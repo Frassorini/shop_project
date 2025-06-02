@@ -1,12 +1,14 @@
 from collections.abc import Iterator
 from typing import Self
 from domain.cart_item import CartItem
-from domain.domain_object import DomainObject
+from domain.entity_mixin import EntityMixin
+from domain.entity_id import EntityId
 
 
-class Cart(DomainObject):
-    def __init__(self, items: list[CartItem]|None=None) -> None:
+class Cart(EntityMixin):
+    def __init__(self, entity_id: EntityId, items: list[CartItem]|None=None) -> None:
         super().__init__()
+        self._entity_id: EntityId = entity_id
         self.items: list[CartItem] = [] if items is None else items
     
     @property

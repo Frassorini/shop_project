@@ -1,12 +1,14 @@
-from domain.domain_object import DomainObject
+from domain.entity_mixin import EntityMixin
 from domain.exceptions import NegativeAmountException
-from domain.p_store_item import PStoreItem
+from domain.entity_id import EntityId
+from domain.store_item import StoreItem
 
 
-class CartItem(DomainObject):
-    def __init__(self, store_item: PStoreItem, amount: float) -> None:
+class CartItem(EntityMixin):
+    def __init__(self, entity_id: EntityId, store_item: StoreItem, amount: float) -> None:
         super().__init__()
-        self.store_item: PStoreItem = store_item
+        self._entity_id: EntityId = entity_id
+        self.store_item: StoreItem = store_item
         self.name: str = store_item.name
         if amount < 0:
             raise NegativeAmountException('amount field must be >= 0')
@@ -26,5 +28,5 @@ class CartItem(DomainObject):
     def price(self) -> float:
         return self.store_item.price * self.amount
     
-    def is_chunk_of(self, item: PStoreItem) -> bool:
+    def is_chunk_of(self, item: StoreItem) -> bool:
         return item == self.store_item

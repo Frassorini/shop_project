@@ -1,12 +1,14 @@
-from domain.domain_object import DomainObject
+from domain.entity_mixin import EntityMixin
 from domain.exceptions import StateException
-from domain.p_store_item import PStoreItem
+from domain.store_item import StoreItem
+from domain.entity_id import EntityId
 
 
-class SupplierOrderItem(DomainObject):
-    def __init__(self, store_item: PStoreItem, amount: int) -> None:
+class SupplierOrderItem(EntityMixin):
+    def __init__(self, entity_id: EntityId, store_item: StoreItem, amount: int) -> None:
         super().__init__()
-        self.store_item: PStoreItem = store_item
+        self._entity_id: EntityId = entity_id
+        self.store_item: StoreItem = store_item
         self.amount: int = amount
         self._received: bool = False
     

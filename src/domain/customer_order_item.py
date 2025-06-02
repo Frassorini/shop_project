@@ -1,8 +1,9 @@
 from enum import Enum
 from functools import wraps
-from domain.domain_object import DomainObject
+from domain.entity_mixin import EntityMixin
 from domain.exceptions import DomainException, NegativeAmountException, StateException
-from domain.p_store_item import PStoreItem
+from domain.store_item import StoreItem
+from domain.entity_id import EntityId
 
 
 class CustomerOrderItemState(Enum):
@@ -23,10 +24,11 @@ def _state_required(allowed_states: list[CustomerOrderItemState]):
     return wrapped
 
 
-class CustomerOrderItem(DomainObject):
-    def __init__(self, store_item: PStoreItem, amount: float) -> None:
+class CustomerOrderItem(EntityMixin):
+    def __init__(self, entity_id: EntityId, store_item: StoreItem, amount: float) -> None:
         super().__init__()
-        self.store_item: PStoreItem = store_item
+        self._entity_id: EntityId = entity_id
+        self.store_item: StoreItem = store_item
         self.name: str = store_item.name
         if amount < 0:
             raise NegativeAmountException('amount field must be >= 0')
@@ -48,7 +50,7 @@ class CustomerOrderItem(DomainObject):
     def price(self) -> float:
         return self.amount * self.price_per_one
     
-    def is_chunk_of(self, item: PStoreItem) -> bool:
+    def is_chunk_of(self, item: StoreItem) -> bool:
         return item == self.store_item
 
     @_state_required(allowed_states=[CustomerOrderItemState.PENDING])

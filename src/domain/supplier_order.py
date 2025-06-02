@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Self
 
+from domain.entity_id import EntityId
+from domain.entity_mixin import EntityMixin
 from domain.exceptions import DomainException
 from domain.supplier_order_item import SupplierOrderItem
 from domain.base_order import Order, OrderState
@@ -13,9 +15,10 @@ class SupplierOrderState(OrderState):
     CANCELLED = 'CANCELLED'
 
 
-class SupplierOrder(Order):
-    def __init__(self, store: str) -> None:
+class SupplierOrder(Order, EntityMixin):
+    def __init__(self, entity_id: EntityId, store: str) -> None:
         super().__init__()
+        self._entity_id: EntityId = entity_id
         self._items: list[SupplierOrderItem] = []
         self.state: SupplierOrderState = SupplierOrderState.PENDING
         self.store: str = store

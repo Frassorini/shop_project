@@ -2,8 +2,10 @@ from typing import Self
 
 from domain.customer_order_item import CustomerOrderItem, CustomerOrderItemState
 from domain.customer import Customer
+from domain.entity_mixin import EntityMixin
 from domain.exceptions import DomainException
 from domain.base_order import Order, OrderState
+from domain.entity_id import EntityId
 
 
 class CustomerOrderState(OrderState):
@@ -14,9 +16,10 @@ class CustomerOrderState(OrderState):
     CANCELLED = 'CANCELLED'
 
 
-class CustomerOrder(Order):
-    def __init__(self, customer: Customer, store: str) -> None:
+class CustomerOrder(Order, EntityMixin):
+    def __init__(self, entity_id: EntityId, customer: Customer, store: str) -> None:
         super().__init__()
+        self._entity_id: EntityId = entity_id
         self.customer: Customer = customer
         self.items: list[CustomerOrderItem] = []
         self.state: CustomerOrderState = CustomerOrderState.PENDING

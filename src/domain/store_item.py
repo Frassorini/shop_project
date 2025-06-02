@@ -1,12 +1,13 @@
 from typing import override
-from domain.domain_object import DomainObject
+from domain.entity_mixin import EntityMixin
 from domain.exceptions import NegativeAmountException
-from domain.p_store_item import PStoreItem
+from domain.entity_id import EntityId
 
 
-class StoreItem(DomainObject, PStoreItem):
-    def __init__(self, name: str, amount: float, store: str, price: float) -> None:
+class StoreItem(EntityMixin):
+    def __init__(self, entity_id: EntityId, name: str, amount: float, store: str, price: float) -> None:
         super().__init__()
+        self._entity_id: EntityId = entity_id
         self.name: str = name 
         if amount < 0:
             raise NegativeAmountException('amount field must be >= 0')
@@ -15,7 +16,6 @@ class StoreItem(DomainObject, PStoreItem):
         self.price: float = price
     
     @property
-    @override
     def amount(self) -> float:
         return self._amount
     
