@@ -10,5 +10,3 @@ class Customer(EntityMixin):
         self._entity_id: EntityId = entity_id
         self.name: str = name
         
-        # КОСТЫЛЬ
-        self.cart: Cart = Cart(EntityId(1))

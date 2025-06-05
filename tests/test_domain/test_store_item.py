@@ -2,7 +2,7 @@ import copy
 from typing import Callable
 from domain.entity_id import EntityId
 from domain.store_item import StoreItem
-from domain.exceptions import NegativeAmountException
+from domain.exceptions import DomainException, NegativeAmountException
 import pytest
 
 
@@ -85,3 +85,26 @@ def test_not_eq(
     not_same_potatoes = potatoes_store_item_10()
     
     assert potatoes != not_same_potatoes
+
+
+def test_reserve(potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    potatoes = potatoes_store_item_10()
+    
+    potatoes.reserve(4)
+    
+    assert potatoes.amount == 6
+    
+
+def test_reserve_insufficient(potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    potatoes = potatoes_store_item_10()
+    
+    with pytest.raises(DomainException):
+        potatoes.reserve(11)
+
+
+def test_restock(potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    potatoes = potatoes_store_item_10()
+    
+    potatoes.restock(4)
+    
+    assert potatoes.amount == 14

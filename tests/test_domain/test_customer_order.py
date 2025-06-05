@@ -1,243 +1,195 @@
 from typing import Callable
-from domain.customer_order_item import CustomerOrderItem
-from domain.entity_id import EntityId
-from domain.store_item import StoreItem
 from domain.customer import Customer
-from domain.cart import Cart
-from domain.cart_item import CartItem
-from domain.customer_order import CustomerOrder, CustomerOrderState
-from domain.exceptions import DomainException, NegativeAmountException, StateException
+from domain.customer_order import CustomerOrder, CustomerOrderState, CustomerOrderItem
+from domain.exceptions import DomainException
+from domain.store_item import StoreItem
 import pytest
-
-
-def test_order_reserve_fixed_price(
-    unique_id_factory: Callable[[], EntityId],
-    customer_andrew: Callable[[], Customer],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    sausages_store_item_10: Callable[[], StoreItem]
-) -> None:
-    customer = customer_andrew()
-    potatoes = potatoes_store_item_10()
-    sausages = sausages_store_item_10()
     
-    order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
-    order += CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=5)
-    order += CustomerOrderItem(unique_id_factory(), store_item=sausages, amount=5)
 
-    order.reserve()
-    potatoes.price = 10
+def test_add_item(customer_order_factory: Callable[[], CustomerOrder],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = customer_order_factory()
+    store_item: StoreItem = potatoes_store_item_10()
     
-    assert order.price == 5 * 1 + 5 * 1
-
-
-def test_order_reserve_price_is_sum_of_items_price(
-    customer_order_potatoes_10_factory: Callable[[], CustomerOrder]
-) -> None: 
-    order = customer_order_potatoes_10_factory()
-    order.reserve()
-    assert order.price == sum([item.price for item in order.items])
-
-
-def test_order_cancel(
-    unique_id_factory: Callable[[], EntityId],
-    customer_andrew: Callable[[], Customer],
-    potatoes_store_item_10: Callable[[], StoreItem]
-) -> None:
-    customer = customer_andrew()
-    potatoes = potatoes_store_item_10()
     
-    customer.cart += CartItem(unique_id_factory(), store_item=potatoes, amount=5)
-    order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
-    for item in customer.cart.items:
-        order += CustomerOrderItem(unique_id_factory(), store_item=item.store_item, amount=item.amount)
-    order.reserve()
-    
-    order.cancel()
-    
-    assert potatoes.amount == 10
-    assert order.state == CustomerOrderState.CANCELLED
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
 
 
-def test_order_receive_wrong_receiver(
-    customer_order_potatoes_10_factory: Callable[[], CustomerOrder],
-    customer_bob: Callable[[], Customer]
-) -> None: 
-    order = customer_order_potatoes_10_factory()
-    order.reserve()
-    order.pay()
+def test_add_negative_amount(customer_order_factory: Callable[[], CustomerOrder],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = customer_order_factory()
+    store_item: StoreItem = potatoes_store_item_10()
     
     with pytest.raises(DomainException):
-        order.receive(receiver=customer_bob())
+        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=-2, store=store_item.store)
 
 
-def test_raise_empty_order(
-    unique_id_factory: Callable[[], EntityId],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    customer = customer_andrew()
-    order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
+def test_add_negative_price(customer_order_factory: Callable[[], CustomerOrder],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = customer_order_factory()
+    store_item: StoreItem = potatoes_store_item_10()
     
     with pytest.raises(DomainException):
-        order.reserve()
+        order.add_item(store_item_id=store_item.entity_id, price=-1, amount=2, store=store_item.store)
 
 
-def test_transitions_receive(
-    customer_order_potatoes_10_factory: Callable[[], CustomerOrder]
-) -> None: 
-    order = customer_order_potatoes_10_factory()
+def test_get_item(customer_order_factory: Callable[[], CustomerOrder],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = customer_order_factory()
     
-    with pytest.raises(StateException):
-        order.receive(receiver=order.customer)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
+    
+    order_item: CustomerOrderItem = order.get_item(store_item.entity_id)
+    
+    assert order_item.amount == 2
+
+
+def test_cannot_add_duplicate_item(customer_order_factory: Callable[[], CustomerOrder], 
+                                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = customer_order_factory()
+    
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
+    with pytest.raises(DomainException):
+        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=3, store=store_item.store)
+
+
+def test_cannot_add_from_another_store(customer_order_factory: Callable[[], CustomerOrder], 
+                                       potatoes_store_item_10: Callable[..., StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10(store="Petersburg")
+    order = customer_order_factory()
+    
+    with pytest.raises(DomainException):
+        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
+    
+
+def test_valid_transitions(customer_order_factory: Callable[[], CustomerOrder], 
+                           potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = customer_order_factory()
+    
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
     
     order.reserve()
-    with pytest.raises(StateException):
-        order.receive(receiver=order.customer)
     
     order.pay()
-    order.receive(receiver=order.customer)
-    assert order.state == CustomerOrderState.RECEIVED
-    with pytest.raises(StateException):
-        order.receive(receiver=order.customer)
+    
+    order.receive()
 
 
-def test_transitions_pay(
-    customer_order_potatoes_10_factory: Callable[[], CustomerOrder]
-) -> None: 
-    order = customer_order_potatoes_10_factory()
+@pytest.mark.parametrize("from_state, method", [
+    (CustomerOrderState.PENDING, "pay"),
+    (CustomerOrderState.PENDING, "receive"),
+    (CustomerOrderState.PENDING, "cancel"),
     
-    with pytest.raises(StateException):
-        order.pay()
+    (CustomerOrderState.RESERVED, "reserve"),
+    (CustomerOrderState.RESERVED, "receive"),
     
-    order.reserve()
-    order.pay()
-    assert order.state == CustomerOrderState.PAID
-    with pytest.raises(StateException):
-        order.pay()
+    (CustomerOrderState.PAID, "reserve"),
+    (CustomerOrderState.PAID, "pay"),
     
-    order.receive(receiver=order.customer)
-    with pytest.raises(StateException):
-        order.pay()
-
-
-def test_transitions_reserve(
-    customer_order_potatoes_10_factory: Callable[[], CustomerOrder]
-) -> None: 
-    order = customer_order_potatoes_10_factory()
+    (CustomerOrderState.RECEIVED, "reserve"),
+    (CustomerOrderState.RECEIVED, "pay"),
+    (CustomerOrderState.RECEIVED, "receive"),
+    (CustomerOrderState.RECEIVED, "cancel"),
     
-    order.reserve()
-    assert order.state == CustomerOrderState.RESERVED
-    with pytest.raises(StateException):
-        order.reserve()
+    (CustomerOrderState.CANCELLED, "reserve"),
+    (CustomerOrderState.CANCELLED, "pay"),
+    (CustomerOrderState.CANCELLED, "receive"),
+    (CustomerOrderState.CANCELLED, "cancel"),
+])
+def test_invalid_transitions(from_state: CustomerOrderState, method: str, 
+                             customer_order_factory: Callable[[], CustomerOrder], 
+                             potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = customer_order_factory()
     
-    order.pay()
-    with pytest.raises(StateException):
-        order.reserve()
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
     
-    order.receive(receiver=order.customer)
-    with pytest.raises(StateException):
-        order.reserve()
-
-
-def test_invalid_transitions_cancel(
-    customer_order_potatoes_10_factory: Callable[[], CustomerOrder]
-) -> None:
-    order = customer_order_potatoes_10_factory()
-    with pytest.raises(StateException):
-        order.cancel()
+    match from_state:
+        case CustomerOrderState.PENDING:
+            pass
+        case CustomerOrderState.RESERVED:
+            order.reserve()
+        case CustomerOrderState.PAID:
+            order.reserve()
+            order.pay()
+        case CustomerOrderState.RECEIVED:
+            order.reserve()
+            order.pay()
+            order.receive()
+        case CustomerOrderState.CANCELLED:
+            order.reserve()
+            order.cancel()
         
+    with pytest.raises(DomainException):
+        getattr(order, method)()
+    
+
+def test_valid_checks(customer_order_factory: Callable[[], CustomerOrder], 
+                      potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = customer_order_factory()
+    
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
+    
+    assert order.can_be_reserved()
+    assert not order.can_be_cancelled()
     order.reserve()
+    
+    assert order.can_be_paid()
+    assert order.can_be_cancelled()
     order.pay()
-    order.receive(receiver=order.customer)
     
-    with pytest.raises(StateException):
-        order.cancel()
+    assert order.can_be_received()
+    assert order.can_be_cancelled()
+    order.receive()
 
 
-def test_add_to_order(
-    unique_id_factory: Callable[[], EntityId],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    potatoes = potatoes_store_item_10()
-    customer = customer_andrew()
-    potatoes_item = CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=10)
-    order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
-    order += potatoes_item
+@pytest.mark.parametrize("from_state, method", [
+    (CustomerOrderState.PENDING, "can_be_paid"),
+    (CustomerOrderState.PENDING, "can_be_received"),
+    (CustomerOrderState.PENDING, "can_be_cancelled"),
     
-    assert len(order.items) == 1
-
-
-def test_sub_from_order(
-    unique_id_factory: Callable[[], EntityId],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    potatoes = potatoes_store_item_10()
-    customer = customer_andrew()
-    potatoes_item = CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=10)
-    order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
-    order += potatoes_item
+    (CustomerOrderState.RESERVED, "can_be_reserved"),
+    (CustomerOrderState.RESERVED, "can_be_received"),
     
-    order -= potatoes_item
+    (CustomerOrderState.PAID, "can_be_reserved"),
+    (CustomerOrderState.PAID, "can_be_paid"),
     
-    assert len(order.items) == 0
-
-
-def test_add_item_has_correct_store(
-    unique_id_factory: Callable[[], EntityId],
-    potatoes_store_item_10: Callable[..., StoreItem],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    potatoes = potatoes_store_item_10(store='Petersburg')
-    customer = customer_andrew()
-    potatoes_item = CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=10)
-    order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
+    (CustomerOrderState.RECEIVED, "can_be_reserved"),
+    (CustomerOrderState.RECEIVED, "can_be_paid"),
+    (CustomerOrderState.RECEIVED, "can_be_received"),
+    (CustomerOrderState.RECEIVED, "can_be_cancelled"),
     
-    with pytest.raises(DomainException):
-        order += potatoes_item
-
-
-def test_add_item_is_not_reserved(
-    unique_id_factory: Callable[[], EntityId],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    potatoes = potatoes_store_item_10()
-    customer = customer_andrew()
-    potatoes_item = CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=10)
-    potatoes_item.reserve()
-    customer_order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
+    (CustomerOrderState.CANCELLED, "can_be_reserved"),
+    (CustomerOrderState.CANCELLED, "can_be_paid"),
+    (CustomerOrderState.CANCELLED, "can_be_received"),
+    (CustomerOrderState.CANCELLED, "can_be_cancelled"),
+])
+def test_invalid_checks(from_state: CustomerOrderState, method: str, 
+                        customer_order_factory: Callable[[], CustomerOrder], 
+                        potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = customer_order_factory()
     
-    with pytest.raises(DomainException):
-        customer_order += potatoes_item
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
+    
+    match from_state:
+        case CustomerOrderState.PENDING:
+            pass
+        case CustomerOrderState.RESERVED:
+            order.reserve()
+        case CustomerOrderState.PAID:
+            order.reserve()
+            order.pay()
+        case CustomerOrderState.RECEIVED:
+            order.reserve()
+            order.pay()
+            order.receive()
+        case CustomerOrderState.CANCELLED:
+            order.reserve()
+            order.cancel()
         
-
-def test_sub_item_is_not_reserved(
-    unique_id_factory: Callable[[], EntityId],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    potatoes = potatoes_store_item_10()
-    customer = customer_andrew()
-    potatoes_item = CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=10)
-    customer_order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
-    customer_order += potatoes_item
-    potatoes_item.reserve()
-    
-    with pytest.raises(DomainException):
-        customer_order -= potatoes_item
-
-
-def test_price_changes_before_reserve(
-    unique_id_factory: Callable[[], EntityId],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    customer_andrew: Callable[[], Customer]
-) -> None:
-    potatoes = potatoes_store_item_10()
-    customer = customer_andrew()
-    potatoes_item = CustomerOrderItem(unique_id_factory(), store_item=potatoes, amount=10)
-    customer_order = CustomerOrder(unique_id_factory(), customer=customer, store='Moscow')
-    customer_order += potatoes_item
-    potatoes.price = 100
-    
-    assert customer_order.price == 100 * 10
+    assert not getattr(order, method)()

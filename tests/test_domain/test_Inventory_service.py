@@ -1,0 +1,82 @@
+from typing import Callable
+
+import pytest
+
+from domain.customer import Customer
+from domain.customer_order import CustomerOrder
+from domain.inventory_service import InventoryService
+from domain.exceptions import DomainException
+from domain.store_item import StoreItem
+from domain.supplier_order import SupplierOrder
+
+
+def test_reserve_order(customer_order_factory: Callable[[], CustomerOrder],
+                       potatoes_store_item_10: Callable[[], StoreItem], 
+                       sausages_store_item_10: Callable[[], StoreItem],) -> None:
+    potatoes: StoreItem = potatoes_store_item_10()
+    sausages: StoreItem = sausages_store_item_10()
+    inventory_service: InventoryService = InventoryService(stock=[potatoes, sausages])
+    
+    order = customer_order_factory()
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    order.add_item(store_item_id=sausages.entity_id, price=sausages.price, amount=2, store=sausages.store)
+    
+    inventory_service.reserve_stock(order.get_items())
+    
+    assert potatoes.amount == 8
+    assert sausages.amount == 8
+
+
+def test_insufficient_stock(customer_order_factory: Callable[[], CustomerOrder],
+                       potatoes_store_item_10: Callable[[], StoreItem], 
+                       sausages_store_item_10: Callable[[], StoreItem],) -> None:
+    potatoes: StoreItem = potatoes_store_item_10()
+    sausages: StoreItem = sausages_store_item_10()
+    inventory_service: InventoryService = InventoryService(stock=[potatoes, sausages])
+    order = customer_order_factory()
+    
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=20, store=potatoes.store)
+    
+    with pytest.raises(DomainException):
+        inventory_service.reserve_stock(order.get_items())
+
+
+def test_invalid_stock(customer_order_factory: Callable[[], CustomerOrder],
+                       potatoes_store_item_10: Callable[[], StoreItem], 
+                       sausages_store_item_10: Callable[[], StoreItem],) -> None:
+    potatoes: StoreItem = potatoes_store_item_10()
+    sausages: StoreItem = sausages_store_item_10()
+    inventory_service: InventoryService = InventoryService(stock=[sausages])
+    order = customer_order_factory()
+    
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    
+    with pytest.raises(DomainException):
+        inventory_service.reserve_stock(order.get_items())
+
+
+def test_restock_customer(customer_order_factory: Callable[[], CustomerOrder],
+                          potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    potatoes: StoreItem = potatoes_store_item_10()
+    inventory_service: InventoryService = InventoryService(stock=[potatoes])
+    order = customer_order_factory()
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    
+    inventory_service.reserve_stock(order.get_items())
+    inventory_service.restock(order.get_items())
+    
+    assert potatoes.amount == 10
+
+
+def test_restock_supplier(supplier_order_factory: Callable[[], SupplierOrder],
+                          potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    potatoes: StoreItem = potatoes_store_item_10()
+    inventory_service: InventoryService = InventoryService(stock=[potatoes])
+    order = supplier_order_factory()
+    order.add_item(store_item_id=potatoes.entity_id, amount=2, store=potatoes.store)
+    
+    inventory_service.restock(order.get_items())
+    
+    assert potatoes.amount == 12
+
+

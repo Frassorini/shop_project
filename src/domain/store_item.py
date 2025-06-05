@@ -14,6 +14,12 @@ class StoreItem(EntityMixin):
         self._amount: float = amount 
         self.store: str = store
         self.price: float = price
+
+    def reserve(self, amount: float) -> None:
+        self.amount -= amount
+        
+    def restock(self, amount: float) -> None:
+        self.amount += amount
     
     @property
     def amount(self) -> float:

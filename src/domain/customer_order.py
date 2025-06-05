@@ -1,14 +1,13 @@
-from typing import Self
+from dataclasses import dataclass
+from enum import Enum
 
-from domain.customer_order_item import CustomerOrderItem, CustomerOrderItemState
-from domain.customer import Customer
 from domain.entity_mixin import EntityMixin
-from domain.exceptions import DomainException
-from domain.base_order import Order, OrderState
+from domain.exceptions import DomainException, StateException
 from domain.entity_id import EntityId
+from domain.stock_item import StockItem
 
 
-class CustomerOrderState(OrderState):
+class CustomerOrderState(Enum):
     PENDING = 'PENDING'
     RESERVED = 'RESERVED'
     PAID = 'PAID'
@@ -16,57 +15,83 @@ class CustomerOrderState(OrderState):
     CANCELLED = 'CANCELLED'
 
 
-class CustomerOrder(Order, EntityMixin):
-    def __init__(self, entity_id: EntityId, customer: Customer, store: str) -> None:
-        super().__init__()
+@dataclass(frozen=True)
+class CustomerOrderItem(StockItem):
+    store_item_id: EntityId
+    amount: int
+    price: float
+
+
+class CustomerOrder(EntityMixin):
+    def __init__(self, entity_id: EntityId, customer_id: EntityId, store: str) -> None:
         self._entity_id: EntityId = entity_id
-        self.customer: Customer = customer
-        self.items: list[CustomerOrderItem] = []
-        self.state: CustomerOrderState = CustomerOrderState.PENDING
+        self.customer_id: EntityId = customer_id
         self.store: str = store
+        self.state: CustomerOrderState = CustomerOrderState.PENDING
+        
+        self._items: dict[EntityId, CustomerOrderItem] = {}
     
-    @property
-    def price(self) -> float:
-        return sum([item.price for item in self.items])
+    def _validate_item(self, store_item_id: EntityId, price: float, amount: int, store: str) -> None:
+        if store_item_id in self._items:
+            raise DomainException('Item already added')
+        
+        if self.store != store:
+            raise DomainException('Item from another store')
+        
+        if amount <= 0:
+            raise DomainException('Amount must be > 0')
+        
+        if price <= 0:
+            raise DomainException('Price must be > 0')
     
-    @Order._state_required(allowed_states=[CustomerOrderState.PENDING])
+    def add_item(self, store_item_id: EntityId, price: float, amount: int, store: str) -> None:
+        self._validate_item(store_item_id, price, amount, store)
+        
+        self._items[store_item_id] = (CustomerOrderItem(
+            store_item_id=store_item_id, 
+            amount=amount, 
+            price=price))
+    
+    def get_item(self, store_item_id: EntityId) -> CustomerOrderItem:
+        return self._items[store_item_id]
+        
+    def get_items(self) -> list[CustomerOrderItem]:
+        return list(self._items.values())    
+    
+    def _has_state(self, states: list[CustomerOrderState]) -> bool:
+        return self.state in states
+    
+    def _ensure_has_state(self, states: list[CustomerOrderState]) -> None:
+        if not self._has_state(states):
+            raise StateException('Invalid state')
+    
+    def can_be_reserved(self) -> bool:
+        return self._has_state([CustomerOrderState.PENDING])
+    
+    def can_be_paid(self) -> bool:
+        return self._has_state([CustomerOrderState.RESERVED])
+    
+    def can_be_received(self) -> bool:
+        return self._has_state([CustomerOrderState.PAID])
+    
+    def can_be_cancelled(self) -> bool:
+        return self._has_state([CustomerOrderState.RESERVED, 
+                                CustomerOrderState.PAID])
+    
     def reserve(self) -> None:
-        for item in self.items:
-            item.reserve()
-
-        if self.items == []:
-            raise DomainException('Empty order is not allowed')
-
+        self._ensure_has_state([CustomerOrderState.PENDING])
         self.state = CustomerOrderState.RESERVED
     
-    @Order._state_required(allowed_states=[CustomerOrderState.RESERVED, CustomerOrderState.PAID])
-    def cancel(self) -> None:      
-        for item in self.items:
-            item.cancel()
-            
-        self.state = CustomerOrderState.CANCELLED
-    
-    @Order._state_required(allowed_states=[CustomerOrderState.RESERVED])
-    def pay(self) -> None:      
+    def pay(self) -> None:
+        self._ensure_has_state([CustomerOrderState.RESERVED])
         self.state = CustomerOrderState.PAID
-        
-    @Order._state_required(allowed_states=[CustomerOrderState.PAID])
-    def receive(self, receiver: Customer) -> None:
-        if receiver != self.customer:
-            raise DomainException("Attempted to receive other's order")
-        
+    
+    def receive(self) -> None:
+        self._ensure_has_state([CustomerOrderState.PAID])
         self.state = CustomerOrderState.RECEIVED
     
-    def __add__(self, other: CustomerOrderItem) -> Self:
-        if other.store != self.store:
-            raise DomainException('Items must be from the same store')
-        if other.state != CustomerOrderItemState.PENDING:
-            raise DomainException('Item is not pending')
-        self.items.append(other)
-        return self
-    
-    def __sub__(self, other: CustomerOrderItem) -> Self:
-        if other.state != CustomerOrderItemState.PENDING:
-            raise DomainException('Item is not pending')
-        self.items.remove(other)
-        return self
+    def cancel(self) -> None:
+        self._ensure_has_state([CustomerOrderState.RESERVED, 
+                                CustomerOrderState.PAID])
+        self.state = CustomerOrderState.CANCELLED
+

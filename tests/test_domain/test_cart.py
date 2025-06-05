@@ -1,53 +1,59 @@
 from typing import Callable
+
+import pytest
 from domain.entity_id import EntityId
+from domain.exceptions import DomainException
 from domain.store_item import StoreItem
 from domain.customer import Customer
-from domain.cart import Cart
-from domain.cart_item import CartItem
+from domain.cart import Cart, CartItem
 
 
-def test_item_in_cart(unique_id_factory: Callable[[], EntityId], potatoes_store_item_1: Callable[[], StoreItem]) -> None:
-    cart = Cart(unique_id_factory())
-    item = potatoes_store_item_1()
-    cart_item = CartItem(unique_id_factory(), item, 1)
+
+def test_add_item(cart_factory: Callable[[], Cart],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = cart_factory()
+    store_item: StoreItem = potatoes_store_item_10()
     
-    cart.items.append(cart_item)
     
-    assert cart_item in cart.items
+    order.add_item(store_item_id=store_item.entity_id, amount=2, store=store_item.store)
 
 
-def test_sub_item_from_cart(unique_id_factory: Callable[[], EntityId],potatoes_store_item_1: Callable[[], StoreItem]) -> None:
-    item = potatoes_store_item_1()
-    cart_item = CartItem(unique_id_factory(), item, 1)
-    same_cart_item = CartItem(unique_id_factory(), item, 1)
-    cart = Cart(unique_id_factory(), items=[cart_item])
+def test_add_negative_amount(cart_factory: Callable[[], Cart],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = cart_factory()
+    store_item: StoreItem = potatoes_store_item_10()
     
-    cart -= cart_item
-    
-    assert cart_item not in cart
+    with pytest.raises(DomainException):
+        order.add_item(store_item_id=store_item.entity_id, amount=-2, store=store_item.store)
 
 
-def test_cart_add_cart_item(unique_id_factory: Callable[[], EntityId],potatoes_store_item_10: Callable[[], StoreItem]) -> None:
-    potatoes_cart = CartItem(unique_id_factory(), store_item=potatoes_store_item_10(), amount=5)
-    cart = Cart(unique_id_factory(),)
+def test_get_item(cart_factory: Callable[[], Cart],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = cart_factory()
     
-    cart += potatoes_cart
+    order.add_item(store_item_id=store_item.entity_id, amount=2, store=store_item.store)
     
-    assert potatoes_cart in cart
+    order_item: CartItem = order.get_item(store_item.entity_id)
+    
+    assert order_item.amount == 2
 
 
-def test_cutomer_cart(unique_id_factory: Callable[[], EntityId],customer_andrew: Callable[[], Customer], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
-    customer: Customer = customer_andrew()
-    potatoes_cart = CartItem(unique_id_factory(), store_item=potatoes_store_item_10(), amount=5)
+def test_cannot_add_duplicate_item(cart_factory: Callable[[], Cart], 
+                                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10()
+    order = cart_factory()
     
-    customer.cart += potatoes_cart
-    
-    assert potatoes_cart in customer.cart
+    order.add_item(store_item_id=store_item.entity_id, amount=2, store=store_item.store)
+    with pytest.raises(DomainException):
+        order.add_item(store_item_id=store_item.entity_id, amount=3, store=store_item.store)
 
 
-def test_cart_price(unique_id_factory: Callable[[], EntityId],potatoes_store_item_10: Callable[[], StoreItem], sausages_store_item_10: Callable[[], StoreItem]) -> None:
-    potatoes_cart = CartItem(unique_id_factory(), store_item=potatoes_store_item_10(), amount=5)
-    sausages_cart = CartItem(unique_id_factory(), store_item=sausages_store_item_10(), amount=5)
-    cart = Cart(unique_id_factory(), [potatoes_cart, sausages_cart])
+def test_cannot_add_from_another_store(cart_factory: Callable[[], Cart], 
+                                       potatoes_store_item_10: Callable[..., StoreItem]) -> None:
+    store_item: StoreItem = potatoes_store_item_10(store="Petersburg")
+    order = cart_factory()
     
-    assert cart.price == 1*5 + 1*5
+    with pytest.raises(DomainException):
+        order.add_item(store_item_id=store_item.entity_id, amount=2, store=store_item.store)
+    
