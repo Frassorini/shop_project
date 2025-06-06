@@ -2,10 +2,10 @@ from typing import Callable
 
 import pytest
 from domain.exceptions import DomainException
-from domain.reservation_service import ReservationService
-from domain.inventory_service import InventoryService
-from domain.store_item import StoreItem
-from domain.customer_order import CustomerOrder, CustomerOrderState
+from domain.services.reservation_service import ReservationService
+from domain.store_item.inventory_service import InventoryService
+from domain.store_item.model import StoreItem
+from domain.customer_order.model import CustomerOrder, CustomerOrderState
 
 
 def test_(potatoes_store_item_10: Callable[[], StoreItem]) -> None:

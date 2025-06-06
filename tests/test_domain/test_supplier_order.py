@@ -1,14 +1,10 @@
-from datetime import datetime, timezone
 from typing import Callable
 import pytest
 
-from domain.entity_id import EntityId
-from domain.exceptions import DomainException, StateException
-from domain.store_item import StoreItem
+from domain.exceptions import DomainException
+from domain.store_item.model import StoreItem
 from domain.supplier_order import SupplierOrder, SupplierOrderState, SupplierOrderItem
 
-
-from datetime import datetime, timezone
 
 def test_(supplier_order_factory: Callable[[], SupplierOrder]) -> None:
     order = supplier_order_factory()

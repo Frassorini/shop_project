@@ -1,7 +1,5 @@
-from domain.cart import Cart
-from domain.entity_mixin import EntityMixin
-from domain.exceptions import DomainException
-from domain.entity_id import EntityId
+from shared.entity_mixin import EntityMixin
+from shared.entity_id import EntityId
 
 
 class Customer(EntityMixin):
@@ -9,4 +7,5 @@ class Customer(EntityMixin):
         super().__init__()
         self._entity_id: EntityId = entity_id
         self.name: str = name
+        
         

@@ -1,6 +1,6 @@
-from domain.customer_order import CustomerOrder
+from domain.customer_order.model import CustomerOrder
 from domain.exceptions import DomainException
-from domain.inventory_service import InventoryService
+from domain.store_item.inventory_service import InventoryService
 
 
 class ReservationService():

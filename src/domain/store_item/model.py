@@ -1,7 +1,6 @@
-from typing import override
-from domain.entity_mixin import EntityMixin
+from shared.entity_mixin import EntityMixin
 from domain.exceptions import NegativeAmountException
-from domain.entity_id import EntityId
+from shared.entity_id import EntityId
 
 
 class StoreItem(EntityMixin):

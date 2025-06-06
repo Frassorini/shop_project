@@ -1,25 +1,9 @@
-from dataclasses import dataclass
-from enum import Enum
-
-from domain.entity_mixin import EntityMixin
+from shared.entity_mixin import EntityMixin
 from domain.exceptions import DomainException, StateException
-from domain.entity_id import EntityId
-from domain.stock_item import StockItem
+from shared.entity_id import EntityId
+from domain.customer_order.vo import CustomerOrderItem
+from domain.customer_order.state import CustomerOrderState
 
-
-class CustomerOrderState(Enum):
-    PENDING = 'PENDING'
-    RESERVED = 'RESERVED'
-    PAID = 'PAID'
-    RECEIVED = 'RECEIVED'
-    CANCELLED = 'CANCELLED'
-
-
-@dataclass(frozen=True)
-class CustomerOrderItem(StockItem):
-    store_item_id: EntityId
-    amount: int
-    price: float
 
 
 class CustomerOrder(EntityMixin):

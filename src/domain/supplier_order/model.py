@@ -1,25 +1,11 @@
-from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
-from typing import Self
 
-from domain.entity_id import EntityId
-from domain.entity_mixin import EntityMixin
+from shared.entity_id import EntityId
+from shared.entity_mixin import EntityMixin
 from domain.exceptions import DomainException, StateException
-from domain.stock_item import StockItem
+from domain.supplier_order.state import SupplierOrderState
+from domain.supplier_order.vo import SupplierOrderItem
 
-
-class SupplierOrderState(Enum):
-    PENDING = 'PENDING'
-    DEPARTED = 'DEPARTED'
-    RECEIVED = 'RECEIVED'
-    CANCELLED = 'CANCELLED'
-
-
-@dataclass(frozen=True)
-class SupplierOrderItem(StockItem):
-    store_item_id: EntityId
-    amount: int
 
 class SupplierOrder(EntityMixin):
     def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store: str) -> None:

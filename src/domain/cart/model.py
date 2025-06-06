@@ -1,15 +1,7 @@
-from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import Self
-from domain.entity_mixin import EntityMixin
-from domain.entity_id import EntityId
+from shared.entity_mixin import EntityMixin
+from shared.entity_id import EntityId
 from domain.exceptions import DomainException
-
-
-@dataclass(frozen=True)
-class CartItem:
-    store_item_id: EntityId
-    amount: int
+from domain.cart.vo import CartItem
 
 
 class Cart(EntityMixin):

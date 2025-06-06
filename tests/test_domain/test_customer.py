@@ -1,6 +1,5 @@
-from typing import Callable
 from domain.customer import Customer
-from domain.entity_id import EntityId
+from shared.entity_id import EntityId
 
 
 def test_create_customer() -> None:

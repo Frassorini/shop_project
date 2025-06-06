@@ -1,19 +1,16 @@
 from datetime import datetime, timezone
 from itertools import count
 from typing import Any, Callable
+
 import pytest
 
+from domain.cart.model import Cart
 from domain.customer import Customer
-from domain.cart import Cart
-from domain.customer_order import CustomerOrder
-from domain.entity_id import EntityId
-from domain.entity_mixin import EntityMixin
-from domain.store_item import StoreItem
-from domain.supplier_order import SupplierOrder
-
-import pytest
-from itertools import count
-from typing import Callable
+from domain.customer_order.model import CustomerOrder
+from shared.entity_id import EntityId
+from domain.store_item.model import StoreItem
+from domain.supplier_order.model import SupplierOrder
+from shared.entity_mixin import EntityMixin
 
 
 @pytest.fixture

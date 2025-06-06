@@ -1,8 +1,8 @@
 from collections.abc import Sequence
-from domain.entity_id import EntityId
+from shared.entity_id import EntityId
 from domain.exceptions import DomainException
 from domain.stock_item import StockItem
-from domain.store_item import StoreItem
+from domain.store_item.model import StoreItem
 
 
 class InventoryService:

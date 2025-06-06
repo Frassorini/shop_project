@@ -1,8 +1,7 @@
 from abc import ABC
 from typing import override
 
-from domain.exceptions import DomainException
-from domain.entity_id import EntityId
+from shared.entity_id import EntityId
 
 
 class EntityMixin(ABC):

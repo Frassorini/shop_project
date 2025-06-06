@@ -1,10 +1,8 @@
 from typing import Callable
 
 import pytest
-from domain.entity_id import EntityId
 from domain.exceptions import DomainException
-from domain.store_item import StoreItem
-from domain.customer import Customer
+from domain.store_item.model import StoreItem
 from domain.cart import Cart, CartItem
 
 

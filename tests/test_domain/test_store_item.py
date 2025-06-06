@@ -1,7 +1,7 @@
 import copy
 from typing import Callable
-from domain.entity_id import EntityId
-from domain.store_item import StoreItem
+from shared.entity_id import EntityId
+from domain.store_item.model import StoreItem
 from domain.exceptions import DomainException, NegativeAmountException
 import pytest
 

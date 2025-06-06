@@ -1,4 +1,4 @@
-from domain.entity_id import EntityId
+from shared.entity_id import EntityId
 
 
 def test_entity_id():

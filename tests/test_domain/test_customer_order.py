@@ -1,8 +1,7 @@
 from typing import Callable
-from domain.customer import Customer
 from domain.customer_order import CustomerOrder, CustomerOrderState, CustomerOrderItem
 from domain.exceptions import DomainException
-from domain.store_item import StoreItem
+from domain.store_item.model import StoreItem
 import pytest
     
 
@@ -62,7 +61,7 @@ def test_cannot_add_from_another_store(customer_order_factory: Callable[[], Cust
     
     with pytest.raises(DomainException):
         order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
-    
+
 
 def test_valid_transitions(customer_order_factory: Callable[[], CustomerOrder], 
                            potatoes_store_item_10: Callable[[], StoreItem]) -> None:

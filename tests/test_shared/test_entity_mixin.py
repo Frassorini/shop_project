@@ -1,8 +1,5 @@
-import pytest
-
-from domain.entity_id import EntityId
-from domain.exceptions import DomainException
-from domain.entity_mixin import EntityMixin
+from shared.entity_id import EntityId
+from shared.entity_mixin import EntityMixin
 
 
 class ExampleDomainClass1(EntityMixin):

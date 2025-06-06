@@ -26,3 +26,37 @@ include = ["src"]
 
 
 exclude = ["**/__pycache__", "**/migrations", "**/tests"]
+
+
+[tool.pyright]
+# Основное
+typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
+pythonVersion = "3.12"
+include = ["src", "tests"]
+extraPaths = ["src"]
+exclude = ["**/__pycache__"]
+
+# Строгие правила (аналог basedpyright)
+reportMissingTypeStubs = true
+reportMissingImports = true
+reportMissingModuleSource = true
+reportIncompatibleMethodOverride = true
+reportUnknownArgumentType = true
+reportUnknownParameterType = true
+reportUnknownVariableType = true
+reportUnknownMemberType = true
+reportPrivateUsage = true
+reportUnnecessaryIsInstance = true
+reportUnnecessaryCast = true
+reportUnnecessaryTypeIgnoreComment = true
+reportUninitializedInstanceVariable = true
+reportUnusedCallResult = true
+reportUnusedImport = false
+reportUnusedVariable = false
+
+# Поддержка тестов
+# Позволяет игнорировать отсутсвие аннотаций у pytest фикстур, если надо
+reportMissingParameterType = false
+reportFunctionMemberAccess = false
+reportPrivateImportUsage = false
