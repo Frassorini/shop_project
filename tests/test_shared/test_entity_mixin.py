@@ -10,7 +10,7 @@ class ExampleDomainClass2(EntityMixin):
         self._entity_id: EntityId = entity_id
 
 
-def test_not_eq_differenet_classes() -> None:
+def test_not_eq_different_classes() -> None:
     obj_1 = ExampleDomainClass1(EntityId(1))
     
     obj_2 = ExampleDomainClass2(EntityId(1))

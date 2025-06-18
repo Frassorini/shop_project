@@ -13,6 +13,12 @@ from domain.supplier_order.model import SupplierOrder
 from shared.entity_mixin import EntityMixin
 
 
+pytest_plugins = [
+    "tests.fixtures.mock_store_item_repository",
+    "tests.fixtures.mock_customer_order_repository",
+]
+
+
 @pytest.fixture
 def unique_id_factory() -> Callable[[], EntityId]:
     

@@ -51,7 +51,7 @@ reportUnnecessaryIsInstance = true
 reportUnnecessaryCast = true
 reportUnnecessaryTypeIgnoreComment = true
 reportUninitializedInstanceVariable = true
-reportUnusedCallResult = true
+reportUnusedCallResult = false
 reportUnusedImport = false
 reportUnusedVariable = false
 
