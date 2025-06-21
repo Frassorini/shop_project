@@ -1,21 +1,23 @@
 from datetime import datetime, timezone
 from itertools import count
-from typing import Any, Callable
+from typing import Any, Callable, Type, TypeVar, cast
 
 import pytest
 
-from domain.cart.model import Cart
+from application.interfaces.p_repository import PRepository
+from application.resource_loader.repository_container import RepositoryContainer
+from application.resource_loader.resource_manager import ResourceManager
+from domain.cart import Cart
 from domain.customer import Customer
-from domain.customer_order.model import CustomerOrder
+from domain.customer_order import CustomerOrder
 from shared.entity_id import EntityId
-from domain.store_item.model import StoreItem
-from domain.supplier_order.model import SupplierOrder
+from domain.store_item import StoreItem
+from domain.supplier_order import SupplierOrder
 from shared.entity_mixin import EntityMixin
 
 
 pytest_plugins = [
-    "tests.fixtures.mock_store_item_repository",
-    "tests.fixtures.mock_customer_order_repository",
+    "tests.fixtures.fake_repository",
 ]
 
 
@@ -25,7 +27,7 @@ def unique_id_factory() -> Callable[[], EntityId]:
     counter = count(start=1)
     
     def fact() -> EntityId:
-        return EntityId(next(counter))
+        return EntityId(str(next(counter)))
     
     return fact
 
@@ -143,4 +145,55 @@ def supplier_order_factory(
                               arrival=datetime(2024, 1, 2, 0, 0, tzinfo=timezone.utc), 
                               store="Moscow")
         return order
+    return factory
+
+
+DomainObject = TypeVar('DomainObject', 
+                       Customer, 
+                       CustomerOrder, 
+                       SupplierOrder, 
+                       Cart, 
+                       StoreItem,)
+@pytest.fixture
+def domain_object_factory(customer_andrew: Callable[[], Customer],
+                          customer_order_factory: Callable[[], CustomerOrder],
+                          supplier_order_factory: Callable[[], SupplierOrder],
+                          cart_factory: Callable[[], Cart],
+                          potatoes_store_item_10: Callable[[], StoreItem]) -> Callable[[Type[DomainObject]], DomainObject]:
+    def factory(model_type: Type[DomainObject]) -> DomainObject:
+        if model_type is Customer:
+            return cast(DomainObject, customer_andrew())
+        elif model_type is CustomerOrder:
+            return cast(DomainObject, customer_order_factory())
+        elif model_type is SupplierOrder:
+            return cast(DomainObject, supplier_order_factory())
+        elif model_type is Cart:
+            return cast(DomainObject, cart_factory())
+        elif model_type is StoreItem:
+            return cast(DomainObject, potatoes_store_item_10())
+        else:
+            raise ValueError(f'Unknown model type {model_type}')
+
+    return factory
+
+@pytest.fixture
+def fake_repository_container_factory(
+    fake_repository: Callable[[Type[Any], list[Any]], PRepository[Any]],
+    ) -> Callable[[dict[Type[Any], list[Any]]], RepositoryContainer]:
+    def factory(items_by_type: dict[Type[Any], list[Any]]) -> RepositoryContainer:
+        repositories: dict[str, PRepository[Any]] = {
+            "store_item": fake_repository(StoreItem, []),
+            "customer_order": fake_repository(CustomerOrder, []),
+        }
+        
+        type_arg_map: dict[Type[Any], str] = {
+            StoreItem: "store_item",
+            CustomerOrder: "customer_order",
+        }
+        
+        for model_type, items in items_by_type.items():
+            repositories[type_arg_map[model_type]] = fake_repository(model_type, items)
+        
+        return RepositoryContainer(**repositories) 
+    
     return factory

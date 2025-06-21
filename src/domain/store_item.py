@@ -1,9 +1,11 @@
+from typing import Any
 from shared.entity_mixin import EntityMixin
 from domain.exceptions import NegativeAmountException
 from shared.entity_id import EntityId
+from shared.p_snapshotable import PSnapshotable
 
 
-class StoreItem(EntityMixin):
+class StoreItem(EntityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, name: str, amount: float, store: str, price: float) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
@@ -13,6 +15,24 @@ class StoreItem(EntityMixin):
         self._amount: float = amount 
         self.store: str = store
         self.price: float = price
+    
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any]) -> 'StoreItem':
+        return cls(
+            entity_id=EntityId(snapshot['entity_id']), 
+            name=snapshot['name'], 
+            amount=snapshot['amount'], 
+            store=snapshot['store'], 
+            price=snapshot['price'])
+    
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            'entity_id': self.entity_id.to_str(),
+            'name': self.name,
+            'amount': self._amount,
+            'store': self.store,
+            'price': self.price
+        }
 
     def reserve(self, amount: float) -> None:
         self.amount -= amount

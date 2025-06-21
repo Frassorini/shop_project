@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from shared.entity_id import EntityId
 from domain.exceptions import DomainException
 from domain.stock_item import StockItem
-from domain.store_item.model import StoreItem
+from domain.store_item import StoreItem
 
 
 class InventoryService:

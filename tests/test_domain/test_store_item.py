@@ -1,7 +1,7 @@
 import copy
 from typing import Callable
 from shared.entity_id import EntityId
-from domain.store_item.model import StoreItem
+from domain.store_item import StoreItem
 from domain.exceptions import DomainException, NegativeAmountException
 import pytest
 
@@ -15,6 +15,28 @@ def test_create_store_item(unique_id_factory: Callable[[], EntityId]) -> None:
         price=1
     )
     assert item.name == "Potatoes red price"
+
+
+def test_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
+    item = StoreItem(
+        entity_id=unique_id_factory(),
+        name="potatoes", 
+        amount=1, 
+        store='Moscow', 
+        price=1
+    )
+    assert item.snapshot() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': 1, 'store': 'Moscow', 'price': 1}
+
+
+def test_from_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
+    item = StoreItem.from_snapshot({
+        'entity_id': unique_id_factory().to_str(),
+        'name': 'potatoes',
+        'amount': 1,
+        'store': 'Moscow',
+        'price': 1
+        })
+    assert item.name == 'potatoes'
 
 
 def test_store_item_amount(potatoes_store_item_1: Callable[[], StoreItem]) -> None:

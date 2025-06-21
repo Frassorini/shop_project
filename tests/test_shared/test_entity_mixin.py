@@ -11,24 +11,24 @@ class ExampleDomainClass2(EntityMixin):
 
 
 def test_not_eq_different_classes() -> None:
-    obj_1 = ExampleDomainClass1(EntityId(1))
+    obj_1 = ExampleDomainClass1(EntityId('1'))
     
-    obj_2 = ExampleDomainClass2(EntityId(1))
+    obj_2 = ExampleDomainClass2(EntityId('1'))
     
     assert obj_1 != obj_2
 
 
 def test_eq() -> None:
-    obj_1 = ExampleDomainClass1(EntityId(1))
+    obj_1 = ExampleDomainClass1(EntityId('1'))
     
-    obj_2 = ExampleDomainClass1(EntityId(1))
+    obj_2 = ExampleDomainClass1(EntityId('1'))
     
     assert obj_1 == obj_2
 
 
 def test_not_eq() -> None:
-    obj_1 = ExampleDomainClass1(EntityId(1))
+    obj_1 = ExampleDomainClass1(EntityId('1'))
     
-    obj_2 = ExampleDomainClass1(EntityId(2))
+    obj_2 = ExampleDomainClass1(EntityId('2'))
     
     assert obj_1 != obj_2

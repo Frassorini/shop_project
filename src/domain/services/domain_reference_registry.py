@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Type, TypeVar
 
-from domain.cart.model import Cart
+from domain.cart import Cart
 from domain.customer import Customer
-from domain.customer_order.model import CustomerOrder
-from domain.store_item.model import StoreItem
-from domain.supplier_order.model import SupplierOrder
+from domain.customer_order import CustomerOrder
+from domain.store_item import StoreItem
+from domain.supplier_order import SupplierOrder
 
 
 SourceType = TypeVar('SourceType')

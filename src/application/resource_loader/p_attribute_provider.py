@@ -1,9 +1,7 @@
-from typing import Protocol
-from typing import Generic, TypeVar
+from typing import Any, Protocol
 
-ExtractedAttributeType = TypeVar('ExtractedAttributeType')
 
-class PAttributeProvider(Protocol, Generic[ExtractedAttributeType]):
+class PAttributeProvider(Protocol):
     attribute_name: str
-    def get(self) -> list[ExtractedAttributeType]:
+    def get(self) -> list[Any]:
         ...

@@ -2,12 +2,38 @@ from typing import Callable
 import pytest
 
 from domain.exceptions import DomainException
-from domain.store_item.model import StoreItem
+from domain.store_item import StoreItem
 from domain.supplier_order import SupplierOrder, SupplierOrderState, SupplierOrderItem
 
 
 def test_(supplier_order_factory: Callable[[], SupplierOrder]) -> None:
     order = supplier_order_factory()
+
+
+def test_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = supplier_order_factory()
+    store_item: StoreItem = potatoes_store_item_10()
+    order.add_item(store_item_id=store_item.entity_id, amount=2, store=store_item.store)
+    
+    snapshot = order.snapshot()
+    
+    assert snapshot['entity_id'] == order.entity_id.to_str()
+    assert snapshot['departure'] == order.departure
+    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.to_str(), 'amount': 2}]
+
+
+def test_from_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
+                  potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+    order = supplier_order_factory()
+    store_item: StoreItem = potatoes_store_item_10()
+    order.add_item(store_item_id=store_item.entity_id, amount=2, store=store_item.store)
+    
+    order_from_snapshot = SupplierOrder.from_snapshot(order.snapshot())
+    
+    assert order_from_snapshot.entity_id == order.entity_id
+    assert order_from_snapshot.departure == order.departure
+    assert order_from_snapshot.get_items() == order.get_items()
     
 
 def test_add_item(supplier_order_factory: Callable[[], SupplierOrder],

@@ -1,13 +1,40 @@
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Self
 
+from domain.stock_item import StockItem
 from shared.entity_id import EntityId
 from shared.entity_mixin import EntityMixin
 from domain.exceptions import DomainException, StateException
-from domain.supplier_order.state import SupplierOrderState
-from domain.supplier_order.vo import SupplierOrderItem
+from shared.p_snapshotable import PSnapshotable
 
 
-class SupplierOrder(EntityMixin):
+@dataclass(frozen=True)
+class SupplierOrderItem(StockItem, PSnapshotable):
+    store_item_id: EntityId
+    amount: int
+    
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            'store_item_id': self.store_item_id.to_str(),
+            'amount': self.amount,
+        }
+    
+    
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
+        return cls(EntityId.from_str(snapshot['store_item_id']), snapshot['amount'])
+
+
+class SupplierOrderState(Enum):
+    PENDING = 'PENDING'
+    DEPARTED = 'DEPARTED'
+    RECEIVED = 'RECEIVED'
+    CANCELLED = 'CANCELLED'
+
+
+class SupplierOrder(EntityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store: str) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
@@ -17,6 +44,29 @@ class SupplierOrder(EntityMixin):
         self.state: SupplierOrderState = SupplierOrderState.PENDING
         
         self._items: dict[EntityId, SupplierOrderItem] = {}
+    
+    def snapshot(self) -> dict[str, Any]:
+        return {'entity_id': self.entity_id.to_str(), 
+                'departure': self.departure, 
+                'arrival': self.arrival, 
+                'store': self.store, 
+                'state': self.state.value, 
+                'items': [item.snapshot() for item in self._items.values()],
+                }
+    
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
+        obj = cls(EntityId.from_str(snapshot['entity_id']),
+                  snapshot['departure'], 
+                  snapshot['arrival'], 
+                  snapshot['store'],
+                  )
+        obj.state = SupplierOrderState(snapshot['state'])
+        
+        items: list[SupplierOrderItem] = [SupplierOrderItem.from_snapshot(item) for item in snapshot['items']]
+        obj._items = {item.store_item_id: item for item in items}
+        
+        return obj
         
     def _validate_item(self, store_item_id: EntityId, amount: int, store: str) -> None:
         if store_item_id in self._items:

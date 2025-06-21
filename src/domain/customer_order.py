@@ -1,12 +1,40 @@
+from dataclasses import dataclass
+from typing import Any, Self
+from enum import Enum
+from domain.stock_item import StockItem
 from shared.entity_mixin import EntityMixin
 from domain.exceptions import DomainException, StateException
 from shared.entity_id import EntityId
-from domain.customer_order.vo import CustomerOrderItem
-from domain.customer_order.state import CustomerOrderState
+from shared.p_snapshotable import PSnapshotable
 
 
+@dataclass(frozen=True)
+class CustomerOrderItem(StockItem, PSnapshotable):
+    store_item_id: EntityId
+    amount: int
+    price: float
+    
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            'store_item_id': self.store_item_id.value,
+            'amount': self.amount,
+            'price': self.price,
+        }
+    
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
+        return cls(store_item_id=EntityId.from_str(snapshot['store_item_id']), amount=snapshot['amount'], price=snapshot['price'])
 
-class CustomerOrder(EntityMixin):
+
+class CustomerOrderState(Enum):
+    PENDING = 'PENDING'
+    RESERVED = 'RESERVED'
+    PAID = 'PAID'
+    RECEIVED = 'RECEIVED'
+    CANCELLED = 'CANCELLED'
+
+
+class CustomerOrder(EntityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, customer_id: EntityId, store: str) -> None:
         self._entity_id: EntityId = entity_id
         self.customer_id: EntityId = customer_id
@@ -14,6 +42,26 @@ class CustomerOrder(EntityMixin):
         self.state: CustomerOrderState = CustomerOrderState.PENDING
         
         self._items: dict[EntityId, CustomerOrderItem] = {}
+    
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
+        obj = cls(EntityId.from_str(snapshot['entity_id']), 
+                  EntityId.from_str(snapshot['customer_id']), 
+                  snapshot['store'])
+        obj.state = CustomerOrderState(snapshot['state'])
+        
+        items: list[CustomerOrderItem] = [CustomerOrderItem.from_snapshot(item) for item in snapshot['items']]
+        obj._items = {item.store_item_id: item for item in items}
+        
+        return obj
+    
+    def snapshot(self) -> dict[str, Any]:
+        return {'entity_id': self.entity_id.to_str(), 
+                'customer_id': self.customer_id.to_str(), 
+                'store': self.store, 
+                'state': self.state.value, 
+                'items': [item.snapshot() for item in self._items.values()],
+                }
     
     def _validate_item(self, store_item_id: EntityId, price: float, amount: int, store: str) -> None:
         if store_item_id in self._items:

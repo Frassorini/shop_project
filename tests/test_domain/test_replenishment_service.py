@@ -3,9 +3,9 @@ from typing import Callable
 import pytest
 from domain.exceptions import DomainException
 from domain.services.replenishment_service import ReplenishmentService
-from domain.store_item.inventory_service import InventoryService
-from domain.store_item.model import StoreItem
-from domain.supplier_order.model import SupplierOrder
+from domain.services.inventory_service import InventoryService
+from domain.store_item import StoreItem
+from domain.supplier_order import SupplierOrder
 
 def test_(potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()

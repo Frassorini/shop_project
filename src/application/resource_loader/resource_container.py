@@ -1,0 +1,113 @@
+from abc import ABC
+from typing import Any, Literal, Type, TypeVar, cast
+
+from shared.entity_id import EntityId
+
+from application.resource_loader.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
+
+from domain.customer_order import CustomerOrder
+from domain.store_item import StoreItem
+from shared.p_snapshotable import PSnapshotable
+
+
+ExtractedAttributeType = TypeVar('ExtractedAttributeType')
+ModelType = TypeVar('ModelType', 
+                    CustomerOrder, 
+                    StoreItem,
+                    )
+
+
+class ResourceSnapshotSentinelMixin(ABC):
+    resources: dict[Type[PSnapshotable], list[Any]]
+    _resource_snapshot_previous: ResourceSnapshot | None
+    _resource_snapshot_current: ResourceSnapshot | None
+    
+    def _get_resource_snapshot(self) -> ResourceSnapshot:
+        snapshot_set_vector: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+        for resource_type in self.resources:
+            snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(item.snapshot()) for item in self.resources[resource_type]])
+        
+        return ResourceSnapshot(snapshot_set_vector)
+    
+    def take_snapshot(self) -> None:
+        if self._resource_snapshot_previous is not None:
+            raise RuntimeError("Snapshots are already taken")
+        
+        self._resource_snapshot_previous = self._resource_snapshot_current
+        self._resource_snapshot_current = self._get_resource_snapshot()
+    
+    def get_resource_changes(self) -> dict[Type[PSnapshotable], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[Any]]]:
+        if self._resource_snapshot_current is None or self._resource_snapshot_previous is None:
+            raise RuntimeError("Snapshots are not taken yet")
+        
+        deleted_snapshot: ResourceSnapshot = self._resource_snapshot_previous.difference_identity(self._resource_snapshot_current)
+        created_snapshot: ResourceSnapshot = self._resource_snapshot_current.difference_identity(self._resource_snapshot_previous)
+        current_snapshot_side_intersection: ResourceSnapshot = self._resource_snapshot_current.intersect_identity(self._resource_snapshot_previous)
+        updated_snapshot: ResourceSnapshot = current_snapshot_side_intersection.difference_content(self._resource_snapshot_previous)
+        
+        result: dict[Type[PSnapshotable], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[Any]]] = {}
+        for item_type in self.resources.keys():
+            result[item_type] = {
+                'CREATED': [],
+                'UPDATED': [],
+                'DELETED': [],
+            }
+        
+        for item_type, items in deleted_snapshot.to_dict().items():
+            result[item_type]['DELETED'].extend(items)
+            
+        for item_type, items in updated_snapshot.to_dict().items():
+            result[item_type]['UPDATED'].extend(items)
+        
+        for item_type, items in created_snapshot.to_dict().items():
+            result[item_type]['CREATED'].extend(items)
+        
+        return result
+        
+
+class ResourceContainer(ResourceSnapshotSentinelMixin):
+    def __init__(self):
+        self.resources: dict[Type[PSnapshotable], list[Any]] = {
+            CustomerOrder: [],
+            StoreItem: [],
+        }
+        self._resource_snapshot_previous: ResourceSnapshot | None = None
+        self._resource_snapshot_current: ResourceSnapshot | None = None
+    
+    def _get_resource_by_type(self, resource_type: Type[ModelType]) -> list[ModelType]:
+        if resource_type in self.resources:
+            return cast(list[ModelType], self.resources[resource_type])
+        raise NotImplementedError(f"No resource for {resource_type}")
+    
+    def get_by_attribute(self, model_type: Type[ModelType], 
+                         attribute_name: str, 
+                         values: list[Any]) -> list[ModelType]:
+        
+        resource: list[ModelType] = self._get_resource_by_type(model_type)
+        
+        result: list[ModelType] = []
+        for item in resource:
+            print(getattr(item, attribute_name), values)
+            if getattr(item, attribute_name) in values:
+                result.append(item)
+        return result
+    
+    def get_by_id(self, model_type: Type[ModelType], entity_id: EntityId) -> ModelType:
+        result: list[ModelType] = self.get_by_attribute(model_type, "entity_id", [entity_id])
+
+        if not result:
+            raise ValueError(f"Could not find {model_type} with id {entity_id}")
+        
+        if len(result) > 1:
+            raise RuntimeError(f"Found more than one {model_type} with id {entity_id}")
+
+        return result[0]
+    
+    def put(self, model_type: Type[ModelType], item: ModelType) -> None:
+        self._get_resource_by_type(model_type).append(item)
+        
+    def put_many(self, model_type: Type[ModelType], items: list[ModelType]) -> None:
+        self._get_resource_by_type(model_type).extend(items)
+    
+    def delete(self, model_type: Type[ModelType], item: ModelType) -> None:
+        self._get_resource_by_type(model_type).remove(item)
