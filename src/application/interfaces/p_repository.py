@@ -1,4 +1,4 @@
-from typing import Any, Protocol, Generic, Type, TypeVar
+from typing import Any, Literal, Protocol, Generic, Type, TypeVar
 
 T = TypeVar("T")
 
@@ -15,3 +15,5 @@ class PRepository(Protocol, Generic[T]):
     def delete_by_attribute(self, attribute_name: str, values: list[Any]) -> None: ...
     
     def fill(self, items: list[T]) -> None: ...
+    
+    def save(self, difference: dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]) -> None: ...

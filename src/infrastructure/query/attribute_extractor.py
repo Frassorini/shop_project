@@ -1,6 +1,7 @@
 from typing import Any, Callable
-from application.resource_loader.p_attribute_provider import PAttributeProvider
-from application.resource_loader.load_query import LoadQuery
+from infrastructure.query.p_attribute_provider import PAttributeProvider
+from infrastructure.query.load_query import LoadQuery
+
 
 class AttributeExtractor(PAttributeProvider):
     def __init__(self, query: LoadQuery,

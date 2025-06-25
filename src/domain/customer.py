@@ -1,12 +1,12 @@
 from typing import Any, Self
-from shared.entity_mixin import EntityMixin
+from domain.p_aggregate import PAggregate
+from shared.identity_mixin import IdentityMixin
 from shared.entity_id import EntityId
 from shared.p_snapshotable import PSnapshotable
 
 
-class Customer(EntityMixin, PSnapshotable):
+class Customer(IdentityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, name: str) -> None:
-        super().__init__()
         self._entity_id: EntityId = entity_id
         self.name: str = name
         

@@ -1,11 +1,11 @@
 from shared.entity_id import EntityId
-from shared.entity_mixin import EntityMixin
+from shared.identity_mixin import IdentityMixin
 
 
-class ExampleDomainClass1(EntityMixin):
+class ExampleDomainClass1(IdentityMixin):
     def __init__(self, entity_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
-class ExampleDomainClass2(EntityMixin):
+class ExampleDomainClass2(IdentityMixin):
     def __init__(self, entity_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
 

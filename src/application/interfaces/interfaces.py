@@ -2,11 +2,11 @@ from typing import Protocol, Self
 
 
 class PUnitOfWork(Protocol):
-    committed: bool
-    rolled_back: bool
+    exhausted: bool
 
-    
     def __enter__(self) -> Self: ...
     def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: object) -> None: ...
     def commit(self) -> None: ...
     def rollback(self) -> None: ...
+
+    

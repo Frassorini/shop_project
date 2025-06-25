@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Self
-from shared.entity_mixin import EntityMixin
+from shared.identity_mixin import IdentityMixin
 from shared.entity_id import EntityId
 from domain.exceptions import DomainException
 from shared.p_snapshotable import PSnapshotable
@@ -19,12 +19,12 @@ class CartItem(PSnapshotable):
         return cls(EntityId.from_str(snapshot['store_item_id']), snapshot['amount'])
 
 
-class Cart(EntityMixin, PSnapshotable):
+class Cart(IdentityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, customer_id: EntityId, store: str) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
         self.customer_id: EntityId = customer_id
-        self.store: str = store
+        self.store_id: str = store
         self._items: dict[EntityId, CartItem] = {}
     
     @classmethod
@@ -41,7 +41,7 @@ class Cart(EntityMixin, PSnapshotable):
     def snapshot(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.to_str(), 
                 'customer_id': self.customer_id.to_str(), 
-                'store': self.store, 
+                'store': self.store_id, 
                 'items': [item.snapshot() for item in self._items.values()],
                 }
     
@@ -49,7 +49,7 @@ class Cart(EntityMixin, PSnapshotable):
         if store_item_id in self._items:
             raise DomainException('Item already added')
         
-        if self.store != store:
+        if self.store_id != store:
             raise DomainException('Item from another store')
         
         if amount <= 0:

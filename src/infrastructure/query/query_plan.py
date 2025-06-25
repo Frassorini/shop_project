@@ -1,15 +1,14 @@
 from dataclasses import dataclass
 from typing import Any, Self, Type, TypeVar
 
-from application.resource_loader.attribute_extractor import AttributeExtractor
+from infrastructure.query.attribute_extractor import AttributeExtractor
 from domain.services.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
 
-from application.resource_loader.attribute_container import AttributeContainer
-from application.resource_loader.load_query import LoadQuery
-from application.resource_loader.p_attribute_provider import PAttributeProvider
+from infrastructure.query.attribute_container import AttributeContainer
+from infrastructure.query.load_query import LoadQuery
+from infrastructure.query.p_attribute_provider import PAttributeProvider
 
 
-AttributeType = TypeVar('AttributeType')
 
 
 @dataclass
@@ -49,14 +48,14 @@ class QueryPlan:
         
         return self
     
-    def from_attribute(self, attribute_name: str, attribute_values: list[AttributeType]) -> Self:
+    def from_attribute(self, attribute_name: str, attribute_values: list[Any]) -> Self:
         attribute_container: AttributeContainer = AttributeContainer(attribute_name, attribute_values)
         
         self._current_query_data.attribute_provider = attribute_container
         
         return self
     
-    def from_id(self, attribute_values: list[AttributeType]) -> Self:
+    def from_id(self, attribute_values: list[Any]) -> Self:
         return self.from_attribute("entity_id", attribute_values)
     
     

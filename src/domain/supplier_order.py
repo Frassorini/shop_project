@@ -5,7 +5,7 @@ from typing import Any, Self
 
 from domain.stock_item import StockItem
 from shared.entity_id import EntityId
-from shared.entity_mixin import EntityMixin
+from shared.identity_mixin import IdentityMixin
 from domain.exceptions import DomainException, StateException
 from shared.p_snapshotable import PSnapshotable
 
@@ -34,7 +34,7 @@ class SupplierOrderState(Enum):
     CANCELLED = 'CANCELLED'
 
 
-class SupplierOrder(EntityMixin, PSnapshotable):
+class SupplierOrder(IdentityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store: str) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id

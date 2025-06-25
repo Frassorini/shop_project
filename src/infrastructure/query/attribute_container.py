@@ -1,5 +1,5 @@
 from typing import Any
-from application.resource_loader.p_attribute_provider import PAttributeProvider
+from infrastructure.query.p_attribute_provider import PAttributeProvider
 
 
 class AttributeContainer(PAttributeProvider):

@@ -1,11 +1,11 @@
-from typing import Callable, Type, TypeVar
-from application.resource_loader.attribute_container import AttributeContainer
-from application.resource_loader.attribute_extractor import AttributeExtractor
-from application.resource_loader.load_query import LoadQuery
+from typing import Any, Callable, Type, TypeVar
+from infrastructure.query.attribute_container import AttributeContainer
+from infrastructure.query.attribute_extractor import AttributeExtractor
+from infrastructure.query.load_query import LoadQuery
 from domain.customer_order import CustomerOrder
 from domain.store_item import StoreItem
 from shared.entity_id import EntityId
-from application.resource_loader.resource_manager import ResourceContainer, ResourceManager, RepositoryContainer
+from infrastructure.resource_manager.resource_manager import ResourceContainer, ResourceManager, RepositoryContainer
 from application.interfaces.p_repository import PRepository
 
 
@@ -14,7 +14,8 @@ DomainObject = TypeVar('DomainObject')
     
 def test_query(customer_order_factory: Callable[[], CustomerOrder],
                potatoes_store_item_10: Callable[[], StoreItem],
-               fake_repository: Callable[[Type[DomainObject], list[DomainObject]], PRepository[DomainObject]],) -> None:
+               fake_repository: Callable[[Type[DomainObject], list[DomainObject]], PRepository[DomainObject]],
+               fake_session_factory: Callable[[], Any]) -> None:
     ids_customer_order: AttributeContainer = AttributeContainer('entity_id', [EntityId('1')])
     query_customer_order: LoadQuery = LoadQuery(CustomerOrder, ids_customer_order)
     
@@ -30,11 +31,13 @@ def test_query(customer_order_factory: Callable[[], CustomerOrder],
     
     customer_order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store=store_item.store)
     
+    repository_map: dict[Type[Any], PRepository[Any]] = {
+        CustomerOrder: fake_repository(CustomerOrder, [customer_order]), # type: ignore
+        StoreItem: fake_repository(StoreItem, [store_item]), # type: ignore
+    }
+    
     resource_loader: ResourceManager = ResourceManager(
-        RepositoryContainer(
-            customer_order=fake_repository(CustomerOrder, [customer_order]), # type: ignore
-            store_item=fake_repository(StoreItem, [store_item]), # type: ignore
-            ))
+        RepositoryContainer(fake_session_factory(), repository_map))
     resource_loader.repository_container.repositories[CustomerOrder].fill([customer_order])
     resource_loader.repository_container.repositories[StoreItem].fill([store_item])
     
@@ -42,9 +45,7 @@ def test_query(customer_order_factory: Callable[[], CustomerOrder],
     
     assert query_customer_order.is_loaded
     
-    print('CustomerOrder')
     assert resource_container.get_by_id(CustomerOrder, customer_order.entity_id) == customer_order
-    print('StoreItem')
     assert resource_container.get_by_id(StoreItem, store_item.entity_id) == store_item
     
     # query_store_item.result = query_store_item.id_provider.extract()

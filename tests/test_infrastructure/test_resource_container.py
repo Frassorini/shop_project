@@ -1,7 +1,7 @@
 from typing import Callable
 
 import pytest
-from application.resource_loader.resource_manager import ResourceContainer
+from infrastructure.resource_manager.resource_manager import ResourceContainer
 from domain.customer_order import CustomerOrder
 from shared.entity_id import EntityId
 

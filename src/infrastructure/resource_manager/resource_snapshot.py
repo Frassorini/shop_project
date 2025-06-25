@@ -1,6 +1,6 @@
 from typing import Any, Self, Type
 
-from shared.p_snapshotable import PSnapshotable
+from domain.p_aggregate import PAggregate
 
 
 class EntitySnapshot:
@@ -74,12 +74,12 @@ class EntitySnapshotSet:
 
 class ResourceSnapshot:
     def __init__(self, 
-                 snapshotset_vector: dict[Type[PSnapshotable], EntitySnapshotSet]
+                 snapshotset_vector: dict[Type[PAggregate], EntitySnapshotSet]
                  ) -> None:
-        self.snapshot_set_vector: dict[Type[PSnapshotable], EntitySnapshotSet] = snapshotset_vector
+        self.snapshot_set_vector: dict[Type[PAggregate], EntitySnapshotSet] = snapshotset_vector
     
     def intersect_identity(self, other: Self) -> Self:
-        result: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+        result: dict[Type[PAggregate], EntitySnapshotSet] = {}
         
         for resource_type in self.snapshot_set_vector:
             result[resource_type] = self.snapshot_set_vector[resource_type].intersection_identity(other.snapshot_set_vector[resource_type])
@@ -87,7 +87,7 @@ class ResourceSnapshot:
         return self.__class__(result)
     
     def intersect_content(self, other: Self) -> Self:
-        result: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+        result: dict[Type[PAggregate], EntitySnapshotSet] = {}
         
         for resource_type in self.snapshot_set_vector:
             result[resource_type] = self.snapshot_set_vector[resource_type].intersection_content(other.snapshot_set_vector[resource_type])
@@ -95,7 +95,7 @@ class ResourceSnapshot:
         return self.__class__(result)
     
     def difference_identity(self, other: Self) -> Self:
-        result: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+        result: dict[Type[PAggregate], EntitySnapshotSet] = {}
         
         for resource_type in self.snapshot_set_vector:
             result[resource_type] = self.snapshot_set_vector[resource_type].difference_identity(other.snapshot_set_vector[resource_type])
@@ -103,15 +103,15 @@ class ResourceSnapshot:
         return self.__class__(result)
     
     def difference_content(self, other: Self) -> Self:
-        result: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+        result: dict[Type[PAggregate], EntitySnapshotSet] = {}
         
         for resource_type in self.snapshot_set_vector:
             result[resource_type] = self.snapshot_set_vector[resource_type].difference_content(other.snapshot_set_vector[resource_type])
         
         return self.__class__(result)
     
-    def to_dict(self) -> dict[Type[PSnapshotable], list[dict[str, Any]]]:
-        result: dict[Type[PSnapshotable], list[dict[str, Any]]] = {}
+    def to_dict(self) -> dict[Type[PAggregate], list[dict[str, Any]]]:
+        result: dict[Type[PAggregate], list[dict[str, Any]]] = {}
         
         for resource_type in self.snapshot_set_vector:
             result[resource_type] = [snapshot.snapshot for snapshot in self.snapshot_set_vector[resource_type].snapshots]

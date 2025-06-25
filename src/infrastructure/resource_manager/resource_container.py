@@ -1,29 +1,28 @@
 from abc import ABC
 from typing import Any, Literal, Type, TypeVar, cast
 
+from domain.cart import Cart
+from domain.customer import Customer
+from domain.p_aggregate import PAggregate
+from domain.supplier_order import SupplierOrder
 from shared.entity_id import EntityId
 
-from application.resource_loader.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
+from infrastructure.resource_manager.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
 
 from domain.customer_order import CustomerOrder
 from domain.store_item import StoreItem
-from shared.p_snapshotable import PSnapshotable
 
 
-ExtractedAttributeType = TypeVar('ExtractedAttributeType')
-ModelType = TypeVar('ModelType', 
-                    CustomerOrder, 
-                    StoreItem,
-                    )
+T = TypeVar('T', bound=PAggregate)
 
 
 class ResourceSnapshotSentinelMixin(ABC):
-    resources: dict[Type[PSnapshotable], list[Any]]
+    resources: dict[Type[PAggregate], list[PAggregate]]
     _resource_snapshot_previous: ResourceSnapshot | None
     _resource_snapshot_current: ResourceSnapshot | None
     
     def _get_resource_snapshot(self) -> ResourceSnapshot:
-        snapshot_set_vector: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+        snapshot_set_vector: dict[Type[PAggregate], EntitySnapshotSet] = {}
         for resource_type in self.resources:
             snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(item.snapshot()) for item in self.resources[resource_type]])
         
@@ -36,7 +35,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         self._resource_snapshot_previous = self._resource_snapshot_current
         self._resource_snapshot_current = self._get_resource_snapshot()
     
-    def get_resource_changes(self) -> dict[Type[PSnapshotable], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[Any]]]:
+    def get_resource_changes(self) -> dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]]:
         if self._resource_snapshot_current is None or self._resource_snapshot_previous is None:
             raise RuntimeError("Snapshots are not taken yet")
         
@@ -45,7 +44,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         current_snapshot_side_intersection: ResourceSnapshot = self._resource_snapshot_current.intersect_identity(self._resource_snapshot_previous)
         updated_snapshot: ResourceSnapshot = current_snapshot_side_intersection.difference_content(self._resource_snapshot_previous)
         
-        result: dict[Type[PSnapshotable], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[Any]]] = {}
+        result: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]] = {}
         for item_type in self.resources.keys():
             result[item_type] = {
                 'CREATED': [],
@@ -64,36 +63,37 @@ class ResourceSnapshotSentinelMixin(ABC):
         
         return result
         
-
 class ResourceContainer(ResourceSnapshotSentinelMixin):
     def __init__(self):
-        self.resources: dict[Type[PSnapshotable], list[Any]] = {
+        self.resources: dict[Type[PAggregate], list[PAggregate]] = { 
+            Customer: [],
             CustomerOrder: [],
+            SupplierOrder: [],
+            Cart: [],
             StoreItem: [],
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
         self._resource_snapshot_current: ResourceSnapshot | None = None
     
-    def _get_resource_by_type(self, resource_type: Type[ModelType]) -> list[ModelType]:
+    def _get_resource_by_type(self, resource_type: Type[T]) -> list[T]:
         if resource_type in self.resources:
-            return cast(list[ModelType], self.resources[resource_type])
+            return cast(list[T], self.resources[resource_type])
         raise NotImplementedError(f"No resource for {resource_type}")
     
-    def get_by_attribute(self, model_type: Type[ModelType], 
+    def get_by_attribute(self, model_type: Type[T], 
                          attribute_name: str, 
-                         values: list[Any]) -> list[ModelType]:
+                         values: list[Any]) -> list[T]:
         
-        resource: list[ModelType] = self._get_resource_by_type(model_type)
+        resource = self._get_resource_by_type(model_type)
         
-        result: list[ModelType] = []
+        result: list[T] = []
         for item in resource:
-            print(getattr(item, attribute_name), values)
             if getattr(item, attribute_name) in values:
                 result.append(item)
         return result
     
-    def get_by_id(self, model_type: Type[ModelType], entity_id: EntityId) -> ModelType:
-        result: list[ModelType] = self.get_by_attribute(model_type, "entity_id", [entity_id])
+    def get_by_id(self, model_type: Type[T], entity_id: EntityId) -> T:
+        result: list[T] = self.get_by_attribute(model_type, "entity_id", [entity_id])
 
         if not result:
             raise ValueError(f"Could not find {model_type} with id {entity_id}")
@@ -103,11 +103,11 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
 
         return result[0]
     
-    def put(self, model_type: Type[ModelType], item: ModelType) -> None:
+    def put(self, model_type: Type[PAggregate], item: PAggregate) -> None:
         self._get_resource_by_type(model_type).append(item)
         
-    def put_many(self, model_type: Type[ModelType], items: list[ModelType]) -> None:
+    def put_many(self, model_type: Type[PAggregate], items: list[PAggregate]) -> None:
         self._get_resource_by_type(model_type).extend(items)
     
-    def delete(self, model_type: Type[ModelType], item: ModelType) -> None:
+    def delete(self, model_type: Type[PAggregate], item: PAggregate) -> None:
         self._get_resource_by_type(model_type).remove(item)

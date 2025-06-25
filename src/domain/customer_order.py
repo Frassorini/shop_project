@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Self
 from enum import Enum
 from domain.stock_item import StockItem
-from shared.entity_mixin import EntityMixin
+from shared.identity_mixin import IdentityMixin
 from domain.exceptions import DomainException, StateException
 from shared.entity_id import EntityId
 from shared.p_snapshotable import PSnapshotable
@@ -34,7 +34,7 @@ class CustomerOrderState(Enum):
     CANCELLED = 'CANCELLED'
 
 
-class CustomerOrder(EntityMixin, PSnapshotable):
+class CustomerOrder(IdentityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, customer_id: EntityId, store: str) -> None:
         self._entity_id: EntityId = entity_id
         self.customer_id: EntityId = customer_id

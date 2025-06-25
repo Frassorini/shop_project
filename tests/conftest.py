@@ -4,22 +4,25 @@ from typing import Any, Callable, Type, TypeVar, cast
 
 import pytest
 
+from application.interfaces.interfaces import PUnitOfWork
 from application.interfaces.p_repository import PRepository
-from application.resource_loader.repository_container import RepositoryContainer
-from application.resource_loader.resource_manager import ResourceManager
+from infrastructure.p_session import PSession
+from infrastructure.repositories.repository_container import RepositoryContainer
+from infrastructure.resource_manager.resource_manager import ResourceManager
 from domain.cart import Cart
 from domain.customer import Customer
 from domain.customer_order import CustomerOrder
+from infrastructure.unit_of_work import UnitOfWork
 from shared.entity_id import EntityId
 from domain.store_item import StoreItem
 from domain.supplier_order import SupplierOrder
-from shared.entity_mixin import EntityMixin
+from shared.identity_mixin import IdentityMixin
 
 
 pytest_plugins = [
     "tests.fixtures.fake_repository",
+    "tests.fixtures.fake_session",
 ]
-
 
 @pytest.fixture
 def unique_id_factory() -> Callable[[], EntityId]:
@@ -148,12 +151,7 @@ def supplier_order_factory(
     return factory
 
 
-DomainObject = TypeVar('DomainObject', 
-                       Customer, 
-                       CustomerOrder, 
-                       SupplierOrder, 
-                       Cart, 
-                       StoreItem,)
+DomainObject = TypeVar('DomainObject')
 @pytest.fixture
 def domain_object_factory(customer_andrew: Callable[[], Customer],
                           customer_order_factory: Callable[[], CustomerOrder],
@@ -176,24 +174,83 @@ def domain_object_factory(customer_andrew: Callable[[], Customer],
 
     return factory
 
+
+@pytest.fixture
+def mutate_domain_object() -> Callable[[DomainObject], DomainObject]:
+    def factory(domain_object: DomainObject) -> DomainObject:
+        if isinstance(domain_object, Customer):
+            domain_object.name = 'bob'
+        elif isinstance(domain_object, CustomerOrder):
+            domain_object.store = 'New York'
+        elif isinstance(domain_object, SupplierOrder):
+            domain_object.store = 'New York'
+        elif isinstance(domain_object, Cart):
+            domain_object.store_id = 'New York'
+        elif isinstance(domain_object, StoreItem):
+            domain_object.store = 'New York'
+        else:
+            raise ValueError(f'Unknown model type {type(domain_object)}')
+        
+        return domain_object
+    return factory
+
+
 @pytest.fixture
 def fake_repository_container_factory(
     fake_repository: Callable[[Type[Any], list[Any]], PRepository[Any]],
-    ) -> Callable[[dict[Type[Any], list[Any]]], RepositoryContainer]:
-    def factory(items_by_type: dict[Type[Any], list[Any]]) -> RepositoryContainer:
-        repositories: dict[str, PRepository[Any]] = {
-            "store_item": fake_repository(StoreItem, []),
-            "customer_order": fake_repository(CustomerOrder, []),
-        }
+    ) -> Callable[[PSession, dict[Type[Any], list[Any]]], RepositoryContainer]:
+    def factory(session: PSession, items_by_type: dict[Type[Any], list[Any]]) -> RepositoryContainer:
+        type_arg_map: dict[Type[Any], PRepository[Any]] = {
+            Customer: fake_repository(Customer, []),
+            CustomerOrder: fake_repository(CustomerOrder, []),
+            SupplierOrder: fake_repository(SupplierOrder, []),
+            Cart: fake_repository(Cart, []),
+            StoreItem: fake_repository(StoreItem, []),
+        } 
         
-        type_arg_map: dict[Type[Any], str] = {
-            StoreItem: "store_item",
-            CustomerOrder: "customer_order",
-        }
+        for repository_type, items in items_by_type.items():
+            type_arg_map[repository_type] = fake_repository(repository_type, items)
         
-        for model_type, items in items_by_type.items():
-            repositories[type_arg_map[model_type]] = fake_repository(model_type, items)
+        return RepositoryContainer(session, type_arg_map)
+    
+    return factory
+
+
+@pytest.fixture
+def fake_uow_factory(fake_repository_container_factory: Callable[[PSession, dict[Type[Any], list[Any]]], RepositoryContainer],
+                     fake_session_factory: Callable[[], PSession]) -> Callable[[dict[Type[Any], list[Any]]], PUnitOfWork]:
+    def factory(items_by_type: dict[Type[Any], list[Any]]) -> PUnitOfWork:
+        session: PSession = fake_session_factory()
+        resource_manager: ResourceManager = ResourceManager(fake_repository_container_factory(session, items_by_type))
         
-        return RepositoryContainer(**repositories) 
+        return UnitOfWork(session, resource_manager)
+    
+    return factory
+
+
+@pytest.fixture
+def rebuild_fake_repository_container() -> Callable[[PSession, RepositoryContainer], RepositoryContainer]:
+    def factory(session: PSession, repository_container: RepositoryContainer) -> RepositoryContainer:
+        type_arg_map: dict[Type[Any], PRepository[Any]] = {}
+        
+        for repository_type, repository in repository_container.repositories.items():
+            type_arg_map[repository_type] = repository.clone() # type: ignore
+        
+        return RepositoryContainer(session, type_arg_map)
+    
+    return factory
+
+
+@pytest.fixture
+def rebuild_fake_uow(fake_session_factory: Callable[[], PSession],
+                     rebuild_fake_repository_container: Callable[[PSession, RepositoryContainer], RepositoryContainer]
+                     ) -> Callable[[UnitOfWork], UnitOfWork]:
+    def factory(uow: UnitOfWork) -> UnitOfWork:
+        session: PSession = fake_session_factory()
+        
+        resource_manager: ResourceManager = ResourceManager(
+            rebuild_fake_repository_container(session, uow.resource_manager.repository_container))
+        
+        return UnitOfWork(session, resource_manager)
     
     return factory

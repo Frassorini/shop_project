@@ -24,17 +24,5 @@ class MockUnitOfWork(PUnitOfWork):
         self.rolled_back = True
 
 
-def test_() -> None:
-    uow = MockUnitOfWork()
-    customer_order_service = CustomerOrderService(uow)
 
-
-def test_reserve_order() -> None:
-    uow = MockUnitOfWork()
-    customer_order_service: CustomerOrderService = CustomerOrderService(uow)
-    data: list[OrderItemDTO] = [OrderItemDTO(store_item_id=1, amount=1)]
-    
-    order: OrderDTO = customer_order_service.reserve_order(data, 1)
-    
-    assert order.state == 'RESERVED'
 

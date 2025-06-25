@@ -1,11 +1,11 @@
 from typing import Any
-from shared.entity_mixin import EntityMixin
+from shared.identity_mixin import IdentityMixin
 from domain.exceptions import NegativeAmountException
 from shared.entity_id import EntityId
 from shared.p_snapshotable import PSnapshotable
 
 
-class StoreItem(EntityMixin, PSnapshotable):
+class StoreItem(IdentityMixin, PSnapshotable):
     def __init__(self, entity_id: EntityId, name: str, amount: float, store: str, price: float) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id

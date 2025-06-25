@@ -1,15 +1,12 @@
 from typing import Any, Callable, Type
 
-import pytest
-from application.resource_loader.resource_manager import ResourceContainer
-from application.resource_loader.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
+from domain.p_aggregate import PAggregate
+from infrastructure.resource_manager.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
 from domain.customer_order import CustomerOrder
-from shared.entity_id import EntityId
-from shared.p_snapshotable import PSnapshotable
 
 
-def get_resource_snapshot(resources: dict[Type[PSnapshotable], list[Any]]) -> ResourceSnapshot:
-        snapshot_set_vector: dict[Type[PSnapshotable], EntitySnapshotSet] = {}
+def get_resource_snapshot(resources: dict[Type[PAggregate], list[PAggregate]]) -> ResourceSnapshot:
+        snapshot_set_vector: dict[Type[PAggregate], EntitySnapshotSet] = {}
         for resource_type in resources:
             snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(item.snapshot()) for item in resources[resource_type]])
         

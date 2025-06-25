@@ -1,10 +1,10 @@
 from typing import Any, Callable
 
 import pytest
-from application.resource_loader.attribute_container import AttributeContainer
-from application.resource_loader.attribute_extractor import AttributeExtractor
-from application.resource_loader.query_plan import QueryPlan
-from application.resource_loader.load_query import LoadQuery
+from infrastructure.query.attribute_container import AttributeContainer
+from infrastructure.query.attribute_extractor import AttributeExtractor
+from infrastructure.query.query_plan import QueryPlan
+from infrastructure.query.load_query import LoadQuery
 from domain.customer_order import CustomerOrder
 from domain.store_item import StoreItem
 from shared.entity_id import EntityId
