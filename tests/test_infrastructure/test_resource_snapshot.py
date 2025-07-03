@@ -1,6 +1,7 @@
 from typing import Any, Callable, Type
 
 from domain.p_aggregate import PAggregate
+from domain.store import Store
 from infrastructure.resource_manager.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
 from domain.customer_order import CustomerOrder
 
@@ -13,7 +14,8 @@ def get_resource_snapshot(resources: dict[Type[PAggregate], list[PAggregate]]) -
         return ResourceSnapshot(snapshot_set_vector)
 
 
-def test_identity_snapshot(customer_order_factory: Callable[[], CustomerOrder]):
+def test_identity_snapshot(customer_order_factory: Callable[[], CustomerOrder],
+                           store_factory_with_cache: Callable[[str], Store],):
     customer_order_1 = customer_order_factory()
     customer_order_2 = customer_order_factory()
     
@@ -27,7 +29,7 @@ def test_identity_snapshot(customer_order_factory: Callable[[], CustomerOrder]):
     assert customer_order_1_snap.compare_content(customer_order_1_snap)
     
     
-    customer_order_1.store = 'New York'
+    customer_order_1.store_id = store_factory_with_cache('New York').entity_id
     customer_order_1_snap_new = EntitySnapshot(customer_order_1.snapshot())
      
     assert customer_order_1_snap.compare_identity(customer_order_1_snap_new)
@@ -35,13 +37,14 @@ def test_identity_snapshot(customer_order_factory: Callable[[], CustomerOrder]):
     
 
 
-def test_intersect(customer_order_factory: Callable[[], CustomerOrder]):
+def test_intersect(customer_order_factory: Callable[[], CustomerOrder],
+                   store_factory_with_cache: Callable[[str], Store],):
     customer_order_1 = customer_order_factory()
     customer_order_2 = customer_order_factory()
     snapshot_before: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
     
     customer_order_1_old = customer_order_1.snapshot()
-    customer_order_1.store = 'New York'
+    customer_order_1.store_id = store_factory_with_cache('New York').entity_id
     
     snapshot_after: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
     
@@ -60,13 +63,14 @@ def test_intersect(customer_order_factory: Callable[[], CustomerOrder]):
     assert intersect_by_content_after_side.to_dict()[CustomerOrder] == [customer_order_2_snapshot]
 
 
-def test_difference(customer_order_factory: Callable[[], CustomerOrder]):
+def test_difference(customer_order_factory: Callable[[], CustomerOrder],
+                    store_factory_with_cache: Callable[[str], Store],):
     customer_order_1 = customer_order_factory()
     customer_order_2 = customer_order_factory()
     
     snapshot_before: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
     
-    customer_order_1.store = 'New York'
+    customer_order_1.store_id = store_factory_with_cache('New York').entity_id
     
     snapshot_after: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
 

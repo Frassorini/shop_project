@@ -3,9 +3,10 @@ from typing import Any, Self
 from enum import Enum
 from domain.stock_item import StockItem
 from shared.identity_mixin import IdentityMixin
-from domain.exceptions import DomainException, StateException
+from domain.exceptions import DomainException
 from shared.entity_id import EntityId
 from shared.p_snapshotable import PSnapshotable
+from shared.base_state_machine import BaseStateMachine
 
 
 @dataclass(frozen=True)
@@ -23,32 +24,57 @@ class CustomerOrderItem(StockItem, PSnapshotable):
     
     @classmethod
     def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(store_item_id=EntityId.from_str(snapshot['store_item_id']), amount=snapshot['amount'], price=snapshot['price'])
+        return cls(store_item_id=EntityId(snapshot['store_item_id']), 
+                   amount=snapshot['amount'], 
+                   price=snapshot['price']
+                   )
 
 
 class CustomerOrderState(Enum):
     PENDING = 'PENDING'
     RESERVED = 'RESERVED'
     PAID = 'PAID'
-    RECEIVED = 'RECEIVED'
+
+    CLAIMED = 'CLAIMED'
+    UNCLAIMED = 'UNCLAIMED'
+
+    REFUNDED = 'REFUNDED'
+
     CANCELLED = 'CANCELLED'
 
 
-class CustomerOrder(IdentityMixin, PSnapshotable):
-    def __init__(self, entity_id: EntityId, customer_id: EntityId, store: str) -> None:
+class CustomerOrderStateMachine(BaseStateMachine[CustomerOrderState]):
+    _transitions: dict[CustomerOrderState, list[CustomerOrderState]] = {
+        CustomerOrderState.PENDING: [CustomerOrderState.RESERVED],
+        CustomerOrderState.RESERVED: [CustomerOrderState.PAID,
+                                      CustomerOrderState.CANCELLED,],
+        CustomerOrderState.PAID: [CustomerOrderState.CLAIMED, 
+                                  CustomerOrderState.UNCLAIMED, 
+                                  CustomerOrderState.REFUNDED],
+        CustomerOrderState.CLAIMED: [],
+        CustomerOrderState.UNCLAIMED: [CustomerOrderState.REFUNDED],
+        CustomerOrderState.REFUNDED: [],
+        CustomerOrderState.CANCELLED: [],
+    }
+
+
+class CustomerOrder(PSnapshotable, IdentityMixin,):
+    def __init__(self, entity_id: EntityId, customer_id: EntityId, store_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
+        self._state_machine: CustomerOrderStateMachine = CustomerOrderStateMachine(CustomerOrderState.PENDING)
+        
         self.customer_id: EntityId = customer_id
-        self.store: str = store
-        self.state: CustomerOrderState = CustomerOrderState.PENDING
+        self.store_id: EntityId = store_id
         
         self._items: dict[EntityId, CustomerOrderItem] = {}
     
     @classmethod
     def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(EntityId.from_str(snapshot['entity_id']), 
-                  EntityId.from_str(snapshot['customer_id']), 
-                  snapshot['store'])
-        obj.state = CustomerOrderState(snapshot['state'])
+        obj = cls(EntityId(snapshot['entity_id']), 
+                  EntityId(snapshot['customer_id']), 
+                  EntityId(snapshot['store_id']),
+                  )
+        obj._state_machine = CustomerOrderStateMachine(CustomerOrderState(snapshot['state']))
         
         items: list[CustomerOrderItem] = [CustomerOrderItem.from_snapshot(item) for item in snapshot['items']]
         obj._items = {item.store_item_id: item for item in items}
@@ -58,16 +84,16 @@ class CustomerOrder(IdentityMixin, PSnapshotable):
     def snapshot(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.to_str(), 
                 'customer_id': self.customer_id.to_str(), 
-                'store': self.store, 
+                'store_id': self.store_id.to_str(), 
                 'state': self.state.value, 
                 'items': [item.snapshot() for item in self._items.values()],
                 }
     
-    def _validate_item(self, store_item_id: EntityId, price: float, amount: int, store: str) -> None:
+    def _validate_item(self, store_item_id: EntityId, price: float, amount: int, store_id: EntityId) -> None:
         if store_item_id in self._items:
             raise DomainException('Item already added')
         
-        if self.store != store:
+        if self.store_id != store_id:
             raise DomainException('Item from another store')
         
         if amount <= 0:
@@ -76,8 +102,8 @@ class CustomerOrder(IdentityMixin, PSnapshotable):
         if price <= 0:
             raise DomainException('Price must be > 0')
     
-    def add_item(self, store_item_id: EntityId, price: float, amount: int, store: str) -> None:
-        self._validate_item(store_item_id, price, amount, store)
+    def add_item(self, store_item_id: EntityId, price: float, amount: int, store_id: EntityId) -> None:
+        self._validate_item(store_item_id, price, amount, store_id)
         
         self._items[store_item_id] = (CustomerOrderItem(
             store_item_id=store_item_id, 
@@ -90,40 +116,42 @@ class CustomerOrder(IdentityMixin, PSnapshotable):
     def get_items(self) -> list[CustomerOrderItem]:
         return list(self._items.values())    
     
-    def _has_state(self, states: list[CustomerOrderState]) -> bool:
-        return self.state in states
-    
-    def _ensure_has_state(self, states: list[CustomerOrderState]) -> None:
-        if not self._has_state(states):
-            raise StateException('Invalid state')
+    @property
+    def state(self) -> CustomerOrderState:
+        return self._state_machine.state
     
     def can_be_reserved(self) -> bool:
-        return self._has_state([CustomerOrderState.PENDING])
+        return self._state_machine.can_be_transitioned_to(CustomerOrderState.RESERVED)
     
     def can_be_paid(self) -> bool:
-        return self._has_state([CustomerOrderState.RESERVED])
+        return self._state_machine.can_be_transitioned_to(CustomerOrderState.PAID)
     
-    def can_be_received(self) -> bool:
-        return self._has_state([CustomerOrderState.PAID])
+    def can_be_claimed(self) -> bool:
+        return self._state_machine.can_be_transitioned_to(CustomerOrderState.CLAIMED)
+    
+    def can_be_unclaimed(self) -> bool:
+        return self._state_machine.can_be_transitioned_to(CustomerOrderState.UNCLAIMED)
+    
+    def can_be_refunded(self) -> bool:
+        return self._state_machine.can_be_transitioned_to(CustomerOrderState.REFUNDED)
     
     def can_be_cancelled(self) -> bool:
-        return self._has_state([CustomerOrderState.RESERVED, 
-                                CustomerOrderState.PAID])
+        return self._state_machine.can_be_transitioned_to(CustomerOrderState.CANCELLED)
     
     def reserve(self) -> None:
-        self._ensure_has_state([CustomerOrderState.PENDING])
-        self.state = CustomerOrderState.RESERVED
+        self._state_machine.try_transition_to(CustomerOrderState.RESERVED)
     
     def pay(self) -> None:
-        self._ensure_has_state([CustomerOrderState.RESERVED])
-        self.state = CustomerOrderState.PAID
+        self._state_machine.try_transition_to(CustomerOrderState.PAID)
     
-    def receive(self) -> None:
-        self._ensure_has_state([CustomerOrderState.PAID])
-        self.state = CustomerOrderState.RECEIVED
+    def claim(self) -> None:
+        self._state_machine.try_transition_to(CustomerOrderState.CLAIMED)
+    
+    def unclaim(self) -> None:
+        self._state_machine.try_transition_to(CustomerOrderState.UNCLAIMED)
+    
+    def refund(self) -> None:
+        self._state_machine.try_transition_to(CustomerOrderState.REFUNDED)
     
     def cancel(self) -> None:
-        self._ensure_has_state([CustomerOrderState.RESERVED, 
-                                CustomerOrderState.PAID])
-        self.state = CustomerOrderState.CANCELLED
-
+        self._state_machine.try_transition_to(CustomerOrderState.CANCELLED)

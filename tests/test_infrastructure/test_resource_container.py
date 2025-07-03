@@ -1,6 +1,7 @@
 from typing import Callable
 
 import pytest
+from domain.store import Store
 from infrastructure.resource_manager.resource_manager import ResourceContainer
 from domain.customer_order import CustomerOrder
 from shared.entity_id import EntityId
@@ -72,13 +73,14 @@ def test_snapshot_delete(customer_order_factory: Callable[[], CustomerOrder]) ->
     assert customer_order.snapshot() in container.get_resource_changes()[CustomerOrder]['DELETED']
 
 
-def test_snapshot_update(customer_order_factory: Callable[[], CustomerOrder]) -> None:
+def test_snapshot_update(customer_order_factory: Callable[[], CustomerOrder],
+                         store_factory_with_cache: Callable[[str], Store],) -> None:
     container = ResourceContainer()
     customer_order: CustomerOrder = customer_order_factory()
     
     container.put(CustomerOrder, customer_order)
     container.take_snapshot()
-    customer_order.store = 'New York'
+    customer_order.store_id = store_factory_with_cache('New York').entity_id
     container.take_snapshot()
     
     assert customer_order.snapshot() in container.get_resource_changes()[CustomerOrder]['UPDATED']

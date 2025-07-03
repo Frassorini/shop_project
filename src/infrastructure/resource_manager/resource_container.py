@@ -4,6 +4,7 @@ from typing import Any, Literal, Type, TypeVar, cast
 from domain.cart import Cart
 from domain.customer import Customer
 from domain.p_aggregate import PAggregate
+from domain.store import Store
 from domain.supplier_order import SupplierOrder
 from shared.entity_id import EntityId
 
@@ -71,6 +72,7 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
             SupplierOrder: [],
             Cart: [],
             StoreItem: [],
+            Store: [],
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
         self._resource_snapshot_current: ResourceSnapshot | None = None

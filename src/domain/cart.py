@@ -16,22 +16,23 @@ class CartItem(PSnapshotable):
 
     @classmethod
     def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(EntityId.from_str(snapshot['store_item_id']), snapshot['amount'])
+        return cls(EntityId(snapshot['store_item_id']), snapshot['amount'])
 
 
 class Cart(IdentityMixin, PSnapshotable):
-    def __init__(self, entity_id: EntityId, customer_id: EntityId, store: str) -> None:
+    def __init__(self, entity_id: EntityId, customer_id: EntityId, store_id: EntityId) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
         self.customer_id: EntityId = customer_id
-        self.store_id: str = store
+        self.store_id: EntityId = store_id
         self._items: dict[EntityId, CartItem] = {}
     
     @classmethod
     def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(EntityId.from_str(snapshot['entity_id']),
-                  EntityId.from_str(snapshot['customer_id']),
-                  snapshot['store'])
+        obj = cls(EntityId(snapshot['entity_id']),
+                  EntityId(snapshot['customer_id']),
+                  EntityId(snapshot['store_id']),
+        )
         
         items: list[CartItem] = [CartItem.from_snapshot(item) for item in snapshot['items']]
         obj._items = {item.store_item_id: item for item in items}
@@ -41,22 +42,22 @@ class Cart(IdentityMixin, PSnapshotable):
     def snapshot(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.to_str(), 
                 'customer_id': self.customer_id.to_str(), 
-                'store': self.store_id, 
+                'store_id': self.store_id.to_str(), 
                 'items': [item.snapshot() for item in self._items.values()],
                 }
     
-    def _validate_item(self, store_item_id: EntityId, amount: int, store: str) -> None:
+    def _validate_item(self, store_item_id: EntityId, amount: int, store_id: EntityId) -> None:
         if store_item_id in self._items:
             raise DomainException('Item already added')
         
-        if self.store_id != store:
+        if self.store_id != store_id:
             raise DomainException('Item from another store')
         
         if amount <= 0:
             raise DomainException('Amount must be > 0')
     
-    def add_item(self, store_item_id: EntityId, amount: int, store: str) -> None:
-        self._validate_item(store_item_id, amount, store)
+    def add_item(self, store_item_id: EntityId, amount: int, store_id: EntityId) -> None:
+        self._validate_item(store_item_id, amount, store_id)
         
         self._items[store_item_id] = (CartItem(
             store_item_id=store_item_id, 

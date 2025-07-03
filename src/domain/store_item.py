@@ -6,14 +6,14 @@ from shared.p_snapshotable import PSnapshotable
 
 
 class StoreItem(IdentityMixin, PSnapshotable):
-    def __init__(self, entity_id: EntityId, name: str, amount: float, store: str, price: float) -> None:
+    def __init__(self, entity_id: EntityId, name: str, amount: float, store_id: EntityId, price: float) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
         self.name: str = name 
         if amount < 0:
             raise NegativeAmountException('amount field must be >= 0')
         self._amount: float = amount 
-        self.store: str = store
+        self.store_id: EntityId = store_id
         self.price: float = price
     
     @classmethod
@@ -22,7 +22,7 @@ class StoreItem(IdentityMixin, PSnapshotable):
             entity_id=EntityId(snapshot['entity_id']), 
             name=snapshot['name'], 
             amount=snapshot['amount'], 
-            store=snapshot['store'], 
+            store_id=EntityId(snapshot['store_id']), 
             price=snapshot['price'])
     
     def snapshot(self) -> dict[str, Any]:
@@ -30,7 +30,7 @@ class StoreItem(IdentityMixin, PSnapshotable):
             'entity_id': self.entity_id.to_str(),
             'name': self.name,
             'amount': self._amount,
-            'store': self.store,
+            'store_id': self.store_id.to_str(),
             'price': self.price
         }
 

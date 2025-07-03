@@ -12,7 +12,3 @@ class EntityId:
 
     def to_str(self, /) -> str:
         return str(self.value)
-    
-    @classmethod
-    def from_str(cls, value: str, /) -> Self:
-        return cls(value)

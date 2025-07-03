@@ -25,10 +25,6 @@ class RepositoryContainer:
             return cast(list[T], self.repositories[entity_type].read_by_attribute(attribute_name, values))
         raise NotImplementedError
     
-    def update(self, items: list[PAggregate]) -> None:
-        for item in items:
-            self.repositories[type(item)].update([item])
-    
     def delete(self, items: list[PAggregate]) -> None:
         for item in items:
             self.repositories[type(item)].delete([item])

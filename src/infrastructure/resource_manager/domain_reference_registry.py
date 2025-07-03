@@ -6,6 +6,7 @@ from domain.customer import Customer
 from domain.customer_order import CustomerOrder
 from domain.store_item import StoreItem
 from domain.supplier_order import SupplierOrder
+from domain.store import Store
 
 
 SourceType = TypeVar('SourceType')
@@ -44,8 +45,12 @@ class DomainReferenceRegistry():
             CustomerOrder: {
                 StoreItem: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id for item in order.get_items()]
+                    strategy=lambda order: [item.store_item_id for item in order.get_items()],
                 ),
+                Store: DomainReferenceDescriptor(
+                    attribute_name="store_id",
+                    strategy=lambda order: [order.store_id],
+                )
             },
             SupplierOrder: {
                 StoreItem: DomainReferenceDescriptor(
@@ -60,5 +65,6 @@ class DomainReferenceRegistry():
                 ),
             },
             StoreItem: {},
+            Store: {},
         }
     

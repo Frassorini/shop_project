@@ -1,20 +1,10 @@
 import copy
 from typing import Callable
+from domain.store import Store
 from shared.entity_id import EntityId
 from domain.store_item import StoreItem
 from domain.exceptions import DomainException, NegativeAmountException
 import pytest
-
-
-def test_create_store_item(unique_id_factory: Callable[[], EntityId]) -> None:
-    item = StoreItem(
-        entity_id=unique_id_factory(),
-        name="Potatoes red price", 
-        amount=1, 
-        store='Moscow', 
-        price=1
-    )
-    assert item.name == "Potatoes red price"
 
 
 def test_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
@@ -22,10 +12,10 @@ def test_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
         entity_id=unique_id_factory(),
         name="potatoes", 
         amount=1, 
-        store='Moscow', 
+        store_id=unique_id_factory(), 
         price=1
     )
-    assert item.snapshot() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': 1, 'store': 'Moscow', 'price': 1}
+    assert item.snapshot() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': 1, 'store_id': item.store_id.to_str(), 'price': 1}
 
 
 def test_from_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
@@ -33,7 +23,7 @@ def test_from_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
         'entity_id': unique_id_factory().to_str(),
         'name': 'potatoes',
         'amount': 1,
-        'store': 'Moscow',
+        'store_id': unique_id_factory().to_str(),
         'price': 1
         })
     assert item.name == 'potatoes'
@@ -56,37 +46,15 @@ def test_create_negative_amount_store_item(unique_id_factory: Callable[[], Entit
             entity_id=unique_id_factory(),
             name='potatoes', 
             amount=-1, 
-            store='Moscow', 
+            store_id=unique_id_factory(), 
             price=1
         )
 
 
 def test_negative_amount_store_item(potatoes_store_item_1: Callable[[], StoreItem]) -> None:
+    store_item = potatoes_store_item_1()
     with pytest.raises(NegativeAmountException):
-        store_item = potatoes_store_item_1()
         store_item.amount -= 5
-
-
-def test_store_item_store(unique_id_factory: Callable[[], EntityId]) -> None:
-    store_item = StoreItem(
-        entity_id=unique_id_factory(),
-        name='potatoes', 
-        amount=10, 
-        store='Moscow', 
-        price=1
-    )
-    assert store_item.store == 'Moscow'
-
-
-def test_store_item_price(unique_id_factory: Callable[[], EntityId]) -> None:
-    potatoes = StoreItem(
-        entity_id=unique_id_factory(),
-        name='potatoes', 
-        amount=10, 
-        store='Moscow', 
-        price=10
-    )
-    assert potatoes.price == 10
 
 
 def test_eq(

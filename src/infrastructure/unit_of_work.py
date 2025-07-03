@@ -1,6 +1,5 @@
 from application.interfaces.interfaces import PUnitOfWork
-from infrastructure.query.load_query import LoadQuery
-from infrastructure.query.query_plan import QueryPlan
+from infrastructure.query.query_builder import QueryPlanBuilder
 from infrastructure.repositories.repository_container import RepositoryContainer
 from infrastructure.resource_manager.resource_container import ResourceContainer
 from infrastructure.resource_manager.resource_manager import ResourceManager
@@ -9,21 +8,23 @@ from infrastructure.p_session import PSession
 
 
 class UnitOfWork(PUnitOfWork):
-    def __init__(self, session: PSession, resource_manager: ResourceManager) -> None:
+    def __init__(self, session: PSession, repository_container: RepositoryContainer, *, read_only: bool) -> None:
         self.session: PSession = session
-        self.resource_manager: ResourceManager = resource_manager
-        self._query_plan: QueryPlan | None = None
+        self.read_only = read_only
+        self.resource_manager: ResourceManager = ResourceManager(repository_container, read_only=read_only)
+        self._query_plan: QueryPlanBuilder | None = None
         
         self.exhausted = False
     
-    def set_query_plan(self, query_plan: QueryPlan) -> None:
+    def set_query_plan(self, query_plan: QueryPlanBuilder) -> None:
         self._query_plan = query_plan
     
     def __enter__(self):
         if self.exhausted:
             raise UnitOfWorkException('UnitOfWork is exhausted')
         
-        self.session.begin()
+        if not self.read_only:
+            self.session.begin()
         
         if self._query_plan:
             self.resource_manager.load(self._query_plan.build())
@@ -42,6 +43,9 @@ class UnitOfWork(PUnitOfWork):
         self.exhausted = True
     
     def commit(self):
+        if self.read_only:
+            raise UnitOfWorkException('Cannot commit read only UnitOfWork')
+        
         self.resource_manager.save()
         self.session.commit()
         self.exhausted = True

@@ -19,7 +19,7 @@ def test_reserve_customer_order(customer_order_factory: Callable[[], CustomerOrd
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
-    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store_id=potatoes.store_id)
     inventory_service = InventoryService([potatoes])
     reservation_service = ReservationService(inventory_service)
 
@@ -33,7 +33,7 @@ def test_reserve_wrong_customer_order(customer_order_factory: Callable[[], Custo
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
-    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store_id=potatoes.store_id)
     inventory_service = InventoryService([potatoes])
     reservation_service = ReservationService(inventory_service)
     
@@ -47,7 +47,7 @@ def test_cancel_customer_order(customer_order_factory: Callable[[], CustomerOrde
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
-    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store_id=potatoes.store_id)
     inventory_service = InventoryService([potatoes])
     reservation_service = ReservationService(inventory_service)
     reservation_service.reserve_customer_order(order)
@@ -61,7 +61,7 @@ def test_cancel_wrong_customer_order(customer_order_factory: Callable[[], Custom
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
-    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store=potatoes.store)
+    order.add_item(store_item_id=potatoes.entity_id, price=potatoes.price, amount=2, store_id=potatoes.store_id)
     inventory_service = InventoryService([potatoes])
     reservation_service = ReservationService(inventory_service)
     

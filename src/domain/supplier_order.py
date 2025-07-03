@@ -6,8 +6,9 @@ from typing import Any, Self
 from domain.stock_item import StockItem
 from shared.entity_id import EntityId
 from shared.identity_mixin import IdentityMixin
-from domain.exceptions import DomainException, StateException
+from domain.exceptions import DomainException
 from shared.p_snapshotable import PSnapshotable
+from shared.base_state_machine import BaseStateMachine
 
 
 @dataclass(frozen=True)
@@ -24,7 +25,7 @@ class SupplierOrderItem(StockItem, PSnapshotable):
     
     @classmethod
     def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(EntityId.from_str(snapshot['store_item_id']), snapshot['amount'])
+        return cls(EntityId(snapshot['store_item_id']), snapshot['amount'])
 
 
 class SupplierOrderState(Enum):
@@ -34,14 +35,22 @@ class SupplierOrderState(Enum):
     CANCELLED = 'CANCELLED'
 
 
+class SupplierOrderStateMachine(BaseStateMachine[SupplierOrderState]):
+    _transitions: dict[SupplierOrderState, list[SupplierOrderState]] = {
+        SupplierOrderState.PENDING: [SupplierOrderState.DEPARTED],
+        SupplierOrderState.DEPARTED: [SupplierOrderState.RECEIVED, SupplierOrderState.CANCELLED],
+        SupplierOrderState.RECEIVED: [],
+        SupplierOrderState.CANCELLED: [],
+    }
+
+
 class SupplierOrder(IdentityMixin, PSnapshotable):
-    def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store: str) -> None:
-        super().__init__()
+    def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
+        self._state_machine: SupplierOrderStateMachine = SupplierOrderStateMachine(SupplierOrderState.PENDING)
         self.departure: datetime = departure
         self.arrival: datetime = arrival
-        self.store: str = store
-        self.state: SupplierOrderState = SupplierOrderState.PENDING
+        self.store_id: EntityId = store_id
         
         self._items: dict[EntityId, SupplierOrderItem] = {}
     
@@ -49,37 +58,37 @@ class SupplierOrder(IdentityMixin, PSnapshotable):
         return {'entity_id': self.entity_id.to_str(), 
                 'departure': self.departure, 
                 'arrival': self.arrival, 
-                'store': self.store, 
+                'store_id': self.store_id.to_str(), 
                 'state': self.state.value, 
                 'items': [item.snapshot() for item in self._items.values()],
                 }
     
     @classmethod
     def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(EntityId.from_str(snapshot['entity_id']),
+        obj = cls(EntityId(snapshot['entity_id']),
                   snapshot['departure'], 
                   snapshot['arrival'], 
-                  snapshot['store'],
+                  EntityId(snapshot['store_id']),
                   )
-        obj.state = SupplierOrderState(snapshot['state'])
+        obj._state_machine = SupplierOrderStateMachine(SupplierOrderState(snapshot['state']))
         
         items: list[SupplierOrderItem] = [SupplierOrderItem.from_snapshot(item) for item in snapshot['items']]
         obj._items = {item.store_item_id: item for item in items}
         
         return obj
         
-    def _validate_item(self, store_item_id: EntityId, amount: int, store: str) -> None:
+    def _validate_item(self, store_item_id: EntityId, amount: int, store_id: EntityId) -> None:
         if store_item_id in self._items:
             raise DomainException('Item already added')
         
-        if self.store != store:
+        if self.store_id != store_id:
             raise DomainException('Item from another store')
         
         if amount <= 0:
             raise DomainException('Amount must be > 0')
     
-    def add_item(self, store_item_id: EntityId, amount: int, store: str) -> None:
-        self._validate_item(store_item_id, amount, store)
+    def add_item(self, store_item_id: EntityId, amount: int, store_id: EntityId) -> None:
+        self._validate_item(store_item_id, amount, store_id)
         
         self._items[store_item_id] = (SupplierOrderItem(
             store_item_id=store_item_id, 
@@ -89,32 +98,26 @@ class SupplierOrder(IdentityMixin, PSnapshotable):
         return self._items[store_item_id]
         
     def get_items(self) -> list[SupplierOrderItem]:
-        return list(self._items.values())    
+        return list(self._items.values())
     
-    def _has_state(self, states: list[SupplierOrderState]) -> bool:
-        return self.state in states
-    
-    def _ensure_has_state(self, states: list[SupplierOrderState]) -> None:
-        if not self._has_state(states):
-            raise StateException('Invalid state')
+    @property
+    def state(self) -> SupplierOrderState:
+        return self._state_machine.state    
     
     def can_be_departed(self) -> bool:
-        return self._has_state([SupplierOrderState.PENDING])
+        return self._state_machine.can_be_transitioned_to(SupplierOrderState.DEPARTED)
     
     def can_be_received(self) -> bool:
-        return self._has_state([SupplierOrderState.DEPARTED])
+        return self._state_machine.can_be_transitioned_to(SupplierOrderState.RECEIVED)
     
     def can_be_cancelled(self) -> bool:
-        return self._has_state([SupplierOrderState.DEPARTED])
+        return self._state_machine.can_be_transitioned_to(SupplierOrderState.CANCELLED)
     
     def depart(self) -> None:
-        self._ensure_has_state([SupplierOrderState.PENDING])
-        self.state = SupplierOrderState.DEPARTED
+        self._state_machine.try_transition_to(SupplierOrderState.DEPARTED)
     
     def receive(self) -> None:
-        self._ensure_has_state([SupplierOrderState.DEPARTED])
-        self.state = SupplierOrderState.RECEIVED
+        self._state_machine.try_transition_to(SupplierOrderState.RECEIVED)
     
     def cancel(self) -> None:
-        self._ensure_has_state([SupplierOrderState.DEPARTED])
-        self.state = SupplierOrderState.CANCELLED
+        self._state_machine.try_transition_to(SupplierOrderState.CANCELLED)

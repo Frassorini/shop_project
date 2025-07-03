@@ -11,7 +11,7 @@ class PIdentity(Protocol):
     def __eq__(self, value: Any, /) -> bool: ...
 
 
-class IdentityMixin(PIdentity, ABC):
+class IdentityMixin(ABC, PIdentity):
     _entity_id: EntityId
     
     @property

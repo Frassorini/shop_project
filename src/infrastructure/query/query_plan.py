@@ -1,86 +1,145 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Self, Type, TypeVar
+from typing import Any, Literal, Self, Type, TypeVar
 
+from domain.p_aggregate import PAggregate
+from infrastructure.exceptions import QueryPlanException
 from infrastructure.query.attribute_extractor import AttributeExtractor
-from domain.services.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
+from infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
+from infrastructure.resource_manager.lock_total_order_registry import LockTotalOrderRegistry
 
 from infrastructure.query.attribute_container import AttributeContainer
-from infrastructure.query.load_query import LoadQuery
+from infrastructure.query.load_query import LoadQuery, QueryLock
 from infrastructure.query.p_attribute_provider import PAttributeProvider
 
+T = TypeVar("T")
 
 
 
-@dataclass
-class QueryData:
-    model_type: type | None
-    attribute_provider: PAttributeProvider | None
+def _ensure_not_none(value: T | None, fail_message: str) -> T:
+    if value is None:
+        raise QueryPlanException(f"{fail_message}")
+    return value
 
 
-class QueryPlan:
-    def __init__(self) -> None:
-        self.domain_reference_registry: Type[DomainReferenceRegistry] = DomainReferenceRegistry
-        self.queries: list[LoadQuery] = []
-        self._current_query_data: QueryData = QueryData(None, None)
-        self._first_query: bool = True
-        
-    def _build_query(self) -> None:
-        if self._current_query_data.model_type is None:
-            raise ValueError("No model type found")
-        
-        if self._current_query_data.attribute_provider is None:
-            raise ValueError("No attribute provider found")
-        
-        self.queries.append(
-            LoadQuery(self._current_query_data.model_type, 
-                                self._current_query_data.attribute_provider)
-        )
-        
-        self._current_query_data = QueryData(None, None)
+class QueryPlan(ABC):
+    read_only: bool
+    queries: list[LoadQuery]
     
-    def load(self, entity_type: type[Any]) -> Self:
-        if not self._first_query:
-            self._build_query()
-        else:
-            self._first_query = False
-        
-        self._current_query_data = QueryData(entity_type, None)
-        
-        return self
+    @abstractmethod
+    def _validate_query(self, query: LoadQuery) -> None:
+        ...
     
-    def from_attribute(self, attribute_name: str, attribute_values: list[Any]) -> Self:
-        attribute_container: AttributeContainer = AttributeContainer(attribute_name, attribute_values)
+    def add_query(self, model_type: type | None, 
+                  attribute_provider: PAttributeProvider | None, 
+                  lock: QueryLock | None) -> None:
         
-        self._current_query_data.attribute_provider = attribute_container
+        model_type = _ensure_not_none(model_type, "model type not specified")
+        attribute_provider = _ensure_not_none(attribute_provider, "attribute provider not specified")
+        lock = _ensure_not_none(lock, "lock not specified")
         
-        return self
+        query = LoadQuery(model_type, attribute_provider, lock)
+        
+        self._validate_query(query)
+        
+        self.queries.append(query)
     
-    def from_id(self, attribute_values: list[Any]) -> Self:
-        return self.from_attribute("entity_id", attribute_values)
-    
-    
-    def from_previous(self, query_index: int | None = None) -> Self:
+    def get_previous_query(self, query_index: int | None = None) -> LoadQuery:
         if query_index is None:
             query_index = len(self.queries) - 1
         
         if query_index < 0 or query_index >= len(self.queries):
             raise ValueError("Invalid query index")
         
-        if self._current_query_data.model_type is None:
-            raise ValueError("No model type found")
-        
-        previous_query = self.queries[query_index]
-        
-        reference_descriptor: DomainReferenceDescriptor[Any] = self.domain_reference_registry.get_reference_descriptor(previous_query.model_type, self._current_query_data.model_type)
-        
-        extractor = AttributeExtractor(previous_query, reference_descriptor.attribute_name, reference_descriptor.strategy)
-        
-        self._current_query_data.attribute_provider = extractor
-        
-        return self
-
+        return self.queries[query_index]
     
-    def build(self) -> list[LoadQuery]:
-        self._build_query()
+    @abstractmethod
+    def validate_build(self) -> None:
+        ...
+    
+    @abstractmethod
+    def validate_changes(self, resource_changes: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]]) -> None:
+        ...
+
+
+class NoLockQueryPlan(QueryPlan):
+    read_only = True
+    
+    def __init__(self) -> None:
+        self.queries: list[LoadQuery] = []
+
+    def _validate_query(self, query: LoadQuery) -> None:
+        if not query.lock == QueryLock.NO_LOCK:
+            raise QueryPlanException("Only no lock queries are allowed in no lock query plan")
+    
+    def validate_build(self):
+        pass
+    
+    def validate_changes(self, resource_changes: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]]):
+        for model_type, model_changes in resource_changes.items():
+            is_changed = model_changes['CREATED'] or model_changes['UPDATED'] or model_changes['DELETED']
+            
+            if is_changed:
+                raise QueryPlanException(f"Model type {model_type} is changed in no lock query plan")
+
+
+class LockingQueryPlan(QueryPlan):
+    read_only = False
+    
+    def __init__(self) -> None:
+        self.queries: list[LoadQuery] = []
+    
+    def _validate_query(self, query: LoadQuery) -> None:
+        if not query.lock == QueryLock.FOR_UPDATE and not query.lock == QueryLock.FOR_SHARE:
+            raise QueryPlanException("Only locking queries are allowed in locking query plan")
+    
+    def _build_map(self) -> dict[Type[Any], LoadQuery]:
+        result: dict[Type[Any], LoadQuery] = {}
         
-        return self.queries
+        for query in self.queries:
+            result[query.model_type] = query
+        
+        return result
+    
+    def _validate_single_query_per_model_type(self) -> None:
+        for query in self.queries:
+            model_type = query.model_type
+            
+            model_type_count = sum(1 for q in self.queries if q.model_type == model_type)
+            
+            if model_type_count > 1:
+                raise QueryPlanException(f"Multiple queries for model type {model_type} in locking query plan")
+    
+    def validate_build(self) -> None:
+        self._validate_single_query_per_model_type()
+        
+        for previous_query, current_query in zip(self.queries, self.queries[1:]):
+            previous_priority = LockTotalOrderRegistry.get_priority(previous_query.model_type)
+            current_priority = LockTotalOrderRegistry.get_priority(current_query.model_type)
+            
+            if previous_priority >= current_priority:
+                raise QueryPlanException("locking order violation")
+    
+    def validate_changes(self, resource_changes: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]]) -> None:
+        query_map = self._build_map()
+        
+        for model_type, model_changes in resource_changes.items():
+            query = query_map.get(model_type)
+
+            has_created = True if model_changes['CREATED'] else False
+            has_updated = True if model_changes['UPDATED'] else False
+            has_deleted = True if model_changes['DELETED'] else False
+            
+            # Разрешаем все create даже без соответствующего запроса
+            if has_created:
+                pass
+            
+            if has_updated or has_deleted:
+                if query is None:
+                    raise QueryPlanException(f"Model type {model_type} is changed without query")
+                if query.lock == QueryLock.FOR_SHARE:
+                    raise QueryPlanException(f"Model type {model_type} is locked in FOR SHARE mode")
+            else:
+                if query is not None and query.lock == QueryLock.FOR_UPDATE:
+                    # TODO: log.warning in test/dev environment
+                    pass
