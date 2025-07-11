@@ -1,5 +1,7 @@
 from typing import Any, Literal, Protocol, Generic, Type, TypeVar
 
+from infrastructure.query.load_query import LoadQuery
+
 T = TypeVar("T")
 
 class PRepository(Protocol, Generic[T]):
@@ -15,5 +17,7 @@ class PRepository(Protocol, Generic[T]):
     def delete_by_attribute(self, attribute_name: str, values: list[Any]) -> None: ...
     
     def fill(self, items: list[T]) -> None: ...
+    
+    def load_from_query(self, query: LoadQuery) -> list[T]: ...
     
     def save(self, difference: dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]) -> None: ...

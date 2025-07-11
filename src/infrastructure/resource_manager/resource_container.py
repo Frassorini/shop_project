@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Literal, Type, TypeVar, cast
+from typing import Any, Literal, Sequence, Type, TypeVar, cast
 
 from domain.cart import Cart
 from domain.customer import Customer
@@ -9,6 +9,7 @@ from domain.supplier_order import SupplierOrder
 from shared.entity_id import EntityId
 
 from infrastructure.resource_manager.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
+from infrastructure.exceptions import ResourcesException
 
 from domain.customer_order import CustomerOrder
 from domain.store_item import StoreItem
@@ -98,7 +99,7 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
         result: list[T] = self.get_by_attribute(model_type, "entity_id", [entity_id])
 
         if not result:
-            raise ValueError(f"Could not find {model_type} with id {entity_id}")
+            raise ResourcesException(f"Could not find {model_type} with id {entity_id}")
         
         if len(result) > 1:
             raise RuntimeError(f"Found more than one {model_type} with id {entity_id}")
@@ -113,3 +114,7 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
     
     def delete(self, model_type: Type[PAggregate], item: PAggregate) -> None:
         self._get_resource_by_type(model_type).remove(item)
+    
+    def delete_many(self, model_type: Type[PAggregate], items: Sequence[PAggregate]) -> None:
+        for item in items:
+            self.delete(model_type, item)

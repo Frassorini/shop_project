@@ -4,20 +4,21 @@ from typing import Any, Literal, Self, Type, TypeVar
 
 from domain.p_aggregate import PAggregate
 from infrastructure.exceptions import QueryPlanException
-from infrastructure.query.attribute_extractor import AttributeExtractor
+from infrastructure.query.value_extractor import ValueExtractor
+from infrastructure.query.query_criteria import QueryCriteria, QueryCriterion
 from infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
 from infrastructure.resource_manager.lock_total_order_registry import LockTotalOrderRegistry
 
-from infrastructure.query.attribute_container import AttributeContainer
+from infrastructure.query.value_container import ValueContainer
 from infrastructure.query.load_query import LoadQuery, QueryLock
-from infrastructure.query.p_attribute_provider import PAttributeProvider
-from infrastructure.query.query_plan import LockingQueryPlan, NoLockQueryPlan, QueryPlan
+from infrastructure.query.p_value_provider import PValueProvider
+from infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
 
 
 @dataclass
 class QueryData:
     model_type: type | None
-    attribute_provider: PAttributeProvider | None
+    criteria: QueryCriteria
     lock: QueryLock | None
 
 
@@ -28,20 +29,20 @@ class QueryPlanBuilder:
         self.domain_reference_registry: Type[DomainReferenceRegistry] = DomainReferenceRegistry
         self.query_plan: QueryPlan
         if mutating:
-            self.query_plan = LockingQueryPlan()
+            self.query_plan = LockQueryPlan()
         else:
             self.query_plan = NoLockQueryPlan()
-        self._current_query_data: QueryData = QueryData(None, None, None)
+        self._current_query_data: QueryData = QueryData(None, QueryCriteria(), None)
         self._first_query: bool = True
         
     def _build_query(self) -> None:
         self.query_plan.add_query(
             self._current_query_data.model_type,
-            self._current_query_data.attribute_provider,
+            self._current_query_data.criteria,
             self._current_query_data.lock
             )
         
-        self._current_query_data = QueryData(None, None, None)
+        self._current_query_data = QueryData(None, QueryCriteria(), None)
     
     def load(self, entity_type: type[Any]) -> Self:
         if not self._first_query:
@@ -49,14 +50,38 @@ class QueryPlanBuilder:
         else:
             self._first_query = False
         
-        self._current_query_data = QueryData(entity_type, None, None)
+        self._current_query_data = QueryData(entity_type, QueryCriteria(), None)
+        
+        return self
+    
+    def and_(self) -> Self:
+        self._current_query_data.criteria.and_()
+        
+        return self
+    
+    def or_(self) -> Self:
+        self._current_query_data.criteria.or_()
+        
+        return self
+    
+    def is_in(self, attribute_name: str, value: Any) -> Self:
+        provider = ValueContainer([value])
+        
+        self._current_query_data.criteria.criterion_in(attribute_name, provider)
+        
+        return self
+    
+    def equals(self, attribute_name: str, value: Any) -> Self:
+        criterion: QueryCriterion = QueryCriterion.equals(attribute_name, value)
+        
+        self._current_query_data.criteria.criterion(criterion)
         
         return self
     
     def from_attribute(self, attribute_name: str, attribute_values: list[Any]) -> Self:
-        attribute_container: AttributeContainer = AttributeContainer(attribute_name, attribute_values)
+        attribute_container: ValueContainer = ValueContainer(attribute_values)
         
-        self._current_query_data.attribute_provider = attribute_container
+        self._current_query_data.criteria.criterion_in(attribute_name, attribute_container)
         
         return self
     
@@ -90,9 +115,9 @@ class QueryPlanBuilder:
                 )
             )
         
-        extractor = AttributeExtractor(previous_query, reference_descriptor.attribute_name, reference_descriptor.strategy)
+        extractor = ValueExtractor(previous_query, reference_descriptor.strategy)
         
-        self._current_query_data.attribute_provider = extractor
+        self._current_query_data.criteria.criterion_in(reference_descriptor.attribute_name, extractor)
         
         return self
 

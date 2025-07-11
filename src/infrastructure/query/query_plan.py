@@ -4,13 +4,14 @@ from typing import Any, Literal, Self, Type, TypeVar
 
 from domain.p_aggregate import PAggregate
 from infrastructure.exceptions import QueryPlanException
-from infrastructure.query.attribute_extractor import AttributeExtractor
+from infrastructure.query.value_extractor import ValueExtractor
 from infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
 from infrastructure.resource_manager.lock_total_order_registry import LockTotalOrderRegistry
 
-from infrastructure.query.attribute_container import AttributeContainer
+from infrastructure.query.value_container import ValueContainer
 from infrastructure.query.load_query import LoadQuery, QueryLock
-from infrastructure.query.p_attribute_provider import PAttributeProvider
+from infrastructure.query.p_value_provider import PValueProvider
+from infrastructure.query.query_criteria import QueryCriteria
 
 T = TypeVar("T")
 
@@ -31,14 +32,14 @@ class QueryPlan(ABC):
         ...
     
     def add_query(self, model_type: type | None, 
-                  attribute_provider: PAttributeProvider | None, 
+                  criteria: QueryCriteria | None, 
                   lock: QueryLock | None) -> None:
         
         model_type = _ensure_not_none(model_type, "model type not specified")
-        attribute_provider = _ensure_not_none(attribute_provider, "attribute provider not specified")
+        criteria = _ensure_not_none(criteria, "criteria not specified")
         lock = _ensure_not_none(lock, "lock not specified")
         
-        query = LoadQuery(model_type, attribute_provider, lock)
+        query = LoadQuery(model_type, criteria, lock)
         
         self._validate_query(query)
         
@@ -83,7 +84,7 @@ class NoLockQueryPlan(QueryPlan):
                 raise QueryPlanException(f"Model type {model_type} is changed in no lock query plan")
 
 
-class LockingQueryPlan(QueryPlan):
+class LockQueryPlan(QueryPlan):
     read_only = False
     
     def __init__(self) -> None:

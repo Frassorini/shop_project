@@ -4,13 +4,14 @@ import pytest
 from domain.customer import Customer
 from domain.store import Store
 from infrastructure.exceptions import QueryPlanException, UnitOfWorkException
-from infrastructure.query.attribute_container import AttributeContainer
-from infrastructure.query.attribute_extractor import AttributeExtractor
+from infrastructure.query.value_container import ValueContainer
+from infrastructure.query.value_extractor import ValueExtractor
 from infrastructure.query.query_builder import QueryPlanBuilder
-from infrastructure.query.query_plan import LockingQueryPlan, NoLockQueryPlan, QueryPlan
+from infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
 from infrastructure.query.load_query import LoadQuery, QueryLock
 from domain.customer_order import CustomerOrder
 from domain.store_item import StoreItem
+from infrastructure.query.query_criteria import QueryCriteria
 from shared.entity_id import EntityId
 
 
@@ -26,8 +27,7 @@ def test_empty():
 
 def test_load_from_attribute():
     query = LoadQuery(CustomerOrder,
-                      AttributeContainer('entity_id', 
-                                         [EntityId('1')]), 
+                      QueryCriteria().criterion_in("entity_id", ValueContainer([EntityId('1')])), 
                       QueryLock.NO_LOCK)
     
     query_built: QueryPlan = (
@@ -37,14 +37,13 @@ def test_load_from_attribute():
         .no_lock()
         .build())
     
-    assert query_built.queries[0].attribute_provider.get() == query.attribute_provider.get()
+    assert query_built.queries[0].criteria.criteria[0].value_provider.get() == query.criteria.criteria[0].value_provider.get()
     assert query_built.queries[0].model_type == query.model_type
 
 
 def test_load_from_id():
     query = LoadQuery(CustomerOrder, 
-                      AttributeContainer('entity_id', 
-                                         [EntityId('1')]), 
+                      QueryCriteria().criterion_in("entity_id", ValueContainer([EntityId('1')])), 
                       QueryLock.NO_LOCK)
     
     query_built: QueryPlan = (
@@ -54,7 +53,7 @@ def test_load_from_id():
         .no_lock()
         .build())
     
-    assert query_built.queries[0].attribute_provider.get() == query.attribute_provider.get()
+    assert query_built.queries[0].criteria.criteria[0].value_provider.get() == query.criteria.criteria[0].value_provider.get()
     assert query_built.queries[0].model_type == query.model_type
 
 
@@ -62,21 +61,21 @@ def test_load_from_previous(customer_order_factory: Callable[[], CustomerOrder])
     customer_order = customer_order_factory()
     
     query = LoadQuery(CustomerOrder, 
-                      AttributeContainer('entity_id', 
-                                         [EntityId('1')]), 
+                      QueryCriteria().criterion_in("entity_id", ValueContainer([EntityId('1')])), 
                       QueryLock.NO_LOCK)
-    query.result = [customer_order]
-    query.is_loaded = True
+    query.load([customer_order])
     query_store_item = LoadQuery(StoreItem, 
-                                 AttributeExtractor(query, 'entity_id', 
-                                                    lambda x: [item.store_item_id for item in x.get_items()]),
+                                 QueryCriteria().criterion_in("entity_id", 
+                                 ValueExtractor(query,
+                                                    lambda x: [item.store_item_id for item in x.get_items()])
+                                 ),
                                  QueryLock.NO_LOCK)
 
     query_builder = QueryPlanBuilder(mutating=False).load(StoreItem)
     query_builder.query_plan.queries.append(query)
     query_built: QueryPlan = query_builder.from_previous().no_lock().build()
 
-    assert query_built.queries[1].attribute_provider.get() == query_store_item.attribute_provider.get()
+    assert query_built.queries[1].criteria.criteria[0].value_provider.get() == query_store_item.criteria.criteria[0].value_provider.get()
     assert query_built.queries[1].model_type == query_store_item.model_type
 
 

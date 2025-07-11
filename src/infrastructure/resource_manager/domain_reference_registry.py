@@ -34,7 +34,7 @@ class DomainReferenceRegistry():
         return {
             Customer: {
                 CustomerOrder: DomainReferenceDescriptor(
-                    attribute_name="entity_id",
+                    attribute_name="customer_id",
                     strategy=lambda customer: [customer.entity_id]
                 ),
                 Cart: DomainReferenceDescriptor(

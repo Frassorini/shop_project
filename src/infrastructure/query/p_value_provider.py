@@ -1,7 +1,6 @@
 from typing import Any, Protocol
 
 
-class PAttributeProvider(Protocol):
-    attribute_name: str
+class PValueProvider(Protocol):
     def get(self) -> list[Any]:
         ...

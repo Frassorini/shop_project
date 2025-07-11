@@ -2,7 +2,7 @@ from typing import Any, Literal
 from domain.p_aggregate import PAggregate
 from infrastructure.exceptions import UnitOfWorkException
 from infrastructure.query.load_query import LoadQuery
-from infrastructure.query.query_plan import QueryPlan, LockingQueryPlan, NoLockQueryPlan
+from infrastructure.query.query_plan import QueryPlan, LockQueryPlan, NoLockQueryPlan
 from infrastructure.resource_manager.resource_container import ResourceContainer
 from infrastructure.repositories.repository_container import RepositoryContainer
 
@@ -16,24 +16,14 @@ class ResourceManager:
         if read_only:
             self.query_plan: QueryPlan = NoLockQueryPlan()
         else:
-            self.query_plan: QueryPlan = LockingQueryPlan()
+            self.query_plan: QueryPlan = LockQueryPlan()
 
     def _load_single(self, query: LoadQuery) -> None:
-        loaded: list[PAggregate] = self.repository_container\
-            .get_by_attribute(query.model_type, 
-                                      query.attribute_provider.attribute_name, 
-                                      query.attribute_provider.get())
+        loaded: list[PAggregate] = self.repository_container.load_from_query(query)
         
         self.resource_container.put_many(query.model_type, loaded)
-        
-        loaded_ids = [item.entity_id for item in loaded]
-        
-        for entity_id in query.attribute_provider.get():
-            if entity_id not in loaded_ids and self.raise_on_not_found:
-                raise UnitOfWorkException(f"Could not find {query.model_type} with id {entity_id}")
 
-        query.result = loaded
-        query.is_loaded = True
+        query.load(loaded)
 
     def load(self, query_plan: QueryPlan) -> ResourceContainer:
         for query in query_plan.queries:

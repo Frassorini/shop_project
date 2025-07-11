@@ -11,7 +11,7 @@ from domain.store_item import StoreItem
 
 from infrastructure.query.query_builder import QueryPlanBuilder
 from infrastructure.unit_of_work import UnitOfWork
-from infrastructure.exceptions import UnitOfWorkException
+from infrastructure.exceptions import UnitOfWorkException, ResourcesException
 
 
 DomainObject = TypeVar('DomainObject', bound=PAggregate)
@@ -104,9 +104,10 @@ def test_delete(model_type: Type[DomainObject],
         QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id]).no_lock()
         )
     
-    with pytest.raises(UnitOfWorkException):
-        with uow2:
-            pass
+    with uow2:
+        resources = uow.get_resorces()
+        with pytest.raises(ResourcesException):
+            assert resources.get_by_id(model_type, domain_object.entity_id) is None
 
 
 def test_enter_uow_twice(domain_object_factory: Callable[[Type[DomainObject]], DomainObject],

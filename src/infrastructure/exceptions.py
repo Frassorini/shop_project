@@ -7,3 +7,6 @@ class UnitOfWorkException(InfrastructureException):
 
 class QueryPlanException(InfrastructureException):
     pass
+
+class ResourcesException(InfrastructureException):
+    pass

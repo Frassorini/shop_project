@@ -1,8 +1,8 @@
 from enum import Enum
-from typing import Type
+from typing import Any, Type
 
 from domain.p_aggregate import PAggregate
-from infrastructure.query.p_attribute_provider import PAttributeProvider
+from infrastructure.query.query_criteria import QueryCriteria
 
 # Под капотом в репозиториях все равно должен использоваться advisory lock
 # в дополнение к классическим блокировкам для приоритизации запросов на запись
@@ -15,12 +15,25 @@ class QueryLock(Enum):
 class LoadQuery():
     def __init__(
         self,
-        model_type: type,
-        attribute_provider: PAttributeProvider,
+        model_type: Type[PAggregate],
+        criteria: QueryCriteria,
         lock: QueryLock,
     ) -> None:
         self.model_type: Type[PAggregate] = model_type
-        self.attribute_provider: PAttributeProvider = attribute_provider
+        self.criteria: QueryCriteria = criteria
         self.lock: QueryLock = lock
-        self.result: list[PAggregate] = []
-        self.is_loaded: bool = False
+        self._result: list[PAggregate] = []
+        self._is_loaded: bool = False
+
+    def load(self, result: list[PAggregate]) -> None:
+        if self._is_loaded:
+            raise RuntimeError("Query is already loaded")
+        
+        self._result = result
+        self._is_loaded = True
+        
+    def get_result(self) -> list[PAggregate]:
+        if not self._is_loaded:
+            raise RuntimeError("Query is not loaded")
+        
+        return self._result
