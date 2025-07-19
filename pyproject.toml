@@ -1,19 +1,36 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-
 [project]
-name = "project"
+name = "shop-project"
 version = "0.1.0"
-description = "My cool library"
-requires-python = ">=3.10"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy (>=2.0.41,<3.0.0)",
+    "fastapi (>=0.116.1,<0.117.0)",
+    "asyncpg (>=0.30.0,<0.31.0)",
+    "dotenv (>=0.9.9,<0.10.0)",
+]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+pytest-asyncio = "^1.1.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 
 [tool.pytest.ini_options]
 addopts = "-ra -s"
 testpaths = ["tests"]
 pythonpath = "src"
+markers = [
+    "integration: mark test as integration",
+    "unit: mark test as unit"
+]
 
 
 [tool.basedpyright]
@@ -60,3 +77,4 @@ reportUnusedVariable = false
 reportMissingParameterType = false
 reportFunctionMemberAccess = false
 reportPrivateImportUsage = false
+

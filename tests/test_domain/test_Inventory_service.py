@@ -2,11 +2,11 @@ from typing import Callable
 
 import pytest
 
-from domain.customer_order import CustomerOrder
-from domain.services.inventory_service import InventoryService
-from domain.exceptions import DomainException
-from domain.store_item import StoreItem
-from domain.supplier_order import SupplierOrder
+from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.exceptions import DomainException
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.supplier_order import SupplierOrder
 
 
 def test_reserve_order(customer_order_factory: Callable[[], CustomerOrder],

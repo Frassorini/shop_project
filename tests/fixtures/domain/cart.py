@@ -1,10 +1,10 @@
 from typing import Callable
 import pytest
 
-from domain.cart import Cart
-from domain.customer import Customer
-from domain.store import Store
-from shared.entity_id import EntityId
+from shop_project.domain.cart import Cart
+from shop_project.domain.customer import Customer
+from shop_project.domain.store import Store
+from shop_project.shared.entity_id import EntityId
 
 
 @pytest.fixture

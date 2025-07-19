@@ -1,0 +1,16 @@
+from shop_project.domain.exceptions import DomainException
+from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.supplier_order import SupplierOrder
+
+
+class ReplenishmentService:
+    def __init__(self, inventory_service: InventoryService) -> None:
+        self._inventory_service: InventoryService = inventory_service
+        
+    def replenish(self, order: SupplierOrder) -> None:
+        if not order.can_be_received():
+            raise DomainException('Order cannot be replenished')
+        
+        self._inventory_service.restock(order.get_items())
+        
+        order.receive()

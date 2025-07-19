@@ -2,6 +2,7 @@ pytest_plugins = [
     "tests.fixtures.infrastructure.fake_repository",
     "tests.fixtures.infrastructure.fake_session",
     "tests.fixtures.infrastructure.uow",
+    "tests.fixtures.infrastructure.database",
     
     "tests.fixtures.shared.unique_id",
     

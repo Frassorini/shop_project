@@ -2,12 +2,12 @@ from typing import Callable, Type, TypeVar, cast
 
 import pytest
 
-from domain.store import Store
-from domain.cart import Cart
-from domain.customer import Customer
-from domain.customer_order import CustomerOrder
-from domain.store_item import StoreItem
-from domain.supplier_order import SupplierOrder
+from shop_project.domain.store import Store
+from shop_project.domain.cart import Cart
+from shop_project.domain.customer import Customer
+from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.supplier_order import SupplierOrder
 
 
 DomainObject = TypeVar('DomainObject')

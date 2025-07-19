@@ -2,7 +2,7 @@ from itertools import count
 from typing import Callable
 import pytest
 
-from shared.entity_id import EntityId
+from shop_project.shared.entity_id import EntityId
 
 
 @pytest.fixture

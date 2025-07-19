@@ -1,9 +1,9 @@
 from typing import Callable
 import pytest
 
-from domain.exceptions import DomainException
-from domain.store_item import StoreItem
-from domain.supplier_order import SupplierOrder, SupplierOrderState, SupplierOrderItem
+from shop_project.domain.exceptions import DomainException
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.supplier_order import SupplierOrder, SupplierOrderState, SupplierOrderItem
 
 
 def test_(supplier_order_factory: Callable[[], SupplierOrder]) -> None:
@@ -19,8 +19,8 @@ def test_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
     snapshot = order.snapshot()
     
     assert snapshot['entity_id'] == order.entity_id.to_str()
-    assert snapshot['departure'] == order.departure
-    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.to_str(), 'amount': 2}]
+    assert snapshot['departure'] == order.departure.isoformat()
+    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.to_str(), 'amount': '2'}]
 
 
 def test_from_snapshot(supplier_order_factory: Callable[[], SupplierOrder],

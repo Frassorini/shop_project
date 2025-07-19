@@ -1,7 +1,8 @@
+from decimal import Decimal
 from typing import Callable
-from domain.customer_order import CustomerOrder, CustomerOrderState, CustomerOrderItem
-from domain.exceptions import DomainException
-from domain.store_item import StoreItem
+from shop_project.domain.customer_order import CustomerOrder, CustomerOrderState, CustomerOrderItem
+from shop_project.domain.exceptions import DomainException
+from shop_project.domain.store_item import StoreItem
 import pytest
 
 
@@ -55,7 +56,7 @@ def test_add_negative_price(customer_order_factory: Callable[[], CustomerOrder],
     store_item: StoreItem = potatoes_store_item_10()
     
     with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, price=-1, amount=2, store_id=store_item.store_id)
+        order.add_item(store_item_id=store_item.entity_id, price=Decimal(-1), amount=2, store_id=store_item.store_id)
 
 
 def test_get_item(customer_order_factory: Callable[[], CustomerOrder],

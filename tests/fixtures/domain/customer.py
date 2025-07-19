@@ -1,8 +1,8 @@
 from typing import Callable
 import pytest
 
-from domain.customer import Customer
-from shared.entity_id import EntityId
+from shop_project.domain.customer import Customer
+from shop_project.shared.entity_id import EntityId
 
 
 @pytest.fixture

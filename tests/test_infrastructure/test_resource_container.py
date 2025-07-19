@@ -1,11 +1,11 @@
 from typing import Callable
 
 import pytest
-from domain.store import Store
-from infrastructure.exceptions import ResourcesException
-from infrastructure.resource_manager.resource_manager import ResourceContainer
-from domain.customer_order import CustomerOrder
-from shared.entity_id import EntityId
+from shop_project.domain.store import Store
+from shop_project.exceptions import ResourcesException
+from shop_project.infrastructure.resource_manager.resource_manager import ResourceContainer
+from shop_project.domain.customer_order import CustomerOrder
+from shop_project.shared.entity_id import EntityId
 
 
 def test_get_by_id(customer_order_factory: Callable[[], CustomerOrder]) -> None:

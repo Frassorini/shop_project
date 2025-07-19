@@ -1,4 +1,4 @@
-from shared.entity_id import EntityId
+from shop_project.shared.entity_id import EntityId
 
 
 def test_entity_id():

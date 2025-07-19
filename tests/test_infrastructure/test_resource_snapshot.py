@@ -1,9 +1,9 @@
 from typing import Any, Callable, Type
 
-from domain.p_aggregate import PAggregate
-from domain.store import Store
-from infrastructure.resource_manager.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
-from domain.customer_order import CustomerOrder
+from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.store import Store
+from shop_project.infrastructure.resource_manager.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
+from shop_project.domain.customer_order import CustomerOrder
 
 
 def get_resource_snapshot(resources: dict[Type[PAggregate], list[PAggregate]]) -> ResourceSnapshot:

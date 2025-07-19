@@ -1,5 +1,5 @@
-from domain.customer import Customer
-from shared.entity_id import EntityId
+from shop_project.domain.customer import Customer
+from shop_project.shared.entity_id import EntityId
 
 
 def test_create_customer() -> None:

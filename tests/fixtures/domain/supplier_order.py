@@ -3,9 +3,9 @@ from typing import Callable
 
 import pytest
 
-from domain.store import Store
-from shared.entity_id import EntityId
-from domain.supplier_order import SupplierOrder
+from shop_project.domain.store import Store
+from shop_project.shared.entity_id import EntityId
+from shop_project.domain.supplier_order import SupplierOrder
 
 
 @pytest.fixture

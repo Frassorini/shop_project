@@ -2,18 +2,17 @@ from typing import Any, Callable, Type, TypeVar
 
 import pytest
 
-from application.interfaces.interfaces import PUnitOfWork
-from application.interfaces.p_repository import PRepository
-from domain.store import Store
-from infrastructure.p_session import PSession
-from infrastructure.repositories.repository_container import RepositoryContainer
-from infrastructure.resource_manager.resource_manager import ResourceManager
-from domain.cart import Cart
-from domain.customer import Customer
-from domain.customer_order import CustomerOrder
-from infrastructure.unit_of_work import UnitOfWork
-from domain.store_item import StoreItem
-from domain.supplier_order import SupplierOrder
+from shop_project.application.interfaces.p_repository import PRepository
+from shop_project.domain.store import Store
+from shop_project.p_session import PSession
+from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
+from shop_project.infrastructure.resource_manager.resource_manager import ResourceManager
+from shop_project.domain.cart import Cart
+from shop_project.domain.customer import Customer
+from shop_project.domain.customer_order import CustomerOrder
+from shop_project.unit_of_work import UnitOfWork
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.supplier_order import SupplierOrder
 
 
 DomainObject = TypeVar('DomainObject')
@@ -43,8 +42,8 @@ def fake_repository_container_factory(
 
 @pytest.fixture
 def fake_uow_factory(fake_repository_container_factory: Callable[[PSession, dict[Type[Any], list[Any]]], RepositoryContainer],
-                     fake_session_factory: Callable[[], PSession]) -> Callable[[dict[Type[Any], list[Any]], str], PUnitOfWork]:
-    def factory(items_by_type: dict[Type[Any], list[Any]], policy: str) -> PUnitOfWork:
+                     fake_session_factory: Callable[[], PSession]) -> Callable[[dict[Type[Any], list[Any]], str], UnitOfWork]:
+    def factory(items_by_type: dict[Type[Any], list[Any]], policy: str) -> UnitOfWork:
         session: PSession = fake_session_factory()
         repository_container: RepositoryContainer = fake_repository_container_factory(session, items_by_type)
         

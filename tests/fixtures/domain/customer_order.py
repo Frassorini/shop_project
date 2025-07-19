@@ -2,10 +2,10 @@ from typing import Callable
 
 import pytest
 
-from domain.store import Store
-from domain.customer import Customer
-from domain.customer_order import CustomerOrder, CustomerOrderState
-from shared.entity_id import EntityId
+from shop_project.domain.store import Store
+from shop_project.domain.customer import Customer
+from shop_project.domain.customer_order import CustomerOrder, CustomerOrderState
+from shop_project.shared.entity_id import EntityId
 
 
 @pytest.fixture

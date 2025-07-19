@@ -1,5 +1,5 @@
-from shared.entity_id import EntityId
-from shared.identity_mixin import IdentityMixin
+from shop_project.shared.entity_id import EntityId
+from shop_project.shared.identity_mixin import IdentityMixin
 
 
 class ExampleDomainClass1(IdentityMixin):

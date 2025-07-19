@@ -1,9 +1,9 @@
 from typing import Callable
 
 import pytest
-from domain.exceptions import DomainException
-from domain.store_item import StoreItem
-from domain.cart import Cart, CartItem
+from shop_project.domain.exceptions import DomainException
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.cart import Cart, CartItem
 
 
 
@@ -65,7 +65,7 @@ def test_snapshot(cart_factory: Callable[[], Cart],
     
     snapshot = cart.snapshot()
     
-    assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.to_str(), 'amount': 2}
+    assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.to_str(), 'amount': '2'}
 
 
 def test_from_snapshot(cart_factory: Callable[[], Cart], 

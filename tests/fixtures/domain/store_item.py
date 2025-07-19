@@ -2,9 +2,9 @@ from typing import Callable
 
 import pytest
 
-from domain.store import Store
-from shared.entity_id import EntityId
-from domain.store_item import StoreItem
+from shop_project.domain.store import Store
+from shop_project.shared.entity_id import EntityId
+from shop_project.domain.store_item import StoreItem
 
 
 @pytest.fixture

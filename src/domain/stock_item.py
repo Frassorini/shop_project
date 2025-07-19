@@ -1,8 +1,0 @@
-from typing import Protocol
-
-from shared.entity_id import EntityId
-
-
-class StockItem(Protocol):
-    store_item_id: EntityId
-    amount: int

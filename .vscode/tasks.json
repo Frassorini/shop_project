@@ -4,15 +4,34 @@
     {
       "label": "Run Pytest",
       "type": "shell",
-      "command": "pytest",
-      "args": [
-        "-v",  // подробный вывод
-        "-s",
-      ],
+      "command": "make",
+      "args": ["test"],
       "group": {
         "kind": "build",
         "isDefault": true
       },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Unit Tests",
+      "type": "shell",
+      "command": "make",
+      "args": ["unit-tests"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Integration Tests",
+      "type": "shell",
+      "command": "make",
+      "args": ["integration-tests"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"

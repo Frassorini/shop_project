@@ -1,17 +1,17 @@
 from typing import Any, Callable, Type, TypeVar
 import pytest
 
-from domain.p_aggregate import PAggregate
-from domain.customer import Customer
-from domain.customer_order import CustomerOrder
-from domain.store import Store
-from domain.supplier_order import SupplierOrder
-from domain.cart import Cart
-from domain.store_item import StoreItem
+from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.customer import Customer
+from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.store import Store
+from shop_project.domain.supplier_order import SupplierOrder
+from shop_project.domain.cart import Cart
+from shop_project.domain.store_item import StoreItem
 
-from infrastructure.query.query_builder import QueryPlanBuilder
-from infrastructure.unit_of_work import UnitOfWork
-from infrastructure.exceptions import UnitOfWorkException, ResourcesException
+from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.unit_of_work import UnitOfWork
+from shop_project.exceptions import UnitOfWorkException, ResourcesException
 
 
 DomainObject = TypeVar('DomainObject', bound=PAggregate)
@@ -35,7 +35,7 @@ def test_create(model_type: Type[DomainObject],
     uow2: UnitOfWork = rebuild_fake_uow(uow, 'read_only')
     
     uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id]).no_lock()
+        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id.to_str()]).no_lock()
         )
     
     with uow2:
@@ -54,7 +54,7 @@ def test_update(model_type: Type[DomainObject],
     uow: UnitOfWork = fake_uow_factory({model_type: [domain_object]}, 'read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id]).for_update()
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.to_str()]).for_update()
         )
     
     with uow:
@@ -67,7 +67,7 @@ def test_update(model_type: Type[DomainObject],
     uow2: UnitOfWork = rebuild_fake_uow(uow, 'read_only')
     
     uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id]).no_lock()
+        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id.to_str()]).no_lock()
         )
     
     with uow2:
@@ -86,7 +86,7 @@ def test_delete(model_type: Type[DomainObject],
     uow: UnitOfWork = fake_uow_factory({model_type: [domain_object]}, 'read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id]).for_update()
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.to_str()]).for_update()
         )
     
     with uow:
@@ -101,7 +101,7 @@ def test_delete(model_type: Type[DomainObject],
     uow2: UnitOfWork = rebuild_fake_uow(uow, 'read_only')
     
     uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id]).no_lock()
+        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id.to_str()]).no_lock()
         )
     
     with uow2:
@@ -118,7 +118,7 @@ def test_enter_uow_twice(domain_object_factory: Callable[[Type[DomainObject]], D
     uow: UnitOfWork = fake_uow_factory({model_type: [domain_object]}, 'read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id]).for_update()
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.to_str()]).for_update()
         )
     
     with uow:

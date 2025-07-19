@@ -1,9 +1,10 @@
 import copy
+from decimal import Decimal
 from typing import Callable
-from domain.store import Store
-from shared.entity_id import EntityId
-from domain.store_item import StoreItem
-from domain.exceptions import DomainException, NegativeAmountException
+from shop_project.domain.store import Store
+from shop_project.shared.entity_id import EntityId
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.exceptions import DomainException, NegativeAmountException
 import pytest
 
 
@@ -13,18 +14,18 @@ def test_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
         name="potatoes", 
         amount=1, 
         store_id=unique_id_factory(), 
-        price=1
+        price=Decimal(1)
     )
-    assert item.snapshot() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': 1, 'store_id': item.store_id.to_str(), 'price': 1}
+    assert item.snapshot() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': '1', 'store_id': item.store_id.to_str(), 'price': '1'}
 
 
 def test_from_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
     item = StoreItem.from_snapshot({
         'entity_id': unique_id_factory().to_str(),
         'name': 'potatoes',
-        'amount': 1,
+        'amount': '1',
         'store_id': unique_id_factory().to_str(),
-        'price': 1
+        'price': '1'
         })
     assert item.name == 'potatoes'
 
@@ -47,7 +48,7 @@ def test_create_negative_amount_store_item(unique_id_factory: Callable[[], Entit
             name='potatoes', 
             amount=-1, 
             store_id=unique_id_factory(), 
-            price=1
+            price=Decimal(1)
         )
 
 

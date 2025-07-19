@@ -1,0 +1,15 @@
+services:
+  postgres:
+    container_name: test-postgres
+    image: postgres:15
+    hostname: test-postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - environment/.env.test
+    volumes:
+      - test-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  test-postgres-data:
