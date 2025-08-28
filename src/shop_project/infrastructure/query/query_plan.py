@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Literal, Self, Type, TypeVar
 
-from shop_project.domain.p_aggregate import PAggregate
+from shop_project.application.dto.base_dto import BaseDTO
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import QueryPlanException
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
@@ -31,7 +32,7 @@ class QueryPlan(ABC):
     def _validate_query(self, query: LoadQuery) -> None:
         ...
     
-    def add_query(self, model_type: Type[PAggregate] | None, 
+    def add_query(self, model_type: Type[BaseAggregate] | None, 
                   criteria: QueryCriteria | None, 
                   lock: QueryLock | None) -> None:
         
@@ -59,7 +60,7 @@ class QueryPlan(ABC):
         ...
     
     @abstractmethod
-    def validate_changes(self, resource_changes_snapshot: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, str]]]]) -> None:
+    def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         ...
 
 
@@ -76,7 +77,7 @@ class NoLockQueryPlan(QueryPlan):
     def validate_build(self):
         pass
     
-    def validate_changes(self, resource_changes_snapshot: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, str]]]]):
+    def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         for model_type, model_changes in resource_changes_snapshot.items():
             is_changed = model_changes['CREATED'] or model_changes['UPDATED'] or model_changes['DELETED']
             
@@ -121,7 +122,7 @@ class LockQueryPlan(QueryPlan):
             if previous_priority >= current_priority:
                 raise QueryPlanException("locking order violation")
     
-    def validate_changes(self, resource_changes_snapshot: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, str]]]]) -> None:
+    def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         query_map = self._build_map()
         
         for model_type, model_changes in resource_changes_snapshot.items():

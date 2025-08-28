@@ -1,4 +1,4 @@
-from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
@@ -37,7 +37,7 @@ class UnitOfWork():
     def get_resorces(self) -> ResourceContainer:
         return self.resource_manager.resource_container
     
-    def get_unique_id(self, model_type: type[PAggregate]) -> EntityId:
+    def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
         return self.resource_manager.get_unique_id(model_type)
     
     def __exit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Exception | None) -> None:

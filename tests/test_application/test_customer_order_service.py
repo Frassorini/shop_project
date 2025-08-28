@@ -20,7 +20,7 @@ def test_reserve(fake_uow_factory: Callable[[dict[Type[Any], list[Any]], str], U
     service = CustomerOrderService(uow)
     
     customer_order_schema = service.reserve_order(
-        CreateCustomerOrderSchema.model_validate(customer_order.snapshot())
+        CreateCustomerOrderSchema.model_validate(customer_order.to_dict())
     )
     
     uow2 = rebuild_fake_uow(uow, 'read_only')
@@ -34,5 +34,5 @@ def test_reserve(fake_uow_factory: Callable[[dict[Type[Any], list[Any]], str], U
         customer_order_same = resources2.get_by_id(CustomerOrder, EntityId(customer_order_schema.entity_id))
         
         assert customer_order_same.state.value == 'RESERVED'
-        assert customer_order_same.snapshot()['items'] == customer_order_schema.items
+        assert customer_order_same.to_dict()['items'] == customer_order_schema.items
 

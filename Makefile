@@ -3,9 +3,9 @@
 ENV_FILE_TEST := environment/.env.test
 ENV_FILE_DEV := environment/.env.dev
 ENV_FILE_PROD := environment/.env.prod
-COMPOSE_TEST := docker-compose -f docker-compose/docker-compose.test.yml
-COMPOSE_DEV := docker-compose -f docker-compose/docker-compose.dev.yml
-COMPOSE_PROD := docker-compose -f docker-compose/docker-compose.prod.yml
+COMPOSE_TEST := docker compose -f docker-compose/docker-compose.test.yml
+COMPOSE_DEV := docker compose -f docker-compose/docker-compose.dev.yml
+COMPOSE_PROD := docker compose -f docker-compose/docker-compose.prod.yml
 
 help:
 	@echo   Main commands:

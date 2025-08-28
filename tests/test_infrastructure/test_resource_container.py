@@ -6,6 +6,7 @@ from shop_project.exceptions import ResourcesException
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceContainer
 from shop_project.domain.customer_order import CustomerOrder
 from shop_project.shared.entity_id import EntityId
+from shop_project.application.dto.mapper import to_dto
 
 
 def test_get_by_id(customer_order_factory: Callable[[], CustomerOrder]) -> None:
@@ -58,7 +59,7 @@ def test_snapshot_create(customer_order_factory: Callable[[], CustomerOrder]) ->
 
     container.take_snapshot()
     
-    assert customer_order.snapshot() in container.get_resource_changes()[CustomerOrder]['CREATED']
+    assert to_dto(customer_order) in container.get_resource_changes()[CustomerOrder]['CREATED']
 
 
 def test_snapshot_delete(customer_order_factory: Callable[[], CustomerOrder]) -> None:
@@ -71,7 +72,7 @@ def test_snapshot_delete(customer_order_factory: Callable[[], CustomerOrder]) ->
     container.take_snapshot()
 
     
-    assert customer_order.snapshot() in container.get_resource_changes()[CustomerOrder]['DELETED']
+    assert to_dto(customer_order) in container.get_resource_changes()[CustomerOrder]['DELETED']
 
 
 def test_snapshot_update(customer_order_factory: Callable[[], CustomerOrder],
@@ -84,7 +85,7 @@ def test_snapshot_update(customer_order_factory: Callable[[], CustomerOrder],
     customer_order.store_id = store_factory_with_cache('New York').entity_id
     container.take_snapshot()
     
-    assert customer_order.snapshot() in container.get_resource_changes()[CustomerOrder]['UPDATED']
+    assert to_dto(customer_order) in container.get_resource_changes()[CustomerOrder]['UPDATED']
 
 
 def test_snapshot_no_previous(customer_order_factory: Callable[[], CustomerOrder]) -> None:

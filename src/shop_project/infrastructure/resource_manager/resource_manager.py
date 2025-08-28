@@ -1,5 +1,5 @@
 from typing import Any, Literal
-from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import UnitOfWorkException
 from shop_project.infrastructure.query.load_query import LoadQuery
 from shop_project.infrastructure.query.query_plan import QueryPlan, LockQueryPlan, NoLockQueryPlan
@@ -20,7 +20,7 @@ class ResourceManager:
             self.query_plan: QueryPlan = LockQueryPlan()
 
     def _load_single(self, query: LoadQuery) -> None:
-        loaded: list[PAggregate] = self.repository_container.load_from_query(query)
+        loaded: list[BaseAggregate] = self.repository_container.load_from_query(query)
         
         self.resource_container.put_many(query.model_type, loaded)
 
@@ -46,7 +46,7 @@ class ResourceManager:
         
         self.repository_container.save(difference)
     
-    def get_unique_id(self, model_type: type[PAggregate]) -> EntityId:
+    def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
         return self.repository_container.get_unique_id(model_type)
     
     # def validate_save(self, queries: list[LoadQuery], difference: dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]) -> None:

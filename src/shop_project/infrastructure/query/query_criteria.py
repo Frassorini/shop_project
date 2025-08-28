@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import Any, Self
-from shop_project.domain.p_aggregate import PAggregate
 from shop_project.exceptions import QueryPlanException
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
 

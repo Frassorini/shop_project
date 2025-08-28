@@ -12,6 +12,9 @@ dependencies = [
     "fastapi (>=0.116.1,<0.117.0)",
     "asyncpg (>=0.30.0,<0.31.0)",
     "dotenv (>=0.9.9,<0.10.0)",
+    "bidict (>=0.23.1,<0.24.0)",
+    "plum-dispatch (>=2.5.7,<3.0.0)",
+    "pytest-cov (>=6.2.1,<7.0.0)",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -35,26 +38,16 @@ markers = [
 
 [tool.basedpyright]
 pythonVersion = "3.12"
-pythonPlatform = "Windows"
+pythonPlatform = "Linux"
 extraPaths = ["src"]
-
-
-include = ["src"]
-
-
+include = ["src", "tests"]
 exclude = ["**/__pycache__", "**/migrations", "**/tests"]
 
-
-[tool.pyright]
-# Основное
+# Строгая проверка типов
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
-pythonVersion = "3.12"
-include = ["src", "tests"]
-extraPaths = ["src"]
-exclude = ["**/__pycache__"]
 
-# Строгие правила (аналог basedpyright)
+# Строгие правила (аналог pyright strict)
 reportMissingTypeStubs = true
 reportMissingImports = true
 reportMissingModuleSource = true
@@ -71,10 +64,12 @@ reportUninitializedInstanceVariable = true
 reportUnusedCallResult = false
 reportUnusedImport = false
 reportUnusedVariable = false
+reportRedeclaration = false
 
-# Поддержка тестов
-# Позволяет игнорировать отсутсвие аннотаций у pytest фикстур, если надо
+# Поддержка тестов / фикстур
 reportMissingParameterType = false
 reportFunctionMemberAccess = false
 reportPrivateImportUsage = false
+
+
 

@@ -12,7 +12,6 @@ def test_add_item(cart_factory: Callable[[], Cart],
     cart = cart_factory()
     store_item: StoreItem = potatoes_store_item_10()
     
-    
     cart.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
 
 
@@ -63,9 +62,9 @@ def test_snapshot(cart_factory: Callable[[], Cart],
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
     
-    snapshot = cart.snapshot()
+    snapshot = cart.to_dict()
     
-    assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.to_str(), 'amount': '2'}
+    assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.to_str(), 'amount': 2}
 
 
 def test_from_snapshot(cart_factory: Callable[[], Cart], 
@@ -75,8 +74,9 @@ def test_from_snapshot(cart_factory: Callable[[], Cart],
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
     
-    snapshot = cart.snapshot()
+    snapshot = cart.to_dict()
     
-    cart_from_snapshot: Cart = Cart.from_snapshot(snapshot)
+    cart_from_snapshot: Cart = Cart.from_dict(snapshot)
     
     assert cart_from_snapshot.get_items() == cart.get_items()
+    

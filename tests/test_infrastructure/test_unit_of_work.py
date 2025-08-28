@@ -1,7 +1,7 @@
 from typing import Any, Callable, Type, TypeVar
 import pytest
 
-from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
 from shop_project.domain.customer_order import CustomerOrder
 from shop_project.domain.store import Store
@@ -14,7 +14,7 @@ from shop_project.unit_of_work import UnitOfWork
 from shop_project.exceptions import UnitOfWorkException, ResourcesException
 
 
-DomainObject = TypeVar('DomainObject', bound=PAggregate)
+DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 
 @pytest.mark.parametrize('model_type', [Customer, SupplierOrder, Cart, CustomerOrder, StoreItem, Store],)
@@ -61,7 +61,7 @@ def test_update(model_type: Type[DomainObject],
         resources = uow.get_resorces()
         domain_obj_from_db: DomainObject = resources.get_by_id(model_type, domain_object.entity_id)
         mutate_domain_object(domain_obj_from_db)
-        snapshot_before = domain_obj_from_db.snapshot()
+        snapshot_before = domain_obj_from_db.to_dict()
         uow.commit()
     
     uow2: UnitOfWork = rebuild_fake_uow(uow, 'read_only')
@@ -72,7 +72,7 @@ def test_update(model_type: Type[DomainObject],
     
     with uow2:
         resources2 = uow2.get_resorces()
-        snapshot_after = resources2.get_by_id(model_type, domain_object.entity_id).snapshot()
+        snapshot_after = resources2.get_by_id(model_type, domain_object.entity_id).to_dict()
     
     assert snapshot_before == snapshot_after
     

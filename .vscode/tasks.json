@@ -4,8 +4,8 @@
     {
       "label": "Run Pytest",
       "type": "shell",
-      "command": "make",
-      "args": ["test"],
+      "command": "bash",
+      "args": ["-ic", "make tests"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -19,8 +19,8 @@
     {
       "label": "Run Unit Tests",
       "type": "shell",
-      "command": "make",
-      "args": ["unit-tests"],
+      "command": "bash",
+      "args": ["-ic", "make unit-tests"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -30,8 +30,8 @@
     {
       "label": "Run Integration Tests",
       "type": "shell",
-      "command": "make",
-      "args": ["integration-tests"],
+      "command": "bash",
+      "args": ["-ic", "make integration-tests"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"

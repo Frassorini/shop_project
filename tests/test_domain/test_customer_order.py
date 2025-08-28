@@ -12,7 +12,7 @@ def test_snapshot(customer_order_factory: Callable[[], CustomerOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
     
-    snapshot = order.snapshot()
+    snapshot = order.to_dict()
     
     assert snapshot['entity_id'] == order.entity_id.to_str()
     assert snapshot['state'] == order.state.value
@@ -25,7 +25,7 @@ def test_from_snapshot(customer_order_factory: Callable[[], CustomerOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
     
-    order_from_snapshot = CustomerOrder.from_snapshot(order.snapshot())
+    order_from_snapshot = CustomerOrder.from_dict(order.to_dict())
     
     assert order_from_snapshot.entity_id == order.entity_id
     assert order_from_snapshot.state == order.state

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Literal, Self, Type, TypeVar
 
-from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import QueryPlanException
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_criteria import QueryCriteria, QueryCriterion
@@ -44,7 +44,7 @@ class QueryPlanBuilder:
         
         self._current_query_data = QueryData(None, QueryCriteria(), None)
     
-    def load(self, entity_type: Type[PAggregate]) -> Self:
+    def load(self, entity_type: Type[BaseAggregate]) -> Self:
         if not self._first_query:
             self._build_query()
         else:
@@ -109,7 +109,7 @@ class QueryPlanBuilder:
         
         previous_query = self.query_plan.get_previous_query(query_index)
         
-        reference_descriptor: DomainReferenceDescriptor[PAggregate] = (
+        reference_descriptor: DomainReferenceDescriptor[BaseAggregate] = (
             self.domain_reference_registry.get_reference_descriptor(
                 previous_query.model_type, self._current_query_data.model_type
                 )

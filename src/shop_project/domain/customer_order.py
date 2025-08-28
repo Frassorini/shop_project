@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Self
 from enum import Enum
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.stock_item import StockItem
 from shop_project.shared.identity_mixin import IdentityMixin
 from shop_project.domain.exceptions import DomainException
@@ -16,18 +17,18 @@ class CustomerOrderItem(StockItem, PSnapshotable):
     amount: int
     price: Decimal
     
-    def snapshot(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'store_item_id': self.store_item_id.to_str(),
-            'amount': str(self.amount),
-            'price': str(self.price),
+            'amount': self.amount,
+            'price': self.price,
         }
     
     @classmethod
-    def from_snapshot(cls, snapshot: dict[str, str]) -> Self:
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         return cls(store_item_id=EntityId(snapshot['store_item_id']), 
-                   amount=int(snapshot['amount']), 
-                   price=Decimal(snapshot['price']),
+                   amount=snapshot['amount'], 
+                   price=snapshot['price'],
                    )
 
 
@@ -59,7 +60,7 @@ class CustomerOrderStateMachine(BaseStateMachine[CustomerOrderState]):
     }
 
 
-class CustomerOrder(PSnapshotable, IdentityMixin,):
+class CustomerOrder(BaseAggregate):
     def __init__(self, entity_id: EntityId, customer_id: EntityId, store_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
         self._state_machine: CustomerOrderStateMachine = CustomerOrderStateMachine(CustomerOrderState.PENDING)
@@ -70,24 +71,24 @@ class CustomerOrder(PSnapshotable, IdentityMixin,):
         self._items: dict[EntityId, CustomerOrderItem] = {}
     
     @classmethod
-    def from_snapshot(cls, snapshot: dict[str, Any]) -> Self:
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         obj = cls(EntityId(snapshot['entity_id']), 
                   EntityId(snapshot['customer_id']), 
                   EntityId(snapshot['store_id']),
                   )
         obj._state_machine = CustomerOrderStateMachine(CustomerOrderState(snapshot['state']))
         
-        items: list[CustomerOrderItem] = [CustomerOrderItem.from_snapshot(item) for item in snapshot['items']]
+        items: list[CustomerOrderItem] = [CustomerOrderItem.from_dict(item) for item in snapshot['items']]
         obj._items = {item.store_item_id: item for item in items}
         
         return obj
     
-    def snapshot(self) -> dict[str, str | list[dict[str, str]]]:
+    def to_dict(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.to_str(), 
                 'customer_id': self.customer_id.to_str(), 
                 'store_id': self.store_id.to_str(), 
                 'state': self.state.value, 
-                'items': [item.snapshot() for item in self._items.values()],
+                'items': [item.to_dict() for item in self._items.values()],
                 }
     
     def _validate_item(self, store_item_id: EntityId, price: Decimal, amount: int, store_id: EntityId) -> None:

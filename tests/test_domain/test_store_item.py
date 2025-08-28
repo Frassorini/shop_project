@@ -16,16 +16,16 @@ def test_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
         store_id=unique_id_factory(), 
         price=Decimal(1)
     )
-    assert item.snapshot() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': '1', 'store_id': item.store_id.to_str(), 'price': '1'}
+    assert item.to_dict() == {'entity_id': item.entity_id.to_str(), 'name': 'potatoes', 'amount': 1, 'store_id': item.store_id.to_str(), 'price': Decimal(1)}
 
 
 def test_from_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
-    item = StoreItem.from_snapshot({
+    item = StoreItem.from_dict({
         'entity_id': unique_id_factory().to_str(),
         'name': 'potatoes',
-        'amount': '1',
+        'amount': 1,
         'store_id': unique_id_factory().to_str(),
-        'price': '1'
+        'price': Decimal(1)
         })
     assert item.name == 'potatoes'
 

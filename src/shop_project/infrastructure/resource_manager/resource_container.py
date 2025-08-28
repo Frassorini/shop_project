@@ -1,9 +1,10 @@
 from abc import ABC
 from typing import Any, Literal, Sequence, Type, TypeVar, cast
 
+from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.cart import Cart
 from shop_project.domain.customer import Customer
-from shop_project.domain.p_aggregate import PAggregate
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.store import Store
 from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.shared.entity_id import EntityId
@@ -14,19 +15,23 @@ from shop_project.exceptions import ResourcesException
 from shop_project.domain.customer_order import CustomerOrder
 from shop_project.domain.store_item import StoreItem
 
+from shop_project.application.dto.mapper import to_dto
 
-T = TypeVar('T', bound=PAggregate)
+
+
+
+T = TypeVar('T', bound=BaseAggregate)
 
 
 class ResourceSnapshotSentinelMixin(ABC):
-    resources: dict[Type[PAggregate], list[PAggregate]]
+    resources: dict[Type[BaseAggregate], list[BaseAggregate]]
     _resource_snapshot_previous: ResourceSnapshot | None
     _resource_snapshot_current: ResourceSnapshot | None
     
     def _get_resource_snapshot(self) -> ResourceSnapshot:
-        snapshot_set_vector: dict[Type[PAggregate], EntitySnapshotSet] = {}
+        snapshot_set_vector: dict[Type[BaseAggregate], EntitySnapshotSet] = {}
         for resource_type in self.resources:
-            snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(item.snapshot()) for item in self.resources[resource_type]])
+            snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(to_dto(item)) for item in self.resources[resource_type]])
         
         return ResourceSnapshot(snapshot_set_vector)
     
@@ -37,7 +42,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         self._resource_snapshot_previous = self._resource_snapshot_current
         self._resource_snapshot_current = self._get_resource_snapshot()
     
-    def get_resource_changes(self) -> dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]]:
+    def get_resource_changes(self) -> dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]:
         if self._resource_snapshot_current is None or self._resource_snapshot_previous is None:
             raise RuntimeError("Snapshots are not taken yet")
         
@@ -46,7 +51,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         current_snapshot_side_intersection: ResourceSnapshot = self._resource_snapshot_current.intersect_identity(self._resource_snapshot_previous)
         updated_snapshot: ResourceSnapshot = current_snapshot_side_intersection.difference_content(self._resource_snapshot_previous)
         
-        result: dict[Type[PAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]] = {}
+        result: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]] = {}
         for item_type in self.resources.keys():
             result[item_type] = {
                 'CREATED': [],
@@ -67,7 +72,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         
 class ResourceContainer(ResourceSnapshotSentinelMixin):
     def __init__(self):
-        self.resources: dict[Type[PAggregate], list[PAggregate]] = { 
+        self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
             Customer: [],
             CustomerOrder: [],
             SupplierOrder: [],
@@ -109,15 +114,15 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
     def get_all(self, model_type: Type[T]) -> Sequence[T]:
         return self._get_resource_by_type(model_type).copy()
     
-    def put(self, model_type: Type[PAggregate], item: PAggregate) -> None:
+    def put(self, model_type: Type[BaseAggregate], item: BaseAggregate) -> None:
         self._get_resource_by_type(model_type).append(item)
         
-    def put_many(self, model_type: Type[PAggregate], items: list[PAggregate]) -> None:
+    def put_many(self, model_type: Type[BaseAggregate], items: list[BaseAggregate]) -> None:
         self._get_resource_by_type(model_type).extend(items)
     
-    def delete(self, model_type: Type[PAggregate], item: PAggregate) -> None:
+    def delete(self, model_type: Type[BaseAggregate], item: BaseAggregate) -> None:
         self._get_resource_by_type(model_type).remove(item)
     
-    def delete_many(self, model_type: Type[PAggregate], items: Sequence[PAggregate]) -> None:
+    def delete_many(self, model_type: Type[BaseAggregate], items: Sequence[BaseAggregate]) -> None:
         for item in items:
             self.delete(model_type, item)

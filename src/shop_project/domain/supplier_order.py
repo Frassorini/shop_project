@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Mapping, Self, Sequence, cast
 
+from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.stock_item import StockItem
 from shop_project.shared.entity_id import EntityId
 from shop_project.shared.identity_mixin import IdentityMixin
@@ -16,16 +17,16 @@ class SupplierOrderItem(StockItem, PSnapshotable):
     store_item_id: EntityId
     amount: int
     
-    def snapshot(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'store_item_id': self.store_item_id.to_str(),
-            'amount': str(self.amount),
+            'amount': self.amount,
         }
     
     
     @classmethod
-    def from_snapshot(cls, snapshot: dict[str, str]) -> Self:
-        return cls(EntityId(snapshot['store_item_id']), int(snapshot['amount']))
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
+        return cls(EntityId(snapshot['store_item_id']), snapshot['amount'])
 
 
 class SupplierOrderState(Enum):
@@ -44,7 +45,7 @@ class SupplierOrderStateMachine(BaseStateMachine[SupplierOrderState]):
     }
 
 
-class SupplierOrder(IdentityMixin, PSnapshotable):
+class SupplierOrder(BaseAggregate):
     def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
         self._state_machine: SupplierOrderStateMachine = SupplierOrderStateMachine(SupplierOrderState.PENDING)
@@ -54,29 +55,28 @@ class SupplierOrder(IdentityMixin, PSnapshotable):
         
         self._items: dict[EntityId, SupplierOrderItem] = {}
     
-    def snapshot(self) -> dict[str, str | list[dict[str, str]]]:
+    def to_dict(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.to_str(), 
-                'departure': self.departure.isoformat(), 
-                'arrival': self.arrival.isoformat(), 
+                'departure': self.departure, 
+                'arrival': self.arrival, 
                 'store_id': self.store_id.to_str(), 
-                'state': self.state.value, 
-                'items': [item.snapshot() for item in self._items.values()],
+                'state': self.state.value,
+                'items': [item.to_dict() for item in self._items.values()],
                 }
     
     # TODO: это ок или не ок???
     @classmethod
-    def from_snapshot(cls, snapshot: Mapping[str, str | Sequence[Mapping[str, str]]]) -> Self:
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         items_snapshot: list[dict[str, str]] = cast(list[dict[str, str]], snapshot['items'])
-        obj_snapshot: dict[str, str] = cast(dict[str, str], snapshot)
         
-        obj = cls(EntityId(obj_snapshot['entity_id']),
-                  datetime.fromisoformat(obj_snapshot['departure']), 
-                  datetime.fromisoformat(obj_snapshot['arrival']), 
-                  EntityId(obj_snapshot['store_id']),
+        obj = cls(EntityId(snapshot['entity_id']),
+                  snapshot['departure'], 
+                  snapshot['arrival'], 
+                  EntityId(snapshot['store_id']),
                   )
-        obj._state_machine = SupplierOrderStateMachine(SupplierOrderState(obj_snapshot['state']))
+        obj._state_machine = SupplierOrderStateMachine(SupplierOrderState(snapshot['state']))
         
-        items: list[SupplierOrderItem] = [SupplierOrderItem.from_snapshot(item) for item in items_snapshot]
+        items: list[SupplierOrderItem] = [SupplierOrderItem.from_dict(item) for item in items_snapshot]
         obj._items = {item.store_item_id: item for item in items}
         
         return obj

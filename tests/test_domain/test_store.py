@@ -9,9 +9,9 @@ def test_create_store() -> None:
 
 def test_snapshot_store() -> None:
     store = Store(EntityId('1'), name='Moscow')
-    assert store.snapshot() == {'entity_id': '1', 'name': 'Moscow'}
+    assert store.to_dict() == {'entity_id': '1', 'name': 'Moscow'}
 
 
 def test_from_snapshot_store() -> None:
-    store = Store.from_snapshot({'entity_id': '1', 'name': 'Moscow'})
+    store = Store.from_dict({'entity_id': '1', 'name': 'Moscow'})
     assert store.name == 'Moscow'

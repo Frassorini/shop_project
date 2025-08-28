@@ -16,11 +16,11 @@ def test_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
     
-    snapshot = order.snapshot()
+    snapshot = order.to_dict()
     
     assert snapshot['entity_id'] == order.entity_id.to_str()
-    assert snapshot['departure'] == order.departure.isoformat()
-    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.to_str(), 'amount': '2'}]
+    assert snapshot['departure'] == order.departure
+    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.to_str(), 'amount': 2}]
 
 
 def test_from_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
@@ -29,7 +29,7 @@ def test_from_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
     
-    order_from_snapshot = SupplierOrder.from_snapshot(order.snapshot())
+    order_from_snapshot = SupplierOrder.from_dict(order.to_dict())
     
     assert order_from_snapshot.entity_id == order.entity_id
     assert order_from_snapshot.departure == order.departure

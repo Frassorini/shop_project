@@ -40,12 +40,12 @@ class CustomerOrderService:
                                price=resources.get_by_id(StoreItem, EntityId(item.store_item_id)).price, 
                                store_id=EntityId(data.store_id)
                 )
-            
+
             reservation_service.reserve_customer_order(order)
             
             uow.commit()
             
-        return CustomerOrderSchema.model_validate(order.snapshot())
+        return CustomerOrderSchema.model_validate(order.to_dict())
 
     def cancel_order(self, order_id: str) -> CustomerOrderSchema:
         self.uow.set_query_plan(
@@ -66,4 +66,4 @@ class CustomerOrderService:
             
             uow.commit()
             
-        return CustomerOrderSchema.model_validate(order.snapshot())
+        return CustomerOrderSchema.model_validate(order.to_dict())
