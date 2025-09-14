@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Callable
 
 import pytest
@@ -38,7 +39,7 @@ def store_item_factory(unique_id_factory: Callable[[], EntityId],
     def fact(*, name: str, 
              amount: float, 
              store: str, 
-             price: float) -> StoreItem:
+             price: Decimal) -> StoreItem:
 
         store_obj: Store = store_factory_with_cache(store)
 

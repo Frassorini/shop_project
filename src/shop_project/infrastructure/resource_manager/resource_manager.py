@@ -1,7 +1,9 @@
 from typing import Any, Literal
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import UnitOfWorkException
-from shop_project.infrastructure.query.load_query import LoadQuery
+from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
+from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
+from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.query.query_plan import QueryPlan, LockQueryPlan, NoLockQueryPlan
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
@@ -19,16 +21,19 @@ class ResourceManager:
         else:
             self.query_plan: QueryPlan = LockQueryPlan()
 
-    def _load_single(self, query: LoadQuery) -> None:
-        loaded: list[BaseAggregate] = self.repository_container.load_from_query(query)
+    async def _load_single(self, query: BaseLoadQuery) -> None:
+        if isinstance(query, PrebuiltLoadQuery) and query.return_type == 'SCALARS':
+            loaded: Any = await self.repository_container.load_scalars(query)
+        else:
+            loaded: list[BaseAggregate] = await self.repository_container.load(query)
         
         self.resource_container.put_many(query.model_type, loaded)
 
         query.load(loaded)
 
-    def load(self, query_plan: QueryPlan) -> ResourceContainer:
+    async def load(self, query_plan: QueryPlan) -> ResourceContainer:
         for query in query_plan.queries:
-            self._load_single(query)
+            await self._load_single(query)
         
         if self.read_only != query_plan.read_only:
             raise UnitOfWorkException("Invalid query plan read only state")
@@ -37,17 +42,14 @@ class ResourceManager:
         
         return self.resource_container
     
-    def save(self) -> None:
+    async def save(self) -> None:
         self.resource_container.take_snapshot()
         
         difference = self.resource_container.get_resource_changes()
         
         self.query_plan.validate_changes(difference)
         
-        self.repository_container.save(difference)
+        await self.repository_container.save(difference)
     
     def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
         return self.repository_container.get_unique_id(model_type)
-    
-    # def validate_save(self, queries: list[LoadQuery], difference: dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[dict[str, Any]]]) -> None:
-        

@@ -7,7 +7,7 @@ def test_correct() -> None:
     criteria = (
         QueryCriteria()
         .criterion_in("id", ValueContainer([1, 2, 3]))
-        .and_().criterion_equals("status", ValueContainer(["ACTIVE"]))
+        .and_().criterion_in("status", ValueContainer(["ACTIVE"]))
     )
     
     criteria.validate()
@@ -18,7 +18,7 @@ def test_too_many_criteria() -> None:
         criteria = (
             QueryCriteria()
             .criterion_in("id", ValueContainer([1, 2, 3]))
-            .criterion_equals("status", ValueContainer(["ACTIVE"]))
+            .criterion_in("status", ValueContainer(["ACTIVE"]))
         )
 
 

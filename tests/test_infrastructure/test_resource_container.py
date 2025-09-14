@@ -1,4 +1,5 @@
 from typing import Callable
+from uuid import uuid4
 
 import pytest
 from shop_project.domain.store import Store
@@ -47,7 +48,7 @@ def test_get_by_id_not_found(customer_order_factory: Callable[[], CustomerOrder]
     container.put(CustomerOrder, customer_order_1)
 
     with pytest.raises(ResourcesException):
-        container.get_by_id(CustomerOrder, EntityId('99999'))
+        container.get_by_id(CustomerOrder, EntityId(uuid4()))
 
 
 def test_snapshot_create(customer_order_factory: Callable[[], CustomerOrder]) -> None:

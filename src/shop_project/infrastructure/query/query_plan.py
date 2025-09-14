@@ -5,12 +5,14 @@ from typing import Any, Literal, Self, Type, TypeVar
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import QueryPlanException
+from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
 from shop_project.infrastructure.resource_manager.lock_total_order_registry import LockTotalOrderRegistry
 
 from shop_project.infrastructure.query.value_container import ValueContainer
-from shop_project.infrastructure.query.load_query import LoadQuery, QueryLock
+from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
+from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 
@@ -26,10 +28,10 @@ def _ensure_not_none(value: T | None, fail_message: str) -> T:
 
 class QueryPlan(ABC):
     read_only: bool
-    queries: list[LoadQuery]
+    queries: list[BaseLoadQuery]
     
     @abstractmethod
-    def _validate_query(self, query: LoadQuery) -> None:
+    def _validate_query(self, query: BaseLoadQuery) -> None:
         ...
     
     def add_query(self, model_type: Type[BaseAggregate] | None, 
@@ -40,13 +42,16 @@ class QueryPlan(ABC):
         criteria = _ensure_not_none(criteria, "criteria not specified")
         lock = _ensure_not_none(lock, "lock not specified")
         
-        query = LoadQuery(model_type, criteria, lock)
+        query = DomainLoadQuery(model_type, criteria, lock)
         
         self._validate_query(query)
         
         self.queries.append(query)
     
-    def get_previous_query(self, query_index: int | None = None) -> LoadQuery:
+    def add_prebuilt(self, prebuilt_query: PrebuiltLoadQuery) -> None:
+        self.queries.append(prebuilt_query)
+    
+    def get_previous_query(self, query_index: int | None = None) -> BaseLoadQuery:
         if query_index is None:
             query_index = len(self.queries) - 1
         
@@ -68,9 +73,9 @@ class NoLockQueryPlan(QueryPlan):
     read_only = True
     
     def __init__(self) -> None:
-        self.queries: list[LoadQuery] = []
+        self.queries: list[BaseLoadQuery] = []
 
-    def _validate_query(self, query: LoadQuery) -> None:
+    def _validate_query(self, query: BaseLoadQuery) -> None:
         if not query.lock == QueryLock.NO_LOCK:
             raise QueryPlanException("Only no lock queries are allowed in no lock query plan")
     
@@ -89,14 +94,14 @@ class LockQueryPlan(QueryPlan):
     read_only = False
     
     def __init__(self) -> None:
-        self.queries: list[LoadQuery] = []
+        self.queries: list[BaseLoadQuery] = []
     
-    def _validate_query(self, query: LoadQuery) -> None:
-        if not query.lock == QueryLock.FOR_UPDATE and not query.lock == QueryLock.FOR_SHARE:
+    def _validate_query(self, query: BaseLoadQuery) -> None:
+        if not query.lock == QueryLock.EXCLUSIVE and not query.lock == QueryLock.SHARED:
             raise QueryPlanException("Only locking queries are allowed in locking query plan")
     
-    def _build_map(self) -> dict[Type[Any], LoadQuery]:
-        result: dict[Type[Any], LoadQuery] = {}
+    def _build_map(self) -> dict[Type[Any], BaseLoadQuery]:
+        result: dict[Type[Any], BaseLoadQuery] = {}
         
         for query in self.queries:
             result[query.model_type] = query
@@ -139,9 +144,9 @@ class LockQueryPlan(QueryPlan):
             if has_updated or has_deleted:
                 if query is None:
                     raise QueryPlanException(f"Model type {model_type} is changed without query")
-                if query.lock == QueryLock.FOR_SHARE:
+                if query.lock == QueryLock.SHARED:
                     raise QueryPlanException(f"Model type {model_type} is locked in FOR SHARE mode")
             else:
-                if query is not None and query.lock == QueryLock.FOR_UPDATE:
+                if query is not None and query.lock == QueryLock.EXCLUSIVE:
                     # TODO: log.warning in test/dev environment
                     pass

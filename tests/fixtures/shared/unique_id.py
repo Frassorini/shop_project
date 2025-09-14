@@ -1,5 +1,7 @@
 from itertools import count
 from typing import Callable
+from uuid import uuid4
+
 import pytest
 
 from shop_project.shared.entity_id import EntityId
@@ -8,9 +10,7 @@ from shop_project.shared.entity_id import EntityId
 @pytest.fixture
 def unique_id_factory() -> Callable[[], EntityId]:
     
-    counter = count(start=1)
-    
     def fact() -> EntityId:
-        return EntityId(str(next(counter)))
+        return EntityId(uuid4())
     
     return fact

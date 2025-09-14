@@ -30,10 +30,10 @@ class StoreItem(BaseAggregate):
     
     def to_dict(self) -> dict[str, Any]:
         return {
-            'entity_id': self.entity_id.to_str(),
+            'entity_id': self.entity_id.value,
             'name': self.name,
             'amount': self._amount,
-            'store_id': self.store_id.to_str(),
+            'store_id': self.store_id.value,
             'price': self.price
         }
 

@@ -1,5 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
+
 from shop_project.application.dto.base_dto import BaseDTO
 
 
@@ -9,9 +11,9 @@ class SupplierOrderItemDTO(BaseDTO):
 
 
 class SupplierOrderDTO(BaseDTO):
-    entity_id: str
+    entity_id: UUID
     state: str
     departure: datetime
     arrival: datetime
-    store_id: str
+    store_id: UUID
     items: list[SupplierOrderItemDTO]

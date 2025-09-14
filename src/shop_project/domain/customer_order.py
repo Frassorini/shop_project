@@ -19,7 +19,7 @@ class CustomerOrderItem(StockItem, PSnapshotable):
     
     def to_dict(self) -> dict[str, Any]:
         return {
-            'store_item_id': self.store_item_id.to_str(),
+            'store_item_id': self.store_item_id.value,
             'amount': self.amount,
             'price': self.price,
         }
@@ -84,9 +84,9 @@ class CustomerOrder(BaseAggregate):
         return obj
     
     def to_dict(self) -> dict[str, Any]:
-        return {'entity_id': self.entity_id.to_str(), 
-                'customer_id': self.customer_id.to_str(), 
-                'store_id': self.store_id.to_str(), 
+        return {'entity_id': self.entity_id.value, 
+                'customer_id': self.customer_id.value, 
+                'store_id': self.store_id.value, 
                 'state': self.state.value, 
                 'items': [item.to_dict() for item in self._items.values()],
                 }

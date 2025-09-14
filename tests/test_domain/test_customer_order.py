@@ -14,7 +14,7 @@ def test_snapshot(customer_order_factory: Callable[[], CustomerOrder],
     
     snapshot = order.to_dict()
     
-    assert snapshot['entity_id'] == order.entity_id.to_str()
+    assert snapshot['entity_id'] == order.entity_id.value
     assert snapshot['state'] == order.state.value
     assert snapshot['items'][0]['store_item_id'] == order.get_items()[0].store_item_id.value
 

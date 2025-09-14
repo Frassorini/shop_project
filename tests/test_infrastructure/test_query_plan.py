@@ -1,14 +1,16 @@
 from typing import Callable
+from uuid import uuid4
 
 import pytest
 from shop_project.domain.customer import Customer
 from shop_project.domain.store import Store
 from shop_project.exceptions import QueryPlanException, UnitOfWorkException
+from shop_project.infrastructure.query.queries.prebuilt_queries import CountStoreItemsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
-from shop_project.infrastructure.query.load_query import LoadQuery, QueryLock
+from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
 from shop_project.domain.customer_order import CustomerOrder
 from shop_project.domain.store_item import StoreItem
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
@@ -26,7 +28,7 @@ def test_empty():
 
 
 def test_load_from_attribute():
-    query = LoadQuery(CustomerOrder,
+    query = DomainLoadQuery(CustomerOrder,
                       QueryCriteria().criterion_in("entity_id", ValueContainer(['1'])), 
                       QueryLock.NO_LOCK)
     
@@ -42,14 +44,16 @@ def test_load_from_attribute():
 
 
 def test_load_from_id():
-    query = LoadQuery(CustomerOrder, 
-                      QueryCriteria().criterion_in("entity_id", ValueContainer(['1'])), 
+    uuid_id = uuid4()
+    
+    query = DomainLoadQuery(CustomerOrder, 
+                      QueryCriteria().criterion_in("entity_id", ValueContainer([uuid_id])), 
                       QueryLock.NO_LOCK)
     
     query_built: QueryPlan = (
         QueryPlanBuilder(mutating=False)
         .load(CustomerOrder)
-        .from_id(['1'])
+        .from_id([uuid_id])
         .no_lock()
         .build())
     
@@ -60,11 +64,11 @@ def test_load_from_id():
 def test_load_from_previous(customer_order_factory: Callable[[], CustomerOrder]):
     customer_order = customer_order_factory()
     
-    query = LoadQuery(CustomerOrder, 
-                      QueryCriteria().criterion_in("entity_id", ValueContainer(['1'])), 
+    query = DomainLoadQuery(CustomerOrder, 
+                      QueryCriteria().criterion_in("entity_id", ValueContainer([customer_order.entity_id.value])), 
                       QueryLock.NO_LOCK)
     query.load([customer_order])
-    query_store_item = LoadQuery(StoreItem, 
+    query_store_item = DomainLoadQuery(StoreItem, 
                                  QueryCriteria().criterion_in("entity_id", 
                                  ValueExtractor(query,
                                                     lambda x: [item.store_item_id for item in x.get_items()])
@@ -80,17 +84,19 @@ def test_load_from_previous(customer_order_factory: Callable[[], CustomerOrder])
 
 
 def test_lock_violation():
+    uuid_id = uuid4()
+    
     with pytest.raises(QueryPlanException):
-        QueryPlanBuilder(mutating=True).load(CustomerOrder).from_id(['1']).no_lock().build()
+        QueryPlanBuilder(mutating=True).load(CustomerOrder).from_id([uuid_id]).no_lock().build()
 
     with pytest.raises(QueryPlanException):
-        QueryPlanBuilder(mutating=False).load(CustomerOrder).from_id(['1']).for_update().build()
+        QueryPlanBuilder(mutating=False).load(CustomerOrder).from_id([uuid_id]).for_update().build()
 
 
 def test_correct_locking_load_order():
     plan: QueryPlan = (
         QueryPlanBuilder(mutating=True)
-        .load(Customer).from_id(['1']).for_share()
+        .load(Customer).from_id([uuid4()]).for_share()
         .load(CustomerOrder).from_previous().for_share()
         .load(Store).from_previous().for_share()
         .load(StoreItem).from_previous(1).for_update()
@@ -102,7 +108,7 @@ def test_wrong_locking_load_order():
     with pytest.raises(QueryPlanException):
         plan: QueryPlan = (
             QueryPlanBuilder(mutating=True)
-            .load(Customer).from_id(['1']).for_share()
+            .load(Customer).from_id([uuid4()]).for_share()
             .load(CustomerOrder).from_previous().for_share()
             .load(StoreItem).from_previous().for_update()
             .load(Store).from_previous(1).for_share()

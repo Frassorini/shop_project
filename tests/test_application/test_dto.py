@@ -16,7 +16,7 @@ def test_to_dto(customer_order_factory: Callable[[], CustomerOrder], potatoes_st
     
     dto = to_dto(order)
     
-    assert dto.entity_id == order.entity_id.to_str()
+    assert dto.entity_id == order.entity_id.value
     assert dto.state == order.state.value
     assert dto.items[0].store_item_id == order.get_items()[0].store_item_id.value
 

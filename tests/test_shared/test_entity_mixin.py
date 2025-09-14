@@ -1,3 +1,5 @@
+from uuid import UUID, uuid4
+
 from shop_project.shared.entity_id import EntityId
 from shop_project.shared.identity_mixin import IdentityMixin
 
@@ -11,24 +13,31 @@ class ExampleDomainClass2(IdentityMixin):
 
 
 def test_not_eq_different_classes() -> None:
-    obj_1 = ExampleDomainClass1(EntityId('1'))
+    uuid_id = uuid4()
     
-    obj_2 = ExampleDomainClass2(EntityId('1'))
+    obj_1 = ExampleDomainClass1(EntityId(uuid_id))
+    
+    obj_2 = ExampleDomainClass2(EntityId(uuid_id))
     
     assert obj_1 != obj_2
 
 
 def test_eq() -> None:
-    obj_1 = ExampleDomainClass1(EntityId('1'))
+    uuid_id = uuid4()
     
-    obj_2 = ExampleDomainClass1(EntityId('1'))
+    obj_1 = ExampleDomainClass1(EntityId(uuid_id))
+    
+    obj_2 = ExampleDomainClass1(EntityId(uuid_id))
     
     assert obj_1 == obj_2
 
 
 def test_not_eq() -> None:
-    obj_1 = ExampleDomainClass1(EntityId('1'))
+    uuid_id_1 = uuid4()
+    uuid_id_2 = uuid4()
     
-    obj_2 = ExampleDomainClass1(EntityId('2'))
+    obj_1 = ExampleDomainClass1(EntityId(uuid_id_1))
+    
+    obj_2 = ExampleDomainClass1(EntityId(uuid_id_2))
     
     assert obj_1 != obj_2

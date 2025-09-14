@@ -11,7 +11,7 @@ class Store(BaseAggregate):
         self.name: str = name
     
     def to_dict(self) -> dict[str, Any]:
-        return {'entity_id': self.entity_id.to_str(), 'name': self.name}
+        return {'entity_id': self.entity_id.value, 'name': self.name}
     
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:

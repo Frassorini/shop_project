@@ -64,7 +64,7 @@ def test_snapshot(cart_factory: Callable[[], Cart],
     
     snapshot = cart.to_dict()
     
-    assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.to_str(), 'amount': 2}
+    assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.value, 'amount': 2}
 
 
 def test_from_snapshot(cart_factory: Callable[[], Cart], 

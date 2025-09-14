@@ -1,13 +1,13 @@
 from typing import Any, Callable
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
-from shop_project.infrastructure.query.load_query import LoadQuery
+from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 
 
 class ValueExtractor(PValueProvider):
-    def __init__(self, query: LoadQuery,
+    def __init__(self, query: DomainLoadQuery,
                  strategy: Callable[[Any], list[Any]]) -> None:
         
-        self._query: LoadQuery = query
+        self._query: DomainLoadQuery = query
         self._strategy: Callable[[Any], list[Any]] = strategy
 
     def get(self) -> list[Any]:

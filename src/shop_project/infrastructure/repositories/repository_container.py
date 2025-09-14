@@ -1,35 +1,56 @@
 from typing import Any, Literal, Type, TypeVar, cast
 
-from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.application.interfaces.p_repository import PRepository
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.session import Session
 
+from shop_project.application.dto.base_dto import BaseDTO
+
+from shop_project.domain.cart import Cart
+from shop_project.domain.customer import Customer
 from shop_project.domain.customer_order import CustomerOrder
 from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.store import Store
 from shop_project.domain.store_item import StoreItem
-from shop_project.p_session import PSession
-from shop_project.infrastructure.query.load_query import LoadQuery
+from shop_project.domain.supplier_order import SupplierOrder
+from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
+from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
+from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
+from shop_project.infrastructure.repositories.customer_repository import CustomerRepository
+from shop_project.infrastructure.repositories.mock_repository import MockRepository
+from shop_project.infrastructure.repositories.base_repository import BaseRepository
+from shop_project.infrastructure.repositories.store_item_repository import StoreItemRepository
 from shop_project.shared.entity_id import EntityId
+
 
 
 T = TypeVar('T', bound=BaseAggregate)
 
+REPOSITORIES: dict[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
+    Customer: CustomerRepository,
+    CustomerOrder: MockRepository,
+    StoreItem: StoreItemRepository,
+    Store: MockRepository,
+    SupplierOrder: MockRepository,
+    Cart: MockRepository
+}
 
 class RepositoryContainer:
-    def __init__(self, session: PSession, repositories: dict[Type[BaseAggregate], PRepository[BaseAggregate]]) -> None:
-        self.session: PSession = session
-        self.repositories: dict[Type[BaseAggregate], PRepository[BaseAggregate]] = repositories
+    def __init__(self, repositories: dict[Type[BaseAggregate], BaseRepository[BaseAggregate]]) -> None:
+        self.repositories: dict[Type[BaseAggregate], BaseRepository[BaseAggregate]] = repositories
     
-    def load_from_query(self, query: LoadQuery) -> list[BaseAggregate]:
-        return self.repositories[query.model_type].load_from_query(query)
-
-    def get_by_attribute(self, entity_type: Type[T], attribute_name: str, values: list[str]) -> list[T]:
-        if entity_type in self.repositories:
-            return cast(list[T], self.repositories[entity_type].read_by_attribute(attribute_name, values))
-        raise NotImplementedError
+    async def load_scalars(self, query: BaseLoadQuery) -> Any:
+        return await self.repositories[query.model_type].load_scalars(query)
     
-    def save(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
+    async def load(self, query: BaseLoadQuery) -> list[BaseAggregate]:
+        return await self.repositories[query.model_type].load(query)
+    
+    async def save(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         for entity_type, difference in resource_changes_snapshot.items():
-            self.repositories[entity_type].save(difference)
+            await self.repositories[entity_type].save(difference)
     
     def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
-        return self.repositories[model_type].get_unique_id()
+        raise NotImplementedError
+
+
+def repository_container_factory(session: AsyncSession) -> RepositoryContainer:
+    return RepositoryContainer({model_type: repository(session) for model_type, repository in REPOSITORIES.items()})

@@ -3,16 +3,10 @@ from typing import Any, Type
 
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
-
-# Под капотом в репозиториях все равно должен использоваться advisory lock
-# в дополнение к классическим блокировкам для приоритизации запросов на запись
-class QueryLock(Enum):
-    FOR_SHARE = 'FOR SHARE'
-    FOR_UPDATE = 'FOR UPDATE'
-    NO_LOCK = 'NO LOCK'
+from shop_project.infrastructure.query.base_load_query import BaseLoadQuery, QueryLock
 
 
-class LoadQuery():
+class DomainLoadQuery(BaseLoadQuery):
     def __init__(
         self,
         model_type: Type[BaseAggregate],

@@ -18,9 +18,9 @@ def test_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
     
     snapshot = order.to_dict()
     
-    assert snapshot['entity_id'] == order.entity_id.to_str()
+    assert snapshot['entity_id'] == order.entity_id.value
     assert snapshot['departure'] == order.departure
-    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.to_str(), 'amount': 2}]
+    assert snapshot['items'] == [{'store_item_id': store_item.entity_id.value, 'amount': 2}]
 
 
 def test_from_snapshot(supplier_order_factory: Callable[[], SupplierOrder],

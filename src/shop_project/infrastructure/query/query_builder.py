@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Literal, Self, Type, TypeVar
+from typing import Any, Literal, Self, Type, TypeVar
+from uuid import UUID
 
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import QueryPlanException
@@ -10,9 +11,10 @@ from shop_project.infrastructure.resource_manager.domain_reference_registry impo
 from shop_project.infrastructure.resource_manager.lock_total_order_registry import LockTotalOrderRegistry
 
 from shop_project.infrastructure.query.value_container import ValueContainer
-from shop_project.infrastructure.query.load_query import LoadQuery, QueryLock
+from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
+from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 
 
 @dataclass
@@ -43,6 +45,11 @@ class QueryPlanBuilder:
             )
         
         self._current_query_data = QueryData(None, QueryCriteria(), None)
+        
+    def add_prebuilt(self, prebuilt_query: PrebuiltLoadQuery) -> Self:
+        self.query_plan.add_prebuilt(prebuilt_query)
+        
+        return self
     
     def load(self, entity_type: Type[BaseAggregate]) -> Self:
         if not self._first_query:
@@ -64,37 +71,30 @@ class QueryPlanBuilder:
         
         return self
     
-    def is_in(self, attribute_name: str, value: str) -> Self:
+    def greater_than(self, attribute_name: str, value: str) -> Self:
         provider = ValueContainer([value])
         
-        self._current_query_data.criteria.criterion_in(attribute_name, provider)
+        self._current_query_data.criteria.criterion_greater_than(attribute_name, provider)
         
         return self
     
-    def equals(self, attribute_name: str, value: str) -> Self:
-        provider = ValueContainer([value])
-        
-        self._current_query_data.criteria.criterion_equals(attribute_name, provider)
-        
-        return self
-    
-    def from_attribute(self, attribute_name: str, attribute_values: list[str]) -> Self:
+    def from_attribute(self, attribute_name: str, attribute_values: list[Any]) -> Self:
         attribute_container: ValueContainer = ValueContainer(attribute_values)
         
         self._current_query_data.criteria.criterion_in(attribute_name, attribute_container)
         
         return self
     
-    def from_id(self, attribute_values: list[str]) -> Self:
+    def from_id(self, attribute_values: list[UUID]) -> Self:
         return self.from_attribute("entity_id", attribute_values)
     
     def for_update(self) -> Self:
-        self._current_query_data.lock = QueryLock.FOR_UPDATE
+        self._current_query_data.lock = QueryLock.EXCLUSIVE
         
         return self
     
     def for_share(self) -> Self:
-        self._current_query_data.lock = QueryLock.FOR_SHARE
+        self._current_query_data.lock = QueryLock.SHARED
         
         return self
     

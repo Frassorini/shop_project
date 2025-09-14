@@ -1,11 +1,13 @@
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
+
 from shop_project.application.dto.base_dto import BaseDTO
 
 
 class StoreItemDTO(BaseDTO):
-    entity_id: str
+    entity_id: UUID
     name: str
     amount: float 
-    store_id: str
+    store_id: UUID
     price: Decimal
