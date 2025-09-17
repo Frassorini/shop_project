@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKeyConstraint, Integer, Numeric, PrimaryKeyConstraint, String
+from sqlalchemy.orm import Mapped, relationship
 from shop_project.infrastructure.database.models.base import Base
 from shop_project.infrastructure.database.uuid_binary import UUIDBinary
 
@@ -10,6 +11,12 @@ class CustomerOrder(Base):
     customer_id = Column(UUIDBinary(), nullable=False)
     store_id = Column(UUIDBinary(), nullable=False)
     state = Column(String(50), nullable=False)
+    
+    items: Mapped[list["CustomerOrderItem"]] = relationship(
+        back_populates="order",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
     
     __table_args__ = (
         PrimaryKeyConstraint('entity_id'),
@@ -24,6 +31,11 @@ class CustomerOrderItem(Base):
     store_item_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     price = Column(Numeric(), nullable=False)
+    
+    order: Mapped["CustomerOrder"] = relationship(
+        back_populates="items",
+        lazy="raise",
+    )
     
     __table_args__ = (
         PrimaryKeyConstraint('customer_order_id', 'store_item_id'),

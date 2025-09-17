@@ -1,5 +1,5 @@
 import sqlite3
-from typing import AsyncGenerator, Callable, Coroutine, Type
+from typing import AsyncGenerator, Callable, Coroutine, Literal, Type
 
 import pytest
 import pytest_asyncio
@@ -50,7 +50,7 @@ async def test_db_in_memory(base_db_in_memory: sqlite3.Connection) -> AsyncGener
 
 
 @pytest_asyncio.fixture(scope="function")
-async def fill_database(uow_factory: Callable[[AsyncSession, str], UnitOfWork]) -> Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]:
+async def fill_database(uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork]) -> Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]:
     async def _fill_db(database: Database, data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> Database:
         session = database.get_session()
         uow = uow_factory(session, 'read_write')

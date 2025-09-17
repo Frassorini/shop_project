@@ -39,6 +39,7 @@ def test_load_from_attribute():
         .no_lock()
         .build())
     
+    assert isinstance(query_built.queries[0], DomainLoadQuery) and query_built.queries[0]
     assert query_built.queries[0].criteria.criteria[0].value_provider.get() == query.criteria.criteria[0].value_provider.get()
     assert query_built.queries[0].model_type == query.model_type
 
@@ -57,6 +58,7 @@ def test_load_from_id():
         .no_lock()
         .build())
     
+    assert isinstance(query_built.queries[0], DomainLoadQuery) and query_built.queries[0]
     assert query_built.queries[0].criteria.criteria[0].value_provider.get() == query.criteria.criteria[0].value_provider.get()
     assert query_built.queries[0].model_type == query.model_type
 
@@ -79,6 +81,7 @@ def test_load_from_previous(customer_order_factory: Callable[[], CustomerOrder])
     query_builder.query_plan.queries.append(query)
     query_built: QueryPlan = query_builder.from_previous().no_lock().build()
 
+    assert isinstance(query_built.queries[1], DomainLoadQuery) and query_built.queries[0]
     assert query_built.queries[1].criteria.criteria[0].value_provider.get() == query_store_item.criteria.criteria[0].value_provider.get()
     assert query_built.queries[1].model_type == query_store_item.model_type
 
@@ -114,3 +117,8 @@ def test_wrong_locking_load_order():
             .load(Store).from_previous(1).for_share()
             .build()
         )
+
+
+def test_prebuilt_query():
+    query = QueryPlanBuilder(mutating=False).add_prebuilt(CountStoreItemsQuery(lock="NO_LOCK")).build()
+    assert len(query.queries) == 1

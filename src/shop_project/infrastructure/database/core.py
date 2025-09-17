@@ -58,6 +58,7 @@ class Database:
             connect_args={"check_same_thread": False},
             creator=lambda: conn,
             future=True,
+            echo=False,
         )
         return cls.from_engine(engine)
 

@@ -22,6 +22,10 @@ class QueryData:
     model_type: type | None
     criteria: QueryCriteria
     lock: QueryLock | None
+    
+    @property
+    def is_not_empty(self) -> bool:
+        return self.model_type is not None or not self.lock is None or not self.criteria.is_empty
 
 
 # lock == True  -> Все запросы должны быть FOR UPDATE/FOR SHARE
@@ -123,7 +127,8 @@ class QueryPlanBuilder:
 
     
     def build(self) -> QueryPlan:
-        self._build_query()
+        if self._current_query_data.is_not_empty:
+            self._build_query()
         
         self.query_plan.validate_build()
         

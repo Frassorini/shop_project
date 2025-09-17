@@ -2,6 +2,7 @@ from typing import Any, Type
 
 from plum import overload, dispatch
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import select, delete, insert, update
 
 from shop_project.application.dto.customer_dto import CustomerDTO
@@ -14,7 +15,7 @@ from shop_project.application.dto.base_dto import BaseDTO
 
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.infrastructure.database.models.store_item import StoreItem as StoreItemORM
-from shop_project.infrastructure.database.models.customer_order import CustomerOrder as CustomerOrderORM
+from shop_project.infrastructure.database.models.customer_order import CustomerOrder as CustomerOrderORM, CustomerOrderItem as CustomerOrderItemORM
 from shop_project.infrastructure.database.models.supplier_order import SupplierOrder as SupplierOrderORM
 from shop_project.infrastructure.database.models.store import Store as StoreORM
 from shop_project.infrastructure.database.models.cart import Cart as CartORM
@@ -49,6 +50,37 @@ def _translate_domain(model_type: Type[StoreItem], query: DomainLoadQuery) -> An
         .where(query.criteria.to_sqlalchemy(StoreItemORM))
         )
 
+@overload
+def _translate_domain(model_type: Type[Store], query: DomainLoadQuery) -> Any:
+    return (
+        select(StoreORM)
+        .where(query.criteria.to_sqlalchemy(StoreORM))
+        )
+
+@overload
+def _translate_domain(model_type: Type[CustomerOrder], query: DomainLoadQuery) -> Any:
+    return (
+        select(CustomerOrderORM)
+        .where(query.criteria.to_sqlalchemy(CustomerOrderORM))
+        .options(joinedload(CustomerOrderORM.items))
+        )
+
+@overload
+def _translate_domain(model_type: Type[SupplierOrder], query: DomainLoadQuery) -> Any:
+    return (
+        select(SupplierOrderORM)
+        .where(query.criteria.to_sqlalchemy(SupplierOrderORM))
+        .options(joinedload(SupplierOrderORM.items))
+        )
+
+@overload
+def _translate_domain(model_type: Type[Cart], query: DomainLoadQuery) -> Any:
+    return (
+        select(CartORM)
+        .where(query.criteria.to_sqlalchemy(CartORM))
+        .options(joinedload(CartORM.items))
+        )
+
 @dispatch
 def _translate_domain(model_type: Type[BaseAggregate], query: DomainLoadQuery) -> Any:
     pass
@@ -61,7 +93,7 @@ def _translate_prebuilt(query: BiggestCustomerOrdersQuery) -> Any:
 @overload
 def _translate_prebuilt(query: CountStoreItemsQuery) -> Any:
     return (
-        select(func.count().select_from(StoreItemORM))
+        select(func.count()).select_from(StoreItemORM)
     )
 
 @dispatch

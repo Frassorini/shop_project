@@ -1,3 +1,4 @@
+from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
@@ -9,10 +10,12 @@ from shop_project.shared.entity_id import EntityId
 
 
 class UnitOfWork():
-    def __init__(self, session: AsyncSession, repository_container: RepositoryContainer, *, read_only: bool) -> None:
+    def __init__(self, session: AsyncSession, repository_container: RepositoryContainer, *, mode: Literal["read_only", "read_write"]) -> None:
         self.session: AsyncSession = session
-        self.read_only = read_only
-        self.resource_manager: ResourceManager = ResourceManager(repository_container, read_only=read_only)
+        if mode not in ['read_only', 'read_write']:
+            raise ValueError('mode must be "read_only" or "read_write"')
+        self.read_only = True if mode == 'read_only' else False
+        self.resource_manager: ResourceManager = ResourceManager(repository_container, read_only=self.read_only)
         self._query_plan: QueryPlanBuilder | None = None
         
         self.exhausted = False

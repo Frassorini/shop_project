@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine, Type, TypeVar, cast
+from typing import Any, Callable, Coroutine, Literal, Type, TypeVar, cast
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,7 +27,7 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 @pytest.mark.asyncio
 async def test_count_store_items(store_item_factory: Callable[..., StoreItem],
                 test_db_in_memory: Database,
-                uow_factory: Callable[[AsyncSession, str], UnitOfWork],
+                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
                 fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
     model_type: Type[BaseAggregate] = StoreItem
     
@@ -39,7 +39,7 @@ async def test_count_store_items(store_item_factory: Callable[..., StoreItem],
     ]
     
     await fill_database(test_db_in_memory, {StoreItem: cast(list[BaseAggregate], store_items)})
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_only')
     
     query = CountStoreItemsQuery(lock="NO_LOCK")
     

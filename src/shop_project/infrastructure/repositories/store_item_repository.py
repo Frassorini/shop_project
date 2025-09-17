@@ -22,19 +22,24 @@ class StoreItemRepository(BaseRepository[StoreItem]):
 
         values = [item.to_dict() for item in items]
         await self.session.execute(insert(StoreItemORM), values)
-
+    
     async def update(self, items: list[StoreItem]) -> None:
-        """Обновляет список StoreItems одним запросом через bulk_update."""
+        """Обновляет список Stores одним bulk-запросом."""
         if not items:
             return
-        
-        # SQLAlchemy bulk update через update + where primary key
-        for item in items:
-            await self.session.execute(
-                update(StoreItemORM)
-                .where(StoreItemORM.entity_id == item.entity_id.value)
-                .values(**item.to_dict())
-            )
+
+        snapshots = [item.to_dict() for item in items]
+        ids = [snap["entity_id"] for snap in snapshots]
+        fields = snapshots[0].keys()
+
+        update_values = {field: self._build_bulk_update_case(field, snapshots, StoreItemORM, ["entity_id"]) for field in fields}
+
+        stmt = (
+            update(StoreItemORM)
+            .where(StoreItemORM.entity_id.in_(ids))
+            .values(**update_values)
+        )
+        await self.session.execute(stmt)
 
     async def delete(self, items: list[StoreItem]) -> None:
         """Удаляет список StoreItems одним запросом через bulk_delete."""

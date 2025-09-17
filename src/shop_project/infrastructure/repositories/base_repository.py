@@ -3,6 +3,9 @@ from typing import Any, Callable, Generic, Literal, Type, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from plum import overload, dispatch
+from sqlalchemy.orm import InstrumentedAttribute
+from sqlalchemy.sql import select, delete, insert, update, case, and_
+from sqlalchemy import bindparam
 
 from shop_project import domain
 from shop_project.application.dto.base_dto import BaseDTO
@@ -38,12 +41,12 @@ class BaseRepository(Generic[T], ABC):
 
     async def load(self, query: BaseLoadQuery) -> list[T]:
         result = await self.session.execute(translate(query))
-        result = result.scalars().all()
+        result = result.scalars().unique().all()
         return [self.model_type.from_dict(self.dto_type.model_validate(item).model_dump()) for item in result]
     
     async def load_scalars(self, query: BaseLoadQuery) -> Any:
         result = await self.session.execute(translate(query))
-        return result.scalars().all()
+        return result.scalars().unique().all()
 
     async def save(self, difference_snapshot: dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]) -> None:
         await self.create([to_domain(item) for item in difference_snapshot['CREATED']]) # type: ignore
@@ -51,3 +54,32 @@ class BaseRepository(Generic[T], ABC):
         await self.update([to_domain(item) for item in difference_snapshot['UPDATED']]) # type: ignore
 
         await self.delete([to_domain(item) for item in difference_snapshot['DELETED']]) # type: ignore
+    
+    @staticmethod
+    def _build_bulk_update_case(
+        field_name: str,
+        snapshots: list[dict[str, Any]],
+        model_cls: type,
+        pk_fields: list[str],
+    ) -> Any:
+        """
+        Создаёт SQLAlchemy CASE для массового обновления одного поля, поддерживает составной PK.
+        :param field_name: Название обновляемого поля.
+        :param snapshots: Список dict'ов, каждый содержит значения всех ключевых полей и обновляемых полей.
+        :param model_cls: ORM-модель.
+        :param pk_fields: Список названий колонок, которые составляют первичный ключ.
+        """
+        column: InstrumentedAttribute[Any] = getattr(model_cls, field_name)
+        return case(
+            *(
+                (
+                    and_(*(getattr(model_cls, pk) == snap[pk] for pk in pk_fields)),
+                    bindparam(
+                        f"{field_name}_{idx}",
+                        snap[field_name],
+                        type_=column.type,
+                    ),
+                )
+                for idx, snap in enumerate(snapshots)
+            )
+        )

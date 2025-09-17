@@ -80,7 +80,8 @@ class NoLockQueryPlan(QueryPlan):
             raise QueryPlanException("Only no lock queries are allowed in no lock query plan")
     
     def validate_build(self):
-        pass
+        if len(self.queries) == 0:
+            raise QueryPlanException("Query plan is empty")
     
     def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         for model_type, model_changes in resource_changes_snapshot.items():
@@ -118,6 +119,9 @@ class LockQueryPlan(QueryPlan):
                 raise QueryPlanException(f"Multiple queries for model type {model_type} in locking query plan")
     
     def validate_build(self) -> None:
+        if len(self.queries) == 0:
+            raise QueryPlanException("Query plan is empty")
+        
         self._validate_single_query_per_model_type()
         
         for previous_query, current_query in zip(self.queries, self.queries[1:]):

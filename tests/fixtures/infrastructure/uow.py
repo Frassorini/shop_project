@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Literal, Type
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,16 +10,9 @@ from shop_project.infrastructure.repositories.repository_container import Reposi
 
 @pytest.fixture
 def uow_factory():
-    def factory(session: AsyncSession, policy: str) -> UnitOfWork:
+    def factory(session: AsyncSession, mode: Literal["read_only", "read_write"]) -> UnitOfWork:
         repository_container: RepositoryContainer = repository_container_factory(session)
-        
-        if policy == 'read_only':
-            read_only_flag = True
-        elif policy == 'read_write':
-            read_only_flag = False
-        else:
-            raise ValueError(f'Unknown policy value {policy}')
-        
-        return UnitOfWork(session, repository_container, read_only=read_only_flag)
+ 
+        return UnitOfWork(session, repository_container, mode=mode)
     
     return factory

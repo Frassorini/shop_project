@@ -15,10 +15,14 @@ from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
+from shop_project.infrastructure.repositories.cart_repository import CartRepository
+from shop_project.infrastructure.repositories.customer_order_repository import CustomerOrderRepository
 from shop_project.infrastructure.repositories.customer_repository import CustomerRepository
 from shop_project.infrastructure.repositories.mock_repository import MockRepository
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.infrastructure.repositories.store_item_repository import StoreItemRepository
+from shop_project.infrastructure.repositories.store_repository import StoreRepository
+from shop_project.infrastructure.repositories.supplier_order_repository import SupplierOrderRepository
 from shop_project.shared.entity_id import EntityId
 
 
@@ -27,11 +31,11 @@ T = TypeVar('T', bound=BaseAggregate)
 
 REPOSITORIES: dict[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
     Customer: CustomerRepository,
-    CustomerOrder: MockRepository,
+    CustomerOrder: CustomerOrderRepository,
     StoreItem: StoreItemRepository,
-    Store: MockRepository,
-    SupplierOrder: MockRepository,
-    Cart: MockRepository
+    Store: StoreRepository,
+    SupplierOrder: SupplierOrderRepository,
+    Cart: CartRepository,
 }
 
 class RepositoryContainer:

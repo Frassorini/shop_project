@@ -26,8 +26,7 @@ class ResourceManager:
             loaded: Any = await self.repository_container.load_scalars(query)
         else:
             loaded: list[BaseAggregate] = await self.repository_container.load(query)
-        
-        self.resource_container.put_many(query.model_type, loaded)
+            self.resource_container.put_many(query.model_type, loaded)
 
         query.load(loaded)
 

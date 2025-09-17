@@ -24,17 +24,22 @@ class CustomerRepository(BaseRepository[Customer]):
         await self.session.execute(insert(CustomerORM), values)
 
     async def update(self, items: list[Customer]) -> None:
-        """Обновляет список Customers одним запросом через bulk_update."""
+        """Обновляет список Stores одним bulk-запросом."""
         if not items:
             return
-        
-        # SQLAlchemy bulk update через update + where primary key
-        for item in items:
-            await self.session.execute(
-                update(CustomerORM)
-                .where(CustomerORM.entity_id == item.entity_id.value)
-                .values(**item.to_dict())
-            )
+
+        snapshots = [item.to_dict() for item in items]
+        ids = [snap["entity_id"] for snap in snapshots]
+        fields = snapshots[0].keys()
+
+        update_values = {field: self._build_bulk_update_case(field, snapshots, CustomerORM, ["entity_id"]) for field in fields}
+
+        stmt = (
+            update(CustomerORM)
+            .where(CustomerORM.entity_id.in_(ids))
+            .values(**update_values)
+        )
+        await self.session.execute(stmt)
 
     async def delete(self, items: list[Customer]) -> None:
         """Удаляет список Customers одним запросом через bulk_delete."""

@@ -63,6 +63,10 @@ class QueryCriteria:
     
         return result
     
+    @property
+    def is_empty(self) -> bool:
+        return len(self.criteria) == 0 and len(self.operators) == 0
+    
     def validate(self) -> None:
         if len(self.criteria) == 0 and len(self.operators) == 0:
             return
