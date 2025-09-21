@@ -37,12 +37,12 @@ class Database:
     def from_env(cls) -> Self:
         obj = cls.__new__(cls)
         url = URL.create(
-            drivername="postgresql+asyncpg",
-            username=get_env("POSTGRES_USER"),
-            password=get_env("POSTGRES_PASSWORD"),
-            host=get_env("POSTGRES_HOST"),
-            port=int(get_env("POSTGRES_PORT")),
-            database=get_env("POSTGRES_DB")
+            drivername=get_env("DB_DRIVER"),
+            username=get_env("DB_USER"),
+            password=get_env("DB_PASSWORD"),
+            host=get_env("DB_HOST"),
+            port=int(get_env("DB_PORT")),
+            database=get_env("DB_NAME"),
         )
         obj.__init__(url.render_as_string(hide_password=False))
         return obj

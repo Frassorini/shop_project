@@ -74,11 +74,11 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
     def __init__(self):
         self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
             Customer: [],
+            Store: [],
+            StoreItem: [],
             CustomerOrder: [],
             SupplierOrder: [],
             Cart: [],
-            StoreItem: [],
-            Store: [],
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
         self._resource_snapshot_current: ResourceSnapshot | None = None

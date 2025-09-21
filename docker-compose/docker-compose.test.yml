@@ -1,15 +1,15 @@
 services:
-  postgres:
-    container_name: test-postgres
-    image: postgres:15
-    hostname: test-postgres
+  mysql:
+    container_name: test-mysql
+    image: mysql:8.0
+    hostname: test-mysql
     ports:
-      - "5432:5432"
+      - "3306:3306"
     env_file:
       - ../environment/.env.test
     volumes:
-      - test-postgres-data:/var/lib/postgresql/data
+      - test-mysql-data:/var/lib/mysql
     restart: unless-stopped
 
 volumes:
-  test-postgres-data:
+  test-mysql-data:

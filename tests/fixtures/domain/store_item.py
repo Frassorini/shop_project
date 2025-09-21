@@ -6,30 +6,7 @@ import pytest
 from shop_project.domain.store import Store
 from shop_project.shared.entity_id import EntityId
 from shop_project.domain.store_item import StoreItem
-
-
-@pytest.fixture
-def store_factory(unique_id_factory: Callable[[], EntityId]) -> Callable[[str], Store]:
-    
-    def fact(name: str) -> Store:
-        return Store(unique_id_factory(), name=name)
-    
-    return fact
-
-
-@pytest.fixture
-def store_factory_with_cache(unique_id_factory: Callable[[], EntityId]) -> Callable[[str], Store]:
-    cache: dict[str, Store] = {}
-
-    def factory(name: str) -> Store:
-        if name in cache:
-            return cache[name]
-        
-        store = Store(unique_id_factory(), name=name)
-        cache[name] = store
-        return store
-    
-    return factory
+from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
@@ -37,13 +14,28 @@ def store_item_factory(unique_id_factory: Callable[[], EntityId],
                        store_factory_with_cache: Callable[[str], Store]) -> Callable[..., StoreItem]:
     
     def fact(*, name: str, 
-             amount: float, 
+             amount: int, 
              store: str, 
              price: Decimal) -> StoreItem:
 
         store_obj: Store = store_factory_with_cache(store)
 
         return StoreItem(unique_id_factory(), name=name, amount=amount, store_id=store_obj.entity_id, price=price)
+    
+    return fact
+
+
+@pytest.fixture
+def store_item_container_factory(unique_id_factory: Callable[[], EntityId]) -> Callable[..., AggregateContainer]:
+    
+    def fact(*, name: str, 
+             amount: int, 
+             store: Store, 
+             price: Decimal) -> AggregateContainer:
+
+        store_item = StoreItem(unique_id_factory(), name=name, amount=amount, store_id=store.entity_id, price=price)
+
+        return AggregateContainer(aggregate=store_item, dependencies={Store: [store]})
     
     return fact
 

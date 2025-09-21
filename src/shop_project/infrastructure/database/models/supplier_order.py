@@ -31,7 +31,6 @@ class SupplierOrderItem(Base):
     supplier_order_id = Column(UUIDBinary(), nullable=False)
     store_item_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
-    price = Column(Integer(), nullable=False)
     
     order: Mapped["SupplierOrder"] = relationship(
         back_populates="items",

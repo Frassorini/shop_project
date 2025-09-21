@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Awaitable, Callable, Generator
 import sqlite3
 
 import pytest
@@ -17,11 +17,11 @@ async def test_database(test_db: Database) -> None:
 
 
 @pytest.mark.asyncio
-async def test_clone_isolation(base_db_in_memory: sqlite3.Connection):
+async def test_clone_isolation(base_db_in_memory: Callable[[], Awaitable[sqlite3.Connection]]):
     clone_conn_1 = sqlite3.connect(":memory:", check_same_thread=False)
-    base_db_in_memory.backup(clone_conn_1)
+    (await base_db_in_memory()).backup(clone_conn_1)
     clone_conn_2 = sqlite3.connect(":memory:", check_same_thread=False)
-    base_db_in_memory.backup(clone_conn_2)
+    (await base_db_in_memory()).backup(clone_conn_2)
     
     clone_conn_1.execute("CREATE TABLE test_table (id INTEGER PRIMARY KEY)")
     clone_conn_1.commit()
@@ -31,7 +31,7 @@ async def test_clone_isolation(base_db_in_memory: sqlite3.Connection):
         "SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'"
     )
     assert cur_clone_1.fetchone() is not None, "Таблица не создалась!"
-    cur_base = base_db_in_memory.cursor()
+    cur_base = (await base_db_in_memory()).cursor()
     cur_base.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'"
     )

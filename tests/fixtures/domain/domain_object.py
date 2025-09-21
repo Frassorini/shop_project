@@ -1,3 +1,4 @@
+from os import name
 from typing import Any, Callable, Type, TypeVar, cast
 from uuid import uuid4
 from plum import overload, dispatch
@@ -13,75 +14,32 @@ from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.shared.entity_id import EntityId
 from shop_project.domain.base_aggregate import BaseAggregate
 
+from tests.helpers import AggregateContainer
+
 
 @pytest.fixture
 def domain_object_factory(customer_andrew: Callable[[], Customer],
-                          customer_order_factory: Callable[[], CustomerOrder],
-                          supplier_order_factory: Callable[[], SupplierOrder],
-                          cart_factory: Callable[[], Cart],
-                          potatoes_store_item_10: Callable[[], StoreItem],
-                          store_factory: Callable[[str], Store]) -> Callable[[Type[BaseAggregate]], BaseAggregate]:
-    def factory(model_type: Type[BaseAggregate]) -> BaseAggregate:
+                          customer_order_container_factory: Callable[[], AggregateContainer],
+                          supplier_order_container_factory: Callable[[], AggregateContainer],
+                          cart_container_factory: Callable[[], AggregateContainer],
+                          store_item_container_factory: Callable[..., AggregateContainer],
+                          store_factory: Callable[[str], Store]) -> Callable[[Type[BaseAggregate]], AggregateContainer]:
+    def factory(model_type: Type[BaseAggregate]) -> AggregateContainer:
         if model_type is Customer:
-            return cast(BaseAggregate, customer_andrew())
+            return AggregateContainer(customer_andrew(), dependencies={})
         elif model_type is CustomerOrder:
-            return cast(BaseAggregate, customer_order_factory())
+            return customer_order_container_factory()
         elif model_type is SupplierOrder:
-            return cast(BaseAggregate, supplier_order_factory())
+            return supplier_order_container_factory()
         elif model_type is Cart:
-            return cast(BaseAggregate, cart_factory())
+            return cart_container_factory()
         elif model_type is StoreItem:
-            return cast(BaseAggregate, potatoes_store_item_10())
+            store = store_factory('Moscow')
+            return store_item_container_factory(name='potatoes', amount=1, store=store, price=1)
         elif model_type is Store:
-            return cast(BaseAggregate, store_factory('Moscow'))
+            return AggregateContainer(store_factory('Moscow'), dependencies={})
         else:
             raise ValueError(f'Unknown model type {model_type}')
 
     return factory
 
-@pytest.fixture
-def mutate_domain_object(customer_andrew: Callable[[], Customer],
-                          customer_order_factory: Callable[[], CustomerOrder],
-                          supplier_order_factory: Callable[[], SupplierOrder],
-                          cart_factory: Callable[[], Cart],
-                          potatoes_store_item_10: Callable[[], StoreItem],
-                          store_factory: Callable[[str], Store]) -> Callable[[BaseAggregate], BaseAggregate]:
-    @overload
-    def _mutate_domain_object(domain_object: Customer) -> Customer:
-        domain_object.name = 'bob'
-        return domain_object
-
-    @overload
-    def _mutate_domain_object(domain_object: CustomerOrder) -> CustomerOrder:
-        domain_object.store_id = EntityId(uuid4())
-        return domain_object
-
-    @overload
-    def _mutate_domain_object(domain_object: SupplierOrder) -> SupplierOrder:
-        domain_object.store_id = EntityId(uuid4())
-        return domain_object
-
-    @overload
-    def _mutate_domain_object(domain_object: Cart) -> Cart:
-        domain_object.store_id = EntityId(uuid4())
-        return domain_object
-
-    @overload
-    def _mutate_domain_object(domain_object: StoreItem) -> StoreItem:
-        domain_object.store_id = EntityId(uuid4())
-        return domain_object
-
-    @overload
-    def _mutate_domain_object(domain_object: Store) -> Store:
-        domain_object.name = 'New York' if domain_object.name == 'Moscow' else 'Moscow'
-        return domain_object
-
-    @overload
-    def _mutate_domain_object(domain_object: BaseAggregate) -> BaseAggregate:
-        raise ValueError(f'Unknown model type {type(domain_object)}')
-
-    @dispatch
-    def _mutate_domain_object(domain_object: Any) -> Any:
-        pass
-
-    return _mutate_domain_object

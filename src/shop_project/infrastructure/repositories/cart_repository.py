@@ -38,56 +38,37 @@ class CartRepository(BaseRepository[Cart]):
             await self.session.execute(insert(CartItemORM), item_snapshots)
 
     async def update(self, items: list[Cart]) -> None:
-        """Обновляет Carts и их order_items одним bulk-запросом."""
         if not items:
             return
 
-        # --- Подготовка snapshots ---
         order_snapshots = [item.to_dict() for item in items]
         order_ids = [snap["entity_id"] for snap in order_snapshots]
-        order_fields = order_snapshots[0].keys()
 
-        # --- Обновление Carts ---
+        order_fields = [f for f in order_snapshots[0].keys() if f != "items"]
         update_order_values = {
             field: self._build_bulk_update_case(field, order_snapshots, CartORM, ["entity_id"])
-            for field in order_fields if field not in ["items"]
+            for field in order_fields
         }
-
-        stmt_orders = (
+        await self.session.execute(
             update(CartORM)
             .where(CartORM.entity_id.in_(order_ids))
             .values(**update_order_values)
         )
-        await self.session.execute(stmt_orders)
 
-        # --- Разворачиваем order_items в один плоский список ---
         item_snapshots: list[dict[str, Any]] = []
-        for order_snap in order_snapshots:
-            customer_order_id = order_snap["entity_id"]
-            for item in order_snap.get("items", []):  # items — список словарей
-                snap = item.copy()
-                snap["customer_order_id"] = customer_order_id  # добавляем связь с заказом
-                item_snapshots.append(snap)
+        for snap in order_snapshots:
+            for item in snap.get("items", []):
+                snapshot = item.copy()
+                snapshot["cart_id"] = snap["entity_id"]
+                item_snapshots.append(snapshot)
 
-        if item_snapshots:
-            pk_fields = ["customer_order_id", "store_item_id"]
-            item_fields = [k for k in item_snapshots[0].keys() if k not in pk_fields]
-
-            update_item_values = {
-                field: self._build_bulk_update_case(field, item_snapshots, CartItemORM, pk_fields)
-                for field in item_fields
-            }
-
-            # WHERE (customer_order_id, store_item_id) IN ((...), (...), ...)
-            pk_tuples = {tuple(snap[pk] for pk in pk_fields) for snap in item_snapshots}
-            ids_filter = tuple_(*(getattr(CartItemORM, pk) for pk in pk_fields)).in_(pk_tuples)
-
-            stmt_items = (
-                update(CartItemORM)
-                .where(ids_filter)
-                .values(**update_item_values)
-            )
-            await self.session.execute(stmt_items)
+        await self._replace_children(
+            session=self.session,
+            root_id_name="cart_id",
+            root_ids=order_ids,
+            child_model=CartItemORM,
+            new_items=item_snapshots,
+        )
 
 
 

@@ -31,9 +31,9 @@ T = TypeVar('T', bound=BaseAggregate)
 
 REPOSITORIES: dict[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
     Customer: CustomerRepository,
-    CustomerOrder: CustomerOrderRepository,
-    StoreItem: StoreItemRepository,
     Store: StoreRepository,
+    StoreItem: StoreItemRepository,
+    CustomerOrder: CustomerOrderRepository,
     SupplierOrder: SupplierOrderRepository,
     Cart: CartRepository,
 }

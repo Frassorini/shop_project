@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any, Callable, Coroutine, Literal, Type, TypeVar
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,7 @@ from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork
 from shop_project.exceptions import UnitOfWorkException, ResourcesException
+from tests.helpers import AggregateContainer
 
 
 DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
@@ -21,119 +23,223 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('model_type', [Customer, StoreItem, Store, CustomerOrder, SupplierOrder, Cart],)
-async def test_create(model_type: Type[DomainObject],
-                domain_object_factory: Callable[[Type[DomainObject]], DomainObject],
-                test_db_in_memory: Database,
-                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],) -> None:
-    domain_object: DomainObject = domain_object_factory(model_type)
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_write')
-    
-    async with uow:
-        resources = uow.get_resorces()
-        
-        resources.put(model_type, domain_object)
-        
-        await uow.commit()
-    
-    uow2: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_only')
-    
-    uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id.value]).no_lock()
-        )
-    
-    async with uow2:
-        resources2 = uow2.get_resorces()
-        
-        assert resources2.get_by_id(model_type, domain_object.entity_id)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize('model_type', [Customer, StoreItem, Store, CustomerOrder, SupplierOrder, Cart],)
-async def test_update(model_type: Type[DomainObject], 
-                domain_object_factory: Callable[[Type[DomainObject]], DomainObject],
-                test_db_in_memory: Database,
+async def test_create_delete(model_type: Type[DomainObject], 
+                test_db: Database,
                 uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                mutate_domain_object: Callable[[DomainObject], DomainObject],
-                fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
-    domain_object: DomainObject = domain_object_factory(model_type)
-
-    await fill_database(test_db_in_memory, {model_type: [domain_object]})
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_write')
+                prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                uow_check: Callable[..., Any],) -> None:
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.value]).for_update()
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
         resources = uow.get_resorces()
-        domain_obj_from_db: DomainObject = resources.get_by_id(model_type, domain_object.entity_id)
-        mutate_domain_object(domain_obj_from_db)
-        snapshot_before = domain_obj_from_db.to_dict()
-        await uow.commit()
-    
-    uow2: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_only')
-    
-    uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id.value]).no_lock()
-        )
-    
-    async with uow2:
-        resources2 = uow2.get_resorces()
-        snapshot_after = resources2.get_by_id(model_type, domain_object.entity_id).to_dict()
-    
-    assert snapshot_before == snapshot_after
-    
-    
-@pytest.mark.asyncio
-@pytest.mark.parametrize('model_type', [Customer, StoreItem, Store, CustomerOrder, SupplierOrder, Cart],)
-async def test_delete(model_type: Type[DomainObject], 
-                domain_object_factory: Callable[[Type[DomainObject]], DomainObject],
-                test_db_in_memory: Database,
-                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]],) -> None:
-    domain_object: DomainObject = domain_object_factory(model_type)
-
-    await fill_database(test_db_in_memory, {model_type: [domain_object]})
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_write')
-    
-    uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.value]).for_update()
-        )
-    
-    async with uow:
-        resources = uow.get_resorces()
-        
-        domain_obj_from_db: DomainObject = resources.get_by_id(model_type, domain_object.entity_id)
-        
+        domain_obj_from_db: DomainObject = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         resources.delete(model_type, domain_obj_from_db)
-        
         await uow.commit()
     
-    uow2: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_only')
     
-    uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(model_type).from_id([domain_object.entity_id.value]).no_lock()
-        )
-    
-    async with uow2:
-        resources = uow.get_resorces()
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
         with pytest.raises(ResourcesException):
-            assert resources.get_by_id(model_type, domain_object.entity_id) is None
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
 
 @pytest.mark.asyncio
-async def test_enter_uow_twice(domain_object_factory: Callable[[Type[DomainObject]], DomainObject],
-                               test_db_in_memory: Database,
+async def test_update_customer(test_db: Database,
                                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                               fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]],) -> None:
+                               prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                               uow_check: Callable[..., Any],) -> None:
     model_type: Type[Any] = Customer
-    domain_object: DomainObject = domain_object_factory(model_type)
-
-    await fill_database(test_db_in_memory, {model_type: [domain_object]})
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_write')
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.value]).for_update()
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        )
+    
+    async with uow:
+        resources = uow.get_resorces()
+        domain_obj: Customer = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        
+        domain_obj.name = 'new name'
+        
+        snapshot_before = domain_obj.to_dict()
+        await uow.commit()
+    
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
+        assert snapshot_before == snapshot_after
+
+
+@pytest.mark.asyncio
+async def test_update_store(test_db: Database,
+                               uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                               prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                               uow_check: Callable[..., Any],) -> None:
+    model_type: Type[Any] = Store
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    
+    uow.set_query_plan(
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        )
+    
+    async with uow:
+        resources = uow.get_resorces()
+        domain_obj: Store = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        
+        domain_obj.name = 'new name'
+        
+        snapshot_before = domain_obj.to_dict()
+        await uow.commit()
+    
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
+        assert snapshot_before == snapshot_after
+
+
+@pytest.mark.asyncio
+async def test_update_store_item(test_db: Database,
+                               uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                               prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                               uow_check: Callable[..., Any],) -> None:
+    model_type: Type[Any] = StoreItem
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    
+    uow.set_query_plan(
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        )
+    
+    async with uow:
+        resources = uow.get_resorces()
+        domain_obj: StoreItem = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        
+        domain_obj.price = domain_obj.price + 1
+        
+        snapshot_before = domain_obj.to_dict()
+        await uow.commit()
+    
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
+        assert snapshot_before == snapshot_after
+
+
+@pytest.mark.asyncio
+async def test_update_customer_order(test_db: Database,
+                                     uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                                     prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                                     uow_check: Callable[..., Any],
+                                     store_item_container_factory: Callable[..., AggregateContainer]) -> None:
+    model_type: Type[Any] = CustomerOrder
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    
+    uow.set_query_plan(
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        )
+    
+    async with uow:
+        resources = uow.get_resorces()
+        domain_obj: CustomerOrder = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        store_item = store_item_container_factory(
+            name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
+        )
+        resources.put(StoreItem, store_item.aggregate)
+        domain_obj.add_item(store_item.aggregate.entity_id, Decimal(1), 1, domain_obj.store_id)
+        
+        snapshot_before = domain_obj.to_dict()
+        await uow.commit()
+    
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
+        assert snapshot_before == snapshot_after
+
+
+@pytest.mark.asyncio
+async def test_update_supplier_order(test_db: Database,
+                                     uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                                     prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                                     uow_check: Callable[..., Any],
+                                     store_item_container_factory: Callable[..., AggregateContainer]) -> None:
+    model_type: Type[Any] = SupplierOrder
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    
+    uow.set_query_plan(
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        )
+    
+    async with uow:
+        resources = uow.get_resorces()
+        domain_obj: SupplierOrder = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        store_item = store_item_container_factory(
+            name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
+        )
+        resources.put(StoreItem, store_item.aggregate)
+        domain_obj.add_item(store_item.aggregate.entity_id, 1, domain_obj.store_id)
+        
+        snapshot_before = domain_obj.to_dict()
+        await uow.commit()
+    
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
+        assert snapshot_before == snapshot_after
+
+
+@pytest.mark.asyncio
+async def test_update_cart(test_db: Database,
+                           uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                           prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
+                           uow_check: Callable[..., Any],
+                           store_item_container_factory: Callable[..., AggregateContainer]) -> None:
+    model_type: Type[Any] = Cart
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    
+    uow.set_query_plan(
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        )
+    
+    async with uow:
+        resources = uow.get_resorces()
+        domain_obj: Cart = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        store_item = store_item_container_factory(
+            name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
+        )
+        resources.put(StoreItem, store_item.aggregate)
+        domain_obj.add_item(store_item.aggregate.entity_id, 1, domain_obj.store_id)
+        
+        snapshot_before = domain_obj.to_dict()
+        await uow.commit()
+    
+    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
+        assert snapshot_before == snapshot_after
+
+
+@pytest.mark.asyncio
+async def test_enter_uow_twice(domain_object_factory: Callable[[Type[DomainObject]], AggregateContainer],
+                               test_db: Database,
+                               uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                               prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]]) -> None:
+    model_type: Type[Any] = Customer
+    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    
+    uow.set_query_plan(
+        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
@@ -143,41 +249,34 @@ async def test_enter_uow_twice(domain_object_factory: Callable[[Type[DomainObjec
         async with uow:
             pass
 
-@pytest.mark.asyncio
-async def test_complex_update(
-                customer_order_factory: Callable[[], CustomerOrder],
-                potatoes_store_item_10: Callable[[], StoreItem],
-                test_db_in_memory: Database,
-                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
-    customer_order: CustomerOrder = customer_order_factory()
-    potatoes = potatoes_store_item_10()
 
-    await fill_database(test_db_in_memory, {CustomerOrder: [customer_order], StoreItem: [potatoes]})
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_write')
-    
-    uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(CustomerOrder).from_id([customer_order.entity_id.value]).for_update()
+@pytest.fixture
+def uow_check() -> Callable[..., Any]:
+    def _check(uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+               test_db: Database, 
+               model_type: Type[BaseAggregate], 
+               domain_object: BaseAggregate) -> UnitOfWork:
+        uow = uow_factory(test_db.get_session(), 'read_only')
+        uow.set_query_plan(
+            QueryPlanBuilder(mutating=False)
+            .load(model_type)
+            .from_id([domain_object.entity_id.value])
+            .no_lock()
         )
-    
-    async with uow:
-        resources = uow.get_resorces()
-        domain_obj_from_db: CustomerOrder = resources.get_by_id(CustomerOrder, customer_order.entity_id)
-        
-        customer_order.add_item(potatoes.entity_id, potatoes.price, 1, potatoes.store_id)
-        
-        snapshot_before = domain_obj_from_db.to_dict()
-        await uow.commit()
-    
-    uow2: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_only')
-    
-    uow2.set_query_plan(
-        QueryPlanBuilder(mutating=False).load(CustomerOrder).from_id([customer_order.entity_id.value]).no_lock()
-        )
-    
-    async with uow2:
-        resources2 = uow2.get_resorces()
-        snapshot_after = resources2.get_by_id(CustomerOrder, customer_order.entity_id).to_dict()
-    
-    assert snapshot_before == snapshot_after
+        return uow
+    return _check
 
+
+@pytest.fixture
+def prepare_container(domain_object_factory: Callable[[Type[DomainObject]], AggregateContainer], 
+                            fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]
+                            ) -> Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]]:
+    async def _prepare(model_type: Type[DomainObject], test_db: Database) -> AggregateContainer:
+        domain_container = domain_object_factory(model_type)
+        to_fill = domain_container.dependencies.copy()
+
+        to_fill.setdefault(model_type, []).append(domain_container.aggregate)
+        await fill_database(test_db, to_fill)
+
+        return domain_container
+    return _prepare

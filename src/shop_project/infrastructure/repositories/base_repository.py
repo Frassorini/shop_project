@@ -54,7 +54,36 @@ class BaseRepository(Generic[T], ABC):
         await self.update([to_domain(item) for item in difference_snapshot['UPDATED']]) # type: ignore
 
         await self.delete([to_domain(item) for item in difference_snapshot['DELETED']]) # type: ignore
-    
+
+    @staticmethod
+    async def _replace_children(
+        session: AsyncSession,
+        root_id_name: str,
+        root_ids: list[Any],
+        child_model: type,
+        new_items: list[dict[str, Any]],
+    ) -> None:
+        """
+        Полностью заменяет дочерние записи для указанных root_id.
+
+        :param session: Асинхронная сессия SQLAlchemy
+        :param root_id_name: Имя колонки внешнего ключа в дочерней таблице
+        :param root_ids: Список ID root-объектов, для которых меняем дочерние элементы
+        :param child_model: ORM-модель дочерней таблицы
+        :param new_items: Список новых дочерних записей (dict), уже с root_id
+        """
+        if not root_ids:
+            return
+
+        # 1. Удаляем старые записи
+        await session.execute(delete(child_model).where(
+            getattr(child_model, root_id_name).in_(root_ids)
+        ))
+
+        # 2. Вставляем новые
+        if new_items:
+            await session.execute(insert(child_model), new_items)
+
     @staticmethod
     def _build_bulk_update_case(
         field_name: str,

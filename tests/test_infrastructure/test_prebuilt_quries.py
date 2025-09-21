@@ -26,9 +26,11 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 @pytest.mark.asyncio
 async def test_count_store_items(store_item_factory: Callable[..., StoreItem],
-                test_db_in_memory: Database,
-                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
+                                 store_factory_with_cache: Callable[[str], Store],
+                                 test_db: Database,
+                                 uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
+                                 fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]],
+                                 ) -> None:
     model_type: Type[BaseAggregate] = StoreItem
     
     store_items: list[StoreItem] = [
@@ -38,8 +40,8 @@ async def test_count_store_items(store_item_factory: Callable[..., StoreItem],
         store_item_factory(name='sausages_4', amount=3, store='Moscow', price="1.0"),
     ]
     
-    await fill_database(test_db_in_memory, {StoreItem: cast(list[BaseAggregate], store_items)})
-    uow: UnitOfWork = uow_factory(test_db_in_memory.get_session(), 'read_only')
+    await fill_database(test_db, {StoreItem: cast(list[BaseAggregate], store_items), Store: cast(list[BaseAggregate], [store_factory_with_cache('Moscow')])})
+    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_only')
     
     query = CountStoreItemsQuery(lock="NO_LOCK")
     

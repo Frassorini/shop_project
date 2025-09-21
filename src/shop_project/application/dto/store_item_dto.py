@@ -8,6 +8,6 @@ from shop_project.application.dto.base_dto import BaseDTO
 class StoreItemDTO(BaseDTO):
     entity_id: UUID
     name: str
-    amount: float 
+    amount: int
     store_id: UUID
     price: Decimal

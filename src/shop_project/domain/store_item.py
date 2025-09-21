@@ -8,13 +8,13 @@ from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 class StoreItem(BaseAggregate):
-    def __init__(self, entity_id: EntityId, name: str, amount: float, store_id: EntityId, price: Decimal) -> None:
+    def __init__(self, entity_id: EntityId, name: str, amount: int, store_id: EntityId, price: Decimal) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
         self.name: str = name 
         if amount < 0:
             raise NegativeAmountException('amount field must be >= 0')
-        self._amount: float = amount 
+        self._amount: int = amount 
         self.store_id: EntityId = store_id
         self.price: Decimal = price
     
@@ -37,18 +37,18 @@ class StoreItem(BaseAggregate):
             'price': self.price
         }
 
-    def reserve(self, amount: float) -> None:
+    def reserve(self, amount: int) -> None:
         self.amount -= amount
         
-    def restock(self, amount: float) -> None:
+    def restock(self, amount: int) -> None:
         self.amount += amount
     
     @property
-    def amount(self) -> float:
+    def amount(self) -> int:
         return self._amount
     
     @amount.setter
-    def amount(self, value: float) -> None:
+    def amount(self, value: int) -> None:
         if value < 0:
             raise NegativeAmountException('amount field must be >= 0')
         self._amount = value

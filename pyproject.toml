@@ -17,6 +17,8 @@ dependencies = [
     "pytest-cov (>=6.2.1,<7.0.0)",
     "aiosqlite (>=0.21.0,<0.22.0)",
     "pytest-xdist (>=3.8.0,<4.0.0)",
+    "aiomysql (>=0.2.0,<0.3.0)",
+    "cryptography (>=46.0.1,<47.0.0)",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -32,6 +34,7 @@ build-backend = "poetry.core.masonry.api"
 addopts = "-ra -s"
 testpaths = ["tests"]
 pythonpath = "src"
+asyncio_mode = "strict"
 markers = [
     "integration: mark test as integration",
     "unit: mark test as unit"
