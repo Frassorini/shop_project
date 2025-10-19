@@ -4,12 +4,12 @@ from typing import Callable
 
 import pytest
 
-from shop_project.application.dto.customer_order_dto import CustomerOrderDTO
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.application.dto.mapper import to_dto, to_domain
 from shop_project.domain.store_item import StoreItem
 
-def test_to_dto(customer_order_factory: Callable[[], CustomerOrder], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+def test_to_dto(customer_order_factory: Callable[[], PurchaseActive], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
@@ -21,7 +21,7 @@ def test_to_dto(customer_order_factory: Callable[[], CustomerOrder], potatoes_st
     assert dto.items[0].store_item_id == order.get_items()[0].store_item_id.value
 
 
-def test_to_domain(customer_order_factory: Callable[[], CustomerOrder], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
+def test_to_domain(customer_order_factory: Callable[[], PurchaseActive], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)

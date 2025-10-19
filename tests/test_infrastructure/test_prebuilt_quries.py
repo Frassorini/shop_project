@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store import Store
 from shop_project.domain.supplier_order import SupplierOrder
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.store_item import StoreItem
 
 from shop_project.infrastructure.database.core import Database
@@ -17,7 +17,7 @@ from shop_project.exceptions import UnitOfWorkException, ResourcesException
 
 from shop_project.infrastructure.query.queries.prebuilt_queries import (
     CountStoreItemsQuery,
-    BiggestCustomerOrdersQuery,
+    BiggestPurchaseActivesQuery,
 )
 
 

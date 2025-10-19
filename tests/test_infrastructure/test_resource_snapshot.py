@@ -3,7 +3,7 @@ from typing import Any, Callable, Type
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.store import Store
 from shop_project.infrastructure.resource_manager.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.application.dto.mapper import to_dto
 
 
@@ -15,7 +15,7 @@ def get_resource_snapshot(resources: dict[Type[BaseAggregate], list[BaseAggregat
         return ResourceSnapshot(snapshot_set_vector)
 
 
-def test_identity_snapshot(customer_order_factory: Callable[[], CustomerOrder],
+def test_identity_snapshot(customer_order_factory: Callable[[], PurchaseActive],
                            store_factory_with_cache: Callable[[str], Store],):
     customer_order_1 = customer_order_factory()
     customer_order_2 = customer_order_factory()
@@ -38,46 +38,46 @@ def test_identity_snapshot(customer_order_factory: Callable[[], CustomerOrder],
     
 
 
-def test_intersect(customer_order_factory: Callable[[], CustomerOrder],
+def test_intersect(customer_order_factory: Callable[[], PurchaseActive],
                    store_factory_with_cache: Callable[[str], Store],):
     customer_order_1 = customer_order_factory()
     customer_order_2 = customer_order_factory()
-    snapshot_before: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
+    snapshot_before: ResourceSnapshot = get_resource_snapshot({PurchaseActive: [customer_order_1, customer_order_2]})
     
     customer_order_1_old = to_dto(customer_order_1)
     customer_order_1.store_id = store_factory_with_cache('New York').entity_id
     
-    snapshot_after: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
+    snapshot_after: ResourceSnapshot = get_resource_snapshot({PurchaseActive: [customer_order_1, customer_order_2]})
     
     customer_order_2_snapshot = to_dto(customer_order_2)
 
     intersect_by_id_before_side = snapshot_before.intersect_identity(snapshot_after)
-    assert intersect_by_id_before_side.to_dict()[CustomerOrder] == [customer_order_1_old, customer_order_2_snapshot]
+    assert intersect_by_id_before_side.to_dict()[PurchaseActive] == [customer_order_1_old, customer_order_2_snapshot]
     
     intersect_by_id_after_side = snapshot_after.intersect_identity(snapshot_before)
-    assert intersect_by_id_after_side.to_dict()[CustomerOrder] == [to_dto(customer_order_1), customer_order_2_snapshot]
+    assert intersect_by_id_after_side.to_dict()[PurchaseActive] == [to_dto(customer_order_1), customer_order_2_snapshot]
     
     intersect_by_content_before_side = snapshot_before.intersect_content(snapshot_after)
-    assert intersect_by_content_before_side.to_dict()[CustomerOrder] == [customer_order_2_snapshot]
+    assert intersect_by_content_before_side.to_dict()[PurchaseActive] == [customer_order_2_snapshot]
     
     intersect_by_content_after_side = snapshot_after.intersect_content(snapshot_before)
-    assert intersect_by_content_after_side.to_dict()[CustomerOrder] == [customer_order_2_snapshot]
+    assert intersect_by_content_after_side.to_dict()[PurchaseActive] == [customer_order_2_snapshot]
 
 
-def test_difference(customer_order_factory: Callable[[], CustomerOrder],
+def test_difference(customer_order_factory: Callable[[], PurchaseActive],
                     store_factory_with_cache: Callable[[str], Store],):
     customer_order_1 = customer_order_factory()
     customer_order_2 = customer_order_factory()
     
-    snapshot_before: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
+    snapshot_before: ResourceSnapshot = get_resource_snapshot({PurchaseActive: [customer_order_1, customer_order_2]})
     
     customer_order_1.store_id = store_factory_with_cache('New York').entity_id
     
-    snapshot_after: ResourceSnapshot = get_resource_snapshot({CustomerOrder: [customer_order_1, customer_order_2]})
+    snapshot_after: ResourceSnapshot = get_resource_snapshot({PurchaseActive: [customer_order_1, customer_order_2]})
 
     difference_by_id_before_side = snapshot_before.difference_identity(snapshot_after)
-    assert not difference_by_id_before_side.to_dict()[CustomerOrder]
+    assert not difference_by_id_before_side.to_dict()[PurchaseActive]
     
     difference_by_id_after_side = snapshot_after.difference_identity(snapshot_before)
-    assert not difference_by_id_after_side.to_dict()[CustomerOrder]
+    assert not difference_by_id_after_side.to_dict()[PurchaseActive]
      

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Type, TypeVar
 
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.domain.store import Store
@@ -33,16 +33,16 @@ class DomainReferenceRegistry():
     def _get_map(cls) -> dict[Type[Any], dict[Type[Any], DomainReferenceDescriptor[Any]]]:
         return {
             Customer: {
-                CustomerOrder: DomainReferenceDescriptor(
+                PurchaseActive: DomainReferenceDescriptor(
                     attribute_name="customer_id",
                     strategy=lambda customer: [customer.entity_id]
                 ),
-                Cart: DomainReferenceDescriptor(
+                PurchaseDraft: DomainReferenceDescriptor(
                     attribute_name="entity_id",
                     strategy=lambda customer: [customer.entity_id]
                 ),
             },
-            CustomerOrder: {
+            PurchaseActive: {
                 StoreItem: DomainReferenceDescriptor(
                     attribute_name="entity_id",
                     strategy=lambda order: [item.store_item_id for item in order.get_items()],
@@ -58,7 +58,7 @@ class DomainReferenceRegistry():
                     strategy=lambda order: [item.store_item_id for item in order.get_items()]
                 ),
             },
-            Cart: {
+            PurchaseDraft: {
                 StoreItem: DomainReferenceDescriptor(
                     attribute_name="entity_id",
                     strategy=lambda cart: [item.store_item_id for item in cart.get_items()]

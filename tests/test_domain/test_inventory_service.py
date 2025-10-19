@@ -2,14 +2,14 @@ from typing import Callable
 
 import pytest
 
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.services.inventory_service import InventoryService
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.supplier_order import SupplierOrder
 
 
-def test_reserve_order(customer_order_factory: Callable[[], CustomerOrder],
+def test_reserve_order(customer_order_factory: Callable[[], PurchaseActive],
                        potatoes_store_item_10: Callable[[], StoreItem], 
                        sausages_store_item_10: Callable[[], StoreItem],) -> None:
     potatoes: StoreItem = potatoes_store_item_10()
@@ -26,7 +26,7 @@ def test_reserve_order(customer_order_factory: Callable[[], CustomerOrder],
     assert sausages.amount == 8
 
 
-def test_insufficient_stock(customer_order_factory: Callable[[], CustomerOrder],
+def test_insufficient_stock(customer_order_factory: Callable[[], PurchaseActive],
                        potatoes_store_item_10: Callable[[], StoreItem], 
                        sausages_store_item_10: Callable[[], StoreItem],) -> None:
     potatoes: StoreItem = potatoes_store_item_10()
@@ -40,7 +40,7 @@ def test_insufficient_stock(customer_order_factory: Callable[[], CustomerOrder],
         inventory_service.reserve_stock(order.get_items())
 
 
-def test_invalid_stock(customer_order_factory: Callable[[], CustomerOrder],
+def test_invalid_stock(customer_order_factory: Callable[[], PurchaseActive],
                        potatoes_store_item_10: Callable[[], StoreItem], 
                        sausages_store_item_10: Callable[[], StoreItem],) -> None:
     potatoes: StoreItem = potatoes_store_item_10()
@@ -54,7 +54,7 @@ def test_invalid_stock(customer_order_factory: Callable[[], CustomerOrder],
         inventory_service.reserve_stock(order.get_items())
 
 
-def test_restock_customer(customer_order_factory: Callable[[], CustomerOrder],
+def test_restock_customer(customer_order_factory: Callable[[], PurchaseActive],
                           potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes: StoreItem = potatoes_store_item_10()
     inventory_service: InventoryService = InventoryService(stock=[potatoes])

@@ -6,9 +6,9 @@ from plum import overload, dispatch
 import pytest
 
 from shop_project.domain.store import Store
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.shared.entity_id import EntityId
@@ -27,11 +27,11 @@ def domain_object_factory(customer_andrew: Callable[[], Customer],
     def factory(model_type: Type[BaseAggregate]) -> AggregateContainer:
         if model_type is Customer:
             return AggregateContainer(customer_andrew(), dependencies={})
-        elif model_type is CustomerOrder:
+        elif model_type is PurchaseActive:
             return customer_order_container_factory()
         elif model_type is SupplierOrder:
             return supplier_order_container_factory()
-        elif model_type is Cart:
+        elif model_type is PurchaseDraft:
             return cart_container_factory()
         elif model_type is StoreItem:
             store = store_factory('Moscow')

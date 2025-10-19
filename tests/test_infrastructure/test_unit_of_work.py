@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store import Store
 from shop_project.domain.supplier_order import SupplierOrder
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.store_item import StoreItem
 
 from shop_project.infrastructure.database.core import Database
@@ -22,7 +22,7 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('model_type', [Customer, StoreItem, Store, CustomerOrder, SupplierOrder, Cart],)
+@pytest.mark.parametrize('model_type', [Customer, StoreItem, Store, PurchaseActive, SupplierOrder, PurchaseDraft],)
 async def test_create_delete(model_type: Type[DomainObject], 
                 test_db: Database,
                 uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
@@ -138,7 +138,7 @@ async def test_update_customer_order(test_db: Database,
                                      prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
                                      uow_check: Callable[..., Any],
                                      store_item_container_factory: Callable[..., AggregateContainer]) -> None:
-    model_type: Type[Any] = CustomerOrder
+    model_type: Type[Any] = PurchaseActive
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
@@ -148,7 +148,7 @@ async def test_update_customer_order(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
-        domain_obj: CustomerOrder = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        domain_obj: PurchaseActive = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         store_item = store_item_container_factory(
             name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
         )
@@ -202,7 +202,7 @@ async def test_update_cart(test_db: Database,
                            prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
                            uow_check: Callable[..., Any],
                            store_item_container_factory: Callable[..., AggregateContainer]) -> None:
-    model_type: Type[Any] = Cart
+    model_type: Type[Any] = PurchaseDraft
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
@@ -212,7 +212,7 @@ async def test_update_cart(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
-        domain_obj: Cart = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        domain_obj: PurchaseDraft = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         store_item = store_item_container_factory(
             name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
         )

@@ -5,7 +5,7 @@ from shop_project.domain.exceptions import DomainException
 from shop_project.domain.services.reservation_service import ReservationService
 from shop_project.domain.services.inventory_service import InventoryService
 from shop_project.domain.store_item import StoreItem
-from shop_project.domain.customer_order import CustomerOrder, CustomerOrderState
+from shop_project.domain.purchase_active import PurchaseActive, PurchaseActiveState
 
 
 def test_(potatoes_store_item_10: Callable[[], StoreItem]) -> None:
@@ -15,7 +15,7 @@ def test_(potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     reservation_service = ReservationService(inventory_service)
 
 
-def test_reserve_customer_order(customer_order_factory: Callable[[], CustomerOrder],
+def test_reserve_customer_order(customer_order_factory: Callable[[], PurchaseActive],
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
@@ -26,10 +26,10 @@ def test_reserve_customer_order(customer_order_factory: Callable[[], CustomerOrd
     reservation_service.reserve_customer_order(order)    
 
     assert potatoes.amount == 8
-    assert order.state == CustomerOrderState.RESERVED
+    assert order.state == PurchaseActiveState.RESERVED
 
 
-def test_reserve_wrong_customer_order(customer_order_factory: Callable[[], CustomerOrder],
+def test_reserve_wrong_customer_order(customer_order_factory: Callable[[], PurchaseActive],
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
@@ -43,7 +43,7 @@ def test_reserve_wrong_customer_order(customer_order_factory: Callable[[], Custo
         reservation_service.reserve_customer_order(order)
         
 
-def test_cancel_customer_order(customer_order_factory: Callable[[], CustomerOrder],
+def test_cancel_customer_order(customer_order_factory: Callable[[], PurchaseActive],
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()
@@ -57,7 +57,7 @@ def test_cancel_customer_order(customer_order_factory: Callable[[], CustomerOrde
     assert potatoes.amount == 10
 
 
-def test_cancel_wrong_customer_order(customer_order_factory: Callable[[], CustomerOrder],
+def test_cancel_wrong_customer_order(customer_order_factory: Callable[[], PurchaseActive],
                                 potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     potatoes = potatoes_store_item_10()
     order = customer_order_factory()

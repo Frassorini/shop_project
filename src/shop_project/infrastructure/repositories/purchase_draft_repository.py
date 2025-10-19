@@ -3,29 +3,29 @@ from sqlalchemy import tuple_
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select, delete, insert, update
 
-from shop_project.application.dto.customer_order_dto import CustomerOrderDTO
+from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.domain.customer_order import CustomerOrder
-from shop_project.infrastructure.database.models.customer_order import CustomerOrder as CustomerOrderORM, CustomerOrderItem as CustomerOrderItemORM
+from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.infrastructure.database.models.purchase_draft import PurchaseDraft as PurchaseDraftORM, PurchaseDraftItem as PurchaseDraftItemORM
 from shop_project.shared.entity_id import EntityId
 
-class CustomerOrderRepository(BaseRepository[CustomerOrder]):
-    model_type = CustomerOrder
-    dto_type = CustomerOrderDTO
+class PurchaseDraftRepository(BaseRepository[PurchaseDraft]):
+    model_type = PurchaseDraft
+    dto_type = PurchaseDraftDTO
     
-    async def create(self, items: list[CustomerOrder]) -> None:
-        """Создает список CustomerOrders и их order_items одним bulk-запросом."""
+    async def create(self, items: list[PurchaseDraft]) -> None:
+        """Создает список PurchaseDrafts и их order_items одним bulk-запросом."""
         if not items:
             return
 
-        # --- CustomerOrders ---
+        # --- PurchaseDrafts ---
         order_snapshots = [item.to_dict() for item in items]
-        await self.session.execute(insert(CustomerOrderORM), order_snapshots)
+        await self.session.execute(insert(PurchaseDraftORM), order_snapshots)
 
-        # --- CustomerOrderItems ---
+        # --- PurchaseDraftItems ---
         item_snapshots: list[dict[str, Any]] = []
         for order_snap in order_snapshots:
             customer_order_id = order_snap["entity_id"]
@@ -35,9 +35,9 @@ class CustomerOrderRepository(BaseRepository[CustomerOrder]):
                 item_snapshots.append(snap)
 
         if item_snapshots:
-            await self.session.execute(insert(CustomerOrderItemORM), item_snapshots)
+            await self.session.execute(insert(PurchaseDraftItemORM), item_snapshots)
 
-    async def update(self, items: list[CustomerOrder]) -> None:
+    async def update(self, items: list[PurchaseDraft]) -> None:
         if not items:
             return
 
@@ -46,12 +46,12 @@ class CustomerOrderRepository(BaseRepository[CustomerOrder]):
 
         order_fields = [f for f in order_snapshots[0].keys() if f != "items"]
         update_order_values = {
-            field: self._build_bulk_update_case(field, order_snapshots, CustomerOrderORM, ["entity_id"])
+            field: self._build_bulk_update_case(field, order_snapshots, PurchaseDraftORM, ["entity_id"])
             for field in order_fields
         }
         await self.session.execute(
-            update(CustomerOrderORM)
-            .where(CustomerOrderORM.entity_id.in_(order_ids))
+            update(PurchaseDraftORM)
+            .where(PurchaseDraftORM.entity_id.in_(order_ids))
             .values(**update_order_values)
         )
 
@@ -59,30 +59,32 @@ class CustomerOrderRepository(BaseRepository[CustomerOrder]):
         for snap in order_snapshots:
             for item in snap.get("items", []):
                 snapshot = item.copy()
-                snapshot["customer_order_id"] = snap["entity_id"]
+                snapshot["cart_id"] = snap["entity_id"]
                 item_snapshots.append(snapshot)
 
         await self._replace_children(
             session=self.session,
-            root_id_name="customer_order_id",
+            root_id_name="cart_id",
             root_ids=order_ids,
-            child_model=CustomerOrderItemORM,
+            child_model=PurchaseDraftItemORM,
             new_items=item_snapshots,
         )
 
-    async def delete(self, items: list[CustomerOrder]) -> None:
-        """Удаляет список CustomerOrders и их order_items одним bulk-запросом."""
+
+
+    async def delete(self, items: list[PurchaseDraft]) -> None:
+        """Удаляет список PurchaseDrafts и их order_items одним bulk-запросом."""
         if not items:
             return
 
         # --- Удаляем сначала order_items ---
         ids = [item.entity_id.value for item in items]
         await self.session.execute(
-            delete(CustomerOrderItemORM).where(CustomerOrderItemORM.customer_order_id.in_(ids))
+            delete(PurchaseDraftItemORM).where(PurchaseDraftItemORM.cart_id.in_(ids))
         )
 
-        # --- Затем CustomerOrders ---
+        # --- Затем PurchaseDrafts ---
         await self.session.execute(
-            delete(CustomerOrderORM).where(CustomerOrderORM.entity_id.in_(ids))
+            delete(PurchaseDraftORM).where(PurchaseDraftORM.entity_id.in_(ids))
         )
     

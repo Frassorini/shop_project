@@ -5,9 +5,9 @@ from sqlalchemy.orm.session import Session
 
 from shop_project.application.dto.base_dto import BaseDTO
 
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.store import Store
 from shop_project.domain.store_item import StoreItem
@@ -15,8 +15,8 @@ from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
-from shop_project.infrastructure.repositories.cart_repository import CartRepository
-from shop_project.infrastructure.repositories.customer_order_repository import CustomerOrderRepository
+from shop_project.infrastructure.repositories.purchase_draft_repository import PurchaseDraftRepository
+from shop_project.infrastructure.repositories.purchase_active_repository import PurchaseActiveRepository
 from shop_project.infrastructure.repositories.customer_repository import CustomerRepository
 from shop_project.infrastructure.repositories.mock_repository import MockRepository
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
@@ -33,9 +33,9 @@ REPOSITORIES: dict[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
     Customer: CustomerRepository,
     Store: StoreRepository,
     StoreItem: StoreItemRepository,
-    CustomerOrder: CustomerOrderRepository,
+    PurchaseActive: PurchaseActiveRepository,
     SupplierOrder: SupplierOrderRepository,
-    Cart: CartRepository,
+    PurchaseDraft: PurchaseDraftRepository,
 }
 
 class RepositoryContainer:

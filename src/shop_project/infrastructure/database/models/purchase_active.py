@@ -1,17 +1,18 @@
-from sqlalchemy import Column, ForeignKeyConstraint, Integer, PrimaryKeyConstraint, String
+from sqlalchemy import Column, ForeignKeyConstraint, Integer, Numeric, PrimaryKeyConstraint, String
 from sqlalchemy.orm import Mapped, relationship
 from shop_project.infrastructure.database.models.base import Base
 from shop_project.infrastructure.database.uuid_binary import UUIDBinary
 
 
-class Cart(Base):
-    __tablename__ = 'cart'
+class PurchaseActive(Base):
+    __tablename__ = 'customer_order'
     
     entity_id = Column(UUIDBinary(), nullable=False)
     customer_id = Column(UUIDBinary(), nullable=False)
     store_id = Column(UUIDBinary(), nullable=False)
+    state = Column(String(50), nullable=False)
     
-    items: Mapped[list["CartItem"]] = relationship(
+    items: Mapped[list["PurchaseActiveItem"]] = relationship(
         back_populates="order",
         cascade="all, delete-orphan",
         lazy="raise",
@@ -23,20 +24,21 @@ class Cart(Base):
     )
     
     
-class CartItem(Base):
-    __tablename__ = 'cart_item'
+class PurchaseActiveItem(Base):
+    __tablename__ = 'customer_order_item'
     
-    cart_id = Column(UUIDBinary(), nullable=False)
+    customer_order_id = Column(UUIDBinary(), nullable=False)
     store_item_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
+    price = Column(Numeric(), nullable=False)
     
-    order: Mapped["Cart"] = relationship(
+    order: Mapped["PurchaseActive"] = relationship(
         back_populates="items",
         lazy="raise",
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('cart_id', 'store_item_id'),
-        ForeignKeyConstraint(['cart_id'], ['cart.entity_id']),
+        PrimaryKeyConstraint('customer_order_id', 'store_item_id'),
+        ForeignKeyConstraint(['customer_order_id'], ['customer_order.entity_id']),
         ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
     )

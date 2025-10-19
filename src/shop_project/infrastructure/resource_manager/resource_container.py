@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, Literal, Sequence, Type, TypeVar, cast
 
 from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.store import Store
@@ -12,7 +12,7 @@ from shop_project.shared.entity_id import EntityId
 from shop_project.infrastructure.resource_manager.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
 from shop_project.exceptions import ResourcesException
 
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store_item import StoreItem
 
 from shop_project.application.dto.mapper import to_dto
@@ -76,9 +76,9 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
             Customer: [],
             Store: [],
             StoreItem: [],
-            CustomerOrder: [],
+            PurchaseActive: [],
             SupplierOrder: [],
-            Cart: [],
+            PurchaseDraft: [],
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
         self._resource_snapshot_current: ResourceSnapshot | None = None

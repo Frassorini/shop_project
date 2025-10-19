@@ -8,24 +8,24 @@ from sqlalchemy.sql import select, delete, insert, update
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.store_item_dto import StoreItemDTO
 from shop_project.application.dto.store_dto import StoreDTO
-from shop_project.application.dto.cart_dto import CartDTO
-from shop_project.application.dto.customer_order_dto import CustomerOrderDTO
+from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
+from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.application.dto.supplier_order_dto import SupplierOrderDTO
 from shop_project.application.dto.base_dto import BaseDTO
 
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.infrastructure.database.models.store_item import StoreItem as StoreItemORM
 from shop_project.infrastructure.database.models.store import Store as StoreORM
-from shop_project.infrastructure.database.models.customer_order import CustomerOrder as CustomerOrderORM, CustomerOrderItem as CustomerOrderItemORM
+from shop_project.infrastructure.database.models.purchase_active import PurchaseActive as PurchaseActiveORM, PurchaseActiveItem as PurchaseActiveItemORM
 from shop_project.infrastructure.database.models.supplier_order import SupplierOrder as SupplierOrderORM, SupplierOrderItem as SupplierOrderItemORM
-from shop_project.infrastructure.database.models.cart import Cart as CartORM, CartItem as CartItemORM
+from shop_project.infrastructure.database.models.purchase_draft import PurchaseDraft as PurchaseDraftORM, PurchaseDraftItem as PurchaseDraftItemORM
 
 from shop_project.domain.customer import Customer
 from shop_project.domain.store_item import StoreItem
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.domain.store import Store
-from shop_project.domain.cart import Cart
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.base_aggregate import BaseAggregate
 
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery, QueryLock
@@ -33,7 +33,7 @@ from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.query.queries.prebuilt_queries import (
     CountStoreItemsQuery,
-    BiggestCustomerOrdersQuery,
+    BiggestPurchaseActivesQuery,
 )
 
 def _apply_lock(query: Any, lock: QueryLock, of: list[Any]):
@@ -69,16 +69,16 @@ def _translate_domain(model_type: Type[Store], query: DomainLoadQuery) -> Any:
     return _apply_lock(base_query, query.lock, [StoreORM])
 
 @overload
-def _translate_domain(model_type: Type[CustomerOrder], query: DomainLoadQuery) -> Any:
-    item_alias = aliased(CustomerOrderItemORM, name="customer_order_item")
+def _translate_domain(model_type: Type[PurchaseActive], query: DomainLoadQuery) -> Any:
+    item_alias = aliased(PurchaseActiveItemORM, name="customer_order_item")
     
     base_query = (
-        select(CustomerOrderORM)
-        .outerjoin(item_alias, CustomerOrderORM.items)
-        .where(query.criteria.to_sqlalchemy(CustomerOrderORM))
-        .options(joinedload(CustomerOrderORM.items))
+        select(PurchaseActiveORM)
+        .outerjoin(item_alias, PurchaseActiveORM.items)
+        .where(query.criteria.to_sqlalchemy(PurchaseActiveORM))
+        .options(joinedload(PurchaseActiveORM.items))
     )
-    return _apply_lock(base_query, query.lock, [CustomerOrderORM, item_alias])
+    return _apply_lock(base_query, query.lock, [PurchaseActiveORM, item_alias])
 
 @overload
 def _translate_domain(model_type: Type[SupplierOrder], query: DomainLoadQuery) -> Any:
@@ -93,16 +93,16 @@ def _translate_domain(model_type: Type[SupplierOrder], query: DomainLoadQuery) -
     return _apply_lock(base_query, query.lock, [SupplierOrderORM, item_alias])
 
 @overload
-def _translate_domain(model_type: Type[Cart], query: DomainLoadQuery) -> Any:
-    item_alias = aliased(CartItemORM, name="cart_item")
+def _translate_domain(model_type: Type[PurchaseDraft], query: DomainLoadQuery) -> Any:
+    item_alias = aliased(PurchaseDraftItemORM, name="cart_item")
     
     base_query = (
-        select(CartORM)
-        .outerjoin(item_alias, CartORM.items)
-        .where(query.criteria.to_sqlalchemy(CartORM))
-        .options(joinedload(CartORM.items))
+        select(PurchaseDraftORM)
+        .outerjoin(item_alias, PurchaseDraftORM.items)
+        .where(query.criteria.to_sqlalchemy(PurchaseDraftORM))
+        .options(joinedload(PurchaseDraftORM.items))
     )
-    return _apply_lock(base_query, query.lock, [CartORM, item_alias])
+    return _apply_lock(base_query, query.lock, [PurchaseDraftORM, item_alias])
 
 @dispatch
 def _translate_domain(model_type: Type[BaseAggregate], query: DomainLoadQuery) -> Any:
@@ -110,7 +110,7 @@ def _translate_domain(model_type: Type[BaseAggregate], query: DomainLoadQuery) -
 
 
 @overload
-def _translate_prebuilt(query: BiggestCustomerOrdersQuery) -> Any:
+def _translate_prebuilt(query: BiggestPurchaseActivesQuery) -> Any:
     pass
 
 @overload

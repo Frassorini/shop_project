@@ -1,13 +1,13 @@
 from typing import Literal
 
 
-from shop_project.domain.customer_order import CustomerOrder
+from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store_item import StoreItem
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 
 
-class BiggestCustomerOrdersQuery(PrebuiltLoadQuery):
-    model_type = CustomerOrder
+class BiggestPurchaseActivesQuery(PrebuiltLoadQuery):
+    model_type = PurchaseActive
     return_type: Literal['DOMAIN', 'SCALARS'] = 'DOMAIN'
     def set_args(self) -> None:
         pass

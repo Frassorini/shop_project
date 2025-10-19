@@ -1,12 +1,12 @@
 from decimal import Decimal
 from typing import Callable
-from shop_project.domain.customer_order import CustomerOrder, CustomerOrderState, CustomerOrderItem
+from shop_project.domain.purchase_active import PurchaseActive, PurchaseActiveState, PurchaseActiveItem
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.store_item import StoreItem
 import pytest
 
 
-def test_snapshot(customer_order_factory: Callable[[], CustomerOrder],
+def test_snapshot(customer_order_factory: Callable[[], PurchaseActive],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
@@ -19,20 +19,20 @@ def test_snapshot(customer_order_factory: Callable[[], CustomerOrder],
     assert snapshot['items'][0]['store_item_id'] == order.get_items()[0].store_item_id.value
 
 
-def test_from_snapshot(customer_order_factory: Callable[[], CustomerOrder], 
+def test_from_snapshot(customer_order_factory: Callable[[], PurchaseActive], 
                        potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
     
-    order_from_snapshot = CustomerOrder.from_dict(order.to_dict())
+    order_from_snapshot = PurchaseActive.from_dict(order.to_dict())
     
     assert order_from_snapshot.entity_id == order.entity_id
     assert order_from_snapshot.state == order.state
     assert order_from_snapshot.get_items() == order.get_items()
     
 
-def test_add_item(customer_order_factory: Callable[[], CustomerOrder],
+def test_add_item(customer_order_factory: Callable[[], PurchaseActive],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
@@ -41,7 +41,7 @@ def test_add_item(customer_order_factory: Callable[[], CustomerOrder],
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
 
 
-def test_add_negative_amount(customer_order_factory: Callable[[], CustomerOrder],
+def test_add_negative_amount(customer_order_factory: Callable[[], PurchaseActive],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
@@ -50,7 +50,7 @@ def test_add_negative_amount(customer_order_factory: Callable[[], CustomerOrder]
         order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=-2, store_id=store_item.store_id)
 
 
-def test_add_negative_price(customer_order_factory: Callable[[], CustomerOrder],
+def test_add_negative_price(customer_order_factory: Callable[[], PurchaseActive],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
@@ -59,19 +59,19 @@ def test_add_negative_price(customer_order_factory: Callable[[], CustomerOrder],
         order.add_item(store_item_id=store_item.entity_id, price=Decimal(-1), amount=2, store_id=store_item.store_id)
 
 
-def test_get_item(customer_order_factory: Callable[[], CustomerOrder],
+def test_get_item(customer_order_factory: Callable[[], PurchaseActive],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
     order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
     
-    order_item: CustomerOrderItem = order.get_item(store_item.entity_id)
+    order_item: PurchaseActiveItem = order.get_item(store_item.entity_id)
     
     assert order_item.amount == 2
 
 
-def test_cannot_add_duplicate_item(customer_order_factory: Callable[[], CustomerOrder], 
+def test_cannot_add_duplicate_item(customer_order_factory: Callable[[], PurchaseActive], 
                                    potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
@@ -81,7 +81,7 @@ def test_cannot_add_duplicate_item(customer_order_factory: Callable[[], Customer
         order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=3, store_id=store_item.store_id)
 
 
-def test_cannot_add_from_another_store(customer_order_factory: Callable[[], CustomerOrder], 
+def test_cannot_add_from_another_store(customer_order_factory: Callable[[], PurchaseActive], 
                                        potatoes_store_item_10: Callable[..., StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10(store="Petersburg")
     order = customer_order_factory()
@@ -91,19 +91,19 @@ def test_cannot_add_from_another_store(customer_order_factory: Callable[[], Cust
 
 
 @pytest.mark.parametrize("from_state, method", [
-    (CustomerOrderState.PENDING, "reserve"),
+    (PurchaseActiveState.PENDING, "reserve"),
 
-    (CustomerOrderState.RESERVED, "pay"),
+    (PurchaseActiveState.RESERVED, "pay"),
     
-    (CustomerOrderState.PAID, "claim"),
-    (CustomerOrderState.PAID, "unclaim"),
-    (CustomerOrderState.PAID, "refund"),
+    (PurchaseActiveState.PAID, "claim"),
+    (PurchaseActiveState.PAID, "unclaim"),
+    (PurchaseActiveState.PAID, "refund"),
     
-    (CustomerOrderState.UNCLAIMED, "refund"),
+    (PurchaseActiveState.UNCLAIMED, "refund"),
 ])
-def test_valid_transitions(from_state: CustomerOrderState, method: str, 
-                           customer_order_factory: Callable[[], CustomerOrder],
-                           transition_order_to_state: Callable[[CustomerOrder, CustomerOrderState], None], 
+def test_valid_transitions(from_state: PurchaseActiveState, method: str, 
+                           customer_order_factory: Callable[[], PurchaseActive],
+                           transition_order_to_state: Callable[[PurchaseActive, PurchaseActiveState], None], 
                            potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
@@ -116,38 +116,38 @@ def test_valid_transitions(from_state: CustomerOrderState, method: str,
 
 
 @pytest.mark.parametrize("from_state, method", [
-    (CustomerOrderState.PENDING, "pay"),
-    (CustomerOrderState.PENDING, "claim"),
-    (CustomerOrderState.PENDING, "unclaim"),
-    (CustomerOrderState.PENDING, "refund"),
-    (CustomerOrderState.PENDING, "cancel"),
+    (PurchaseActiveState.PENDING, "pay"),
+    (PurchaseActiveState.PENDING, "claim"),
+    (PurchaseActiveState.PENDING, "unclaim"),
+    (PurchaseActiveState.PENDING, "refund"),
+    (PurchaseActiveState.PENDING, "cancel"),
     
-    (CustomerOrderState.RESERVED, "reserve"),
-    (CustomerOrderState.RESERVED, "claim"),
-    (CustomerOrderState.RESERVED, "unclaim"),
-    (CustomerOrderState.RESERVED, "refund"),
+    (PurchaseActiveState.RESERVED, "reserve"),
+    (PurchaseActiveState.RESERVED, "claim"),
+    (PurchaseActiveState.RESERVED, "unclaim"),
+    (PurchaseActiveState.RESERVED, "refund"),
     
-    (CustomerOrderState.PAID, "reserve"),
-    (CustomerOrderState.PAID, "pay"),
-    (CustomerOrderState.PAID, "cancel"),
+    (PurchaseActiveState.PAID, "reserve"),
+    (PurchaseActiveState.PAID, "pay"),
+    (PurchaseActiveState.PAID, "cancel"),
     
-    (CustomerOrderState.CLAIMED, "reserve"),
-    (CustomerOrderState.CLAIMED, "pay"),
-    (CustomerOrderState.CLAIMED, "claim"),
-    (CustomerOrderState.CLAIMED, "unclaim"),
-    (CustomerOrderState.CLAIMED, "refund"),
-    (CustomerOrderState.CLAIMED, "cancel"),
+    (PurchaseActiveState.CLAIMED, "reserve"),
+    (PurchaseActiveState.CLAIMED, "pay"),
+    (PurchaseActiveState.CLAIMED, "claim"),
+    (PurchaseActiveState.CLAIMED, "unclaim"),
+    (PurchaseActiveState.CLAIMED, "refund"),
+    (PurchaseActiveState.CLAIMED, "cancel"),
     
-    (CustomerOrderState.CANCELLED, "reserve"),
-    (CustomerOrderState.CANCELLED, "pay"),
-    (CustomerOrderState.CANCELLED, "claim"),
-    (CustomerOrderState.CANCELLED, "unclaim"),
-    (CustomerOrderState.CANCELLED, "refund"),
-    (CustomerOrderState.CANCELLED, "cancel"),
+    (PurchaseActiveState.CANCELLED, "reserve"),
+    (PurchaseActiveState.CANCELLED, "pay"),
+    (PurchaseActiveState.CANCELLED, "claim"),
+    (PurchaseActiveState.CANCELLED, "unclaim"),
+    (PurchaseActiveState.CANCELLED, "refund"),
+    (PurchaseActiveState.CANCELLED, "cancel"),
 ])
-def test_invalid_transitions(from_state: CustomerOrderState, method: str, 
-                             customer_order_factory: Callable[[], CustomerOrder], 
-                             transition_order_to_state: Callable[[CustomerOrder, CustomerOrderState], None], 
+def test_invalid_transitions(from_state: PurchaseActiveState, method: str, 
+                             customer_order_factory: Callable[[], PurchaseActive], 
+                             transition_order_to_state: Callable[[PurchaseActive, PurchaseActiveState], None], 
                              potatoes_store_item_10: Callable[[], StoreItem],) -> None:
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
@@ -161,19 +161,19 @@ def test_invalid_transitions(from_state: CustomerOrderState, method: str,
     
 
 @pytest.mark.parametrize("from_state, method", [
-    (CustomerOrderState.PENDING, "can_be_reserved"),
+    (PurchaseActiveState.PENDING, "can_be_reserved"),
 
-    (CustomerOrderState.RESERVED, "can_be_paid"),
+    (PurchaseActiveState.RESERVED, "can_be_paid"),
     
-    (CustomerOrderState.PAID, "can_be_claimed"),
-    (CustomerOrderState.PAID, "can_be_unclaimed"),
-    (CustomerOrderState.PAID, "can_be_refunded"),
+    (PurchaseActiveState.PAID, "can_be_claimed"),
+    (PurchaseActiveState.PAID, "can_be_unclaimed"),
+    (PurchaseActiveState.PAID, "can_be_refunded"),
     
-    (CustomerOrderState.UNCLAIMED, "can_be_refunded"),
+    (PurchaseActiveState.UNCLAIMED, "can_be_refunded"),
 ])
-def test_valid_checks(from_state: CustomerOrderState, method: str, 
-                      customer_order_factory: Callable[[], CustomerOrder], 
-                      transition_order_to_state: Callable[[CustomerOrder, CustomerOrderState], None], 
+def test_valid_checks(from_state: PurchaseActiveState, method: str, 
+                      customer_order_factory: Callable[[], PurchaseActive], 
+                      transition_order_to_state: Callable[[PurchaseActive, PurchaseActiveState], None], 
                       potatoes_store_item_10: Callable[[], StoreItem],) -> None:
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
@@ -186,29 +186,29 @@ def test_valid_checks(from_state: CustomerOrderState, method: str,
 
 
 @pytest.mark.parametrize("from_state, method", [
-    (CustomerOrderState.PENDING, "can_be_paid"),
-    (CustomerOrderState.PENDING, "can_be_claimed"),
-    (CustomerOrderState.PENDING, "can_be_cancelled"),
+    (PurchaseActiveState.PENDING, "can_be_paid"),
+    (PurchaseActiveState.PENDING, "can_be_claimed"),
+    (PurchaseActiveState.PENDING, "can_be_cancelled"),
     
-    (CustomerOrderState.RESERVED, "can_be_reserved"),
-    (CustomerOrderState.RESERVED, "can_be_claimed"),
+    (PurchaseActiveState.RESERVED, "can_be_reserved"),
+    (PurchaseActiveState.RESERVED, "can_be_claimed"),
     
-    (CustomerOrderState.PAID, "can_be_reserved"),
-    (CustomerOrderState.PAID, "can_be_paid"),
+    (PurchaseActiveState.PAID, "can_be_reserved"),
+    (PurchaseActiveState.PAID, "can_be_paid"),
     
-    (CustomerOrderState.CLAIMED, "can_be_reserved"),
-    (CustomerOrderState.CLAIMED, "can_be_paid"),
-    (CustomerOrderState.CLAIMED, "can_be_claimed"),
-    (CustomerOrderState.CLAIMED, "can_be_cancelled"),
+    (PurchaseActiveState.CLAIMED, "can_be_reserved"),
+    (PurchaseActiveState.CLAIMED, "can_be_paid"),
+    (PurchaseActiveState.CLAIMED, "can_be_claimed"),
+    (PurchaseActiveState.CLAIMED, "can_be_cancelled"),
     
-    (CustomerOrderState.CANCELLED, "can_be_reserved"),
-    (CustomerOrderState.CANCELLED, "can_be_paid"),
-    (CustomerOrderState.CANCELLED, "can_be_claimed"),
-    (CustomerOrderState.CANCELLED, "can_be_cancelled"),
+    (PurchaseActiveState.CANCELLED, "can_be_reserved"),
+    (PurchaseActiveState.CANCELLED, "can_be_paid"),
+    (PurchaseActiveState.CANCELLED, "can_be_claimed"),
+    (PurchaseActiveState.CANCELLED, "can_be_cancelled"),
 ])
-def test_invalid_checks(from_state: CustomerOrderState, method: str, 
-                        customer_order_factory: Callable[[], CustomerOrder],
-                        transition_order_to_state: Callable[[CustomerOrder, CustomerOrderState], None], 
+def test_invalid_checks(from_state: PurchaseActiveState, method: str, 
+                        customer_order_factory: Callable[[], PurchaseActive],
+                        transition_order_to_state: Callable[[PurchaseActive, PurchaseActiveState], None], 
                         potatoes_store_item_10: Callable[[], StoreItem],) -> None:
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
