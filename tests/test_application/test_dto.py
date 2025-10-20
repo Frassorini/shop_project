@@ -12,7 +12,7 @@ from shop_project.domain.store_item import StoreItem
 def test_to_dto(customer_order_factory: Callable[[], PurchaseActive], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     dto = to_dto(order)
     
@@ -24,7 +24,7 @@ def test_to_dto(customer_order_factory: Callable[[], PurchaseActive], potatoes_s
 def test_to_domain(customer_order_factory: Callable[[], PurchaseActive], potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     dto = to_dto(order)
     order_from_dto = to_domain(dto)

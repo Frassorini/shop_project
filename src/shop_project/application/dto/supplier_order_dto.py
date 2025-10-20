@@ -15,5 +15,4 @@ class SupplierOrderDTO(BaseDTO):
     state: str
     departure: datetime
     arrival: datetime
-    store_id: UUID
     items: list[SupplierOrderItemDTO]

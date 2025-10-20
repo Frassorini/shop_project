@@ -8,14 +8,13 @@ from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 class StoreItem(BaseAggregate):
-    def __init__(self, entity_id: EntityId, name: str, amount: int, store_id: EntityId, price: Decimal) -> None:
+    def __init__(self, entity_id: EntityId, name: str, amount: int, price: Decimal) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
         self.name: str = name 
         if amount < 0:
             raise NegativeAmountException('amount field must be >= 0')
         self._amount: int = amount 
-        self.store_id: EntityId = store_id
         self.price: Decimal = price
     
     @classmethod
@@ -23,8 +22,7 @@ class StoreItem(BaseAggregate):
         return cls(
             entity_id=EntityId(snapshot['entity_id']), 
             name=snapshot['name'], 
-            amount=snapshot['amount'], 
-            store_id=EntityId(snapshot['store_id']), 
+            amount=snapshot['amount'],
             price=snapshot['price']
         )
     
@@ -33,7 +31,6 @@ class StoreItem(BaseAggregate):
             'entity_id': self.entity_id.value,
             'name': self.name,
             'amount': self._amount,
-            'store_id': self.store_id.value,
             'price': self.price
         }
 

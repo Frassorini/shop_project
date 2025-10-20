@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import pytest
 from shop_project.domain.customer import Customer
-from shop_project.domain.store import Store
 from shop_project.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.query.queries.prebuilt_queries import CountStoreItemsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
@@ -101,7 +100,6 @@ def test_correct_locking_load_order():
         QueryPlanBuilder(mutating=True)
         .load(Customer).from_id([uuid4()]).for_share()
         .load(PurchaseActive).from_previous().for_share()
-        .load(Store).from_previous().for_share()
         .load(StoreItem).from_previous(1).for_update()
         .build()
     )
@@ -111,10 +109,9 @@ def test_wrong_locking_load_order():
     with pytest.raises(QueryPlanException):
         plan: QueryPlan = (
             QueryPlanBuilder(mutating=True)
-            .load(Customer).from_id([uuid4()]).for_share()
-            .load(PurchaseActive).from_previous().for_share()
+            .load(PurchaseActive).from_id([uuid4()]).for_share()
+            .load(Customer).from_previous().for_share()
             .load(StoreItem).from_previous().for_update()
-            .load(Store).from_previous(1).for_share()
             .build()
         )
 

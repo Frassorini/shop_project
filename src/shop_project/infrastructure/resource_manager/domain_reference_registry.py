@@ -6,7 +6,6 @@ from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.supplier_order import SupplierOrder
-from shop_project.domain.store import Store
 
 
 SourceType = TypeVar('SourceType')
@@ -47,10 +46,6 @@ class DomainReferenceRegistry():
                     attribute_name="entity_id",
                     strategy=lambda order: [item.store_item_id for item in order.get_items()],
                 ),
-                Store: DomainReferenceDescriptor(
-                    attribute_name="store_id",
-                    strategy=lambda order: [order.store_id],
-                )
             },
             SupplierOrder: {
                 StoreItem: DomainReferenceDescriptor(
@@ -65,6 +60,5 @@ class DomainReferenceRegistry():
                 ),
             },
             StoreItem: {},
-            Store: {},
         }
     

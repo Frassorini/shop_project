@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.store import Store
 from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.store_item import StoreItem
@@ -22,7 +21,7 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('model_type', [Customer, StoreItem, Store, PurchaseActive, SupplierOrder, PurchaseDraft],)
+@pytest.mark.parametrize('model_type', [Customer, StoreItem, PurchaseActive, SupplierOrder, PurchaseDraft],)
 async def test_create_delete(model_type: Type[DomainObject], 
                 test_db: Database,
                 uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
@@ -64,34 +63,6 @@ async def test_update_customer(test_db: Database,
     async with uow:
         resources = uow.get_resorces()
         domain_obj: Customer = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
-        
-        domain_obj.name = 'new name'
-        
-        snapshot_before = domain_obj.to_dict()
-        await uow.commit()
-    
-    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
-        assert snapshot_before == snapshot_after
-
-
-@pytest.mark.asyncio
-async def test_update_store(test_db: Database,
-                               uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                               prepare_container: Callable[[Type[DomainObject], Database], Coroutine[None, None, AggregateContainer]],
-                               uow_check: Callable[..., Any],) -> None:
-    model_type: Type[Any] = Store
-    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
-    
-    uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
-        )
-    
-    async with uow:
-        resources = uow.get_resorces()
-        domain_obj: Store = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         
         domain_obj.name = 'new name'
         
@@ -150,10 +121,10 @@ async def test_update_customer_order(test_db: Database,
         resources = uow.get_resorces()
         domain_obj: PurchaseActive = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         store_item = store_item_container_factory(
-            name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
+            name="test item", amount=10, price=1
         )
         resources.put(StoreItem, store_item.aggregate)
-        domain_obj.add_item(store_item.aggregate.entity_id, Decimal(1), 1, domain_obj.store_id)
+        domain_obj.add_item(store_item.aggregate.entity_id, Decimal(1), 1)
         
         snapshot_before = domain_obj.to_dict()
         await uow.commit()
@@ -182,10 +153,10 @@ async def test_update_supplier_order(test_db: Database,
         resources = uow.get_resorces()
         domain_obj: SupplierOrder = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         store_item = store_item_container_factory(
-            name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
+            name="test item", amount=10, price=1
         )
         resources.put(StoreItem, store_item.aggregate)
-        domain_obj.add_item(store_item.aggregate.entity_id, 1, domain_obj.store_id)
+        domain_obj.add_item(store_item.aggregate.entity_id, 1)
         
         snapshot_before = domain_obj.to_dict()
         await uow.commit()
@@ -214,10 +185,10 @@ async def test_update_cart(test_db: Database,
         resources = uow.get_resorces()
         domain_obj: PurchaseDraft = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         store_item = store_item_container_factory(
-            name="test item", amount=10, store=domain_container.dependencies[Store][0], price=1
+            name="test item", amount=10, price=1
         )
         resources.put(StoreItem, store_item.aggregate)
-        domain_obj.add_item(store_item.aggregate.entity_id, 1, domain_obj.store_id)
+        domain_obj.add_item(store_item.aggregate.entity_id, 1)
         
         snapshot_before = domain_obj.to_dict()
         await uow.commit()

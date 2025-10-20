@@ -10,7 +10,7 @@ def test_snapshot(customer_order_factory: Callable[[], PurchaseActive],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     snapshot = order.to_dict()
     
@@ -23,7 +23,7 @@ def test_from_snapshot(customer_order_factory: Callable[[], PurchaseActive],
                        potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = customer_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     order_from_snapshot = PurchaseActive.from_dict(order.to_dict())
     
@@ -38,7 +38,7 @@ def test_add_item(customer_order_factory: Callable[[], PurchaseActive],
     store_item: StoreItem = potatoes_store_item_10()
     
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
 
 
 def test_add_negative_amount(customer_order_factory: Callable[[], PurchaseActive],
@@ -47,7 +47,7 @@ def test_add_negative_amount(customer_order_factory: Callable[[], PurchaseActive
     store_item: StoreItem = potatoes_store_item_10()
     
     with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=-2, store_id=store_item.store_id)
+        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=-2)
 
 
 def test_add_negative_price(customer_order_factory: Callable[[], PurchaseActive],
@@ -56,7 +56,7 @@ def test_add_negative_price(customer_order_factory: Callable[[], PurchaseActive]
     store_item: StoreItem = potatoes_store_item_10()
     
     with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, price=Decimal(-1), amount=2, store_id=store_item.store_id)
+        order.add_item(store_item_id=store_item.entity_id, price=Decimal(-1), amount=2)
 
 
 def test_get_item(customer_order_factory: Callable[[], PurchaseActive],
@@ -64,7 +64,7 @@ def test_get_item(customer_order_factory: Callable[[], PurchaseActive],
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     order_item: PurchaseActiveItem = order.get_item(store_item.entity_id)
     
@@ -76,18 +76,9 @@ def test_cannot_add_duplicate_item(customer_order_factory: Callable[[], Purchase
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=3, store_id=store_item.store_id)
-
-
-def test_cannot_add_from_another_store(customer_order_factory: Callable[[], PurchaseActive], 
-                                       potatoes_store_item_10: Callable[..., StoreItem]) -> None:
-    store_item: StoreItem = potatoes_store_item_10(store="Petersburg")
-    order = customer_order_factory()
-    
-    with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+        order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=3)
 
 
 @pytest.mark.parametrize("from_state, method", [
@@ -108,7 +99,7 @@ def test_valid_transitions(from_state: PurchaseActiveState, method: str,
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     transition_order_to_state(order, from_state)
     
@@ -152,7 +143,7 @@ def test_invalid_transitions(from_state: PurchaseActiveState, method: str,
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     transition_order_to_state(order, from_state)
         
@@ -178,7 +169,7 @@ def test_valid_checks(from_state: PurchaseActiveState, method: str,
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     transition_order_to_state(order, from_state)
     
@@ -213,7 +204,7 @@ def test_invalid_checks(from_state: PurchaseActiveState, method: str,
     store_item: StoreItem = potatoes_store_item_10()
     order = customer_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, price=store_item.price, amount=2)
     
     transition_order_to_state(order, from_state)
         

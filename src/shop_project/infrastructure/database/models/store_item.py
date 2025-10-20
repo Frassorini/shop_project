@@ -7,12 +7,10 @@ class StoreItem(Base):
     __tablename__ = 'store_item'
     
     entity_id = Column(UUIDBinary(), nullable=False)
-    store_id = Column(UUIDBinary(), nullable=False)
     name = Column(String(50), nullable=False)
     amount = Column(Integer(), nullable=False)
     price = Column(Numeric(), nullable=False)
     
     __table_args__ = (
         PrimaryKeyConstraint('entity_id'),
-        ForeignKeyConstraint(['store_id'], ['store.entity_id']),
     )

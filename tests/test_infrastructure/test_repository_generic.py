@@ -11,7 +11,6 @@ from shop_project.domain import customer
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.store import Store
 from shop_project.domain.store_item import StoreItem
 from shop_project.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.database.core import Database

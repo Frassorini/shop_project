@@ -46,20 +46,18 @@ class SupplierOrderStateMachine(BaseStateMachine[SupplierOrderState]):
 
 
 class SupplierOrder(BaseAggregate):
-    def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime, store_id: EntityId) -> None:
+    def __init__(self, entity_id: EntityId, departure: datetime, arrival: datetime) -> None:
         self._entity_id: EntityId = entity_id
         self._state_machine: SupplierOrderStateMachine = SupplierOrderStateMachine(SupplierOrderState.PENDING)
         self.departure: datetime = departure
         self.arrival: datetime = arrival
-        self.store_id: EntityId = store_id
         
         self._items: dict[EntityId, SupplierOrderItem] = {}
     
     def to_dict(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.value, 
                 'departure': self.departure, 
-                'arrival': self.arrival, 
-                'store_id': self.store_id.value, 
+                'arrival': self.arrival,
                 'state': self.state.value,
                 'items': [item.to_dict() for item in self._items.values()],
                 }
@@ -72,7 +70,6 @@ class SupplierOrder(BaseAggregate):
         obj = cls(EntityId(snapshot['entity_id']),
                   snapshot['departure'], 
                   snapshot['arrival'], 
-                  EntityId(snapshot['store_id']),
                   )
         obj._state_machine = SupplierOrderStateMachine(SupplierOrderState(snapshot['state']))
         
@@ -81,18 +78,15 @@ class SupplierOrder(BaseAggregate):
         
         return obj
         
-    def _validate_item(self, store_item_id: EntityId, amount: int, store_id: EntityId) -> None:
+    def _validate_item(self, store_item_id: EntityId, amount: int) -> None:
         if store_item_id in self._items:
             raise DomainException('Item already added')
-        
-        if self.store_id != store_id:
-            raise DomainException('Item from another store')
         
         if amount <= 0:
             raise DomainException('Amount must be > 0')
     
-    def add_item(self, store_item_id: EntityId, amount: int, store_id: EntityId) -> None:
-        self._validate_item(store_item_id, amount, store_id)
+    def add_item(self, store_item_id: EntityId, amount: int) -> None:
+        self._validate_item(store_item_id, amount)
         
         self._items[store_item_id] = (SupplierOrderItem(
             store_item_id=store_item_id, 

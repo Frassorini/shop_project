@@ -7,7 +7,6 @@ from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.supplier_order import SupplierOrder
-from shop_project.domain.store import Store
 
 
 T = TypeVar('T')
@@ -24,6 +23,5 @@ class LockTotalOrderRegistry:
             PurchaseActive: 1,
             PurchaseDraft: 2,
             SupplierOrder: 3,
-            Store: 4,
-            StoreItem: 5,
+            StoreItem: 4,
         }

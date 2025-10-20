@@ -9,7 +9,6 @@ class PurchaseDraft(Base):
     
     entity_id = Column(UUIDBinary(), nullable=False)
     customer_id = Column(UUIDBinary(), nullable=False)
-    store_id = Column(UUIDBinary(), nullable=False)
     
     items: Mapped[list["PurchaseDraftItem"]] = relationship(
         back_populates="order",
@@ -19,7 +18,6 @@ class PurchaseDraft(Base):
     
     __table_args__ = (
         PrimaryKeyConstraint('entity_id'),
-        ForeignKeyConstraint(['store_id'], ['store.entity_id']),
     )
     
     

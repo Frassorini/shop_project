@@ -9,5 +9,4 @@ class StoreItemDTO(BaseDTO):
     entity_id: UUID
     name: str
     amount: int
-    store_id: UUID
     price: Decimal

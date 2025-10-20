@@ -13,5 +13,4 @@ class PurchaseDraftItemDTO(BaseDTO):
 class PurchaseDraftDTO(BaseDTO):
     entity_id: UUID
     customer_id: UUID
-    store_id: UUID
     items: list[PurchaseDraftItemDTO]

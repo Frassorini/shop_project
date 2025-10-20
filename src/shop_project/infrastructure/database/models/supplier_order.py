@@ -10,7 +10,6 @@ class SupplierOrder(Base):
     entity_id = Column(UUIDBinary(), nullable=False)
     departure = Column(DateTime(timezone=True), nullable=False)
     arrival = Column(DateTime(timezone=True), nullable=False)
-    store_id = Column(UUIDBinary(), nullable=False)
     state = Column(String(50), nullable=False)
     
     items: Mapped[list["SupplierOrderItem"]] = relationship(
@@ -21,7 +20,6 @@ class SupplierOrder(Base):
     
     __table_args__ = (
         PrimaryKeyConstraint('entity_id'),
-        ForeignKeyConstraint(['store_id'], ['store.entity_id']),
     )
     
     

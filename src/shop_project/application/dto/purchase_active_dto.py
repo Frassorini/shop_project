@@ -14,5 +14,4 @@ class PurchaseActiveDTO(BaseDTO):
     entity_id: UUID
     state: str
     customer_id: UUID
-    store_id: UUID
     items: list[PurchaseActiveItemDTO]

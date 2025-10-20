@@ -7,7 +7,6 @@ from sqlalchemy.sql import select, delete, insert, update
 
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.store_item_dto import StoreItemDTO
-from shop_project.application.dto.store_dto import StoreDTO
 from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.application.dto.supplier_order_dto import SupplierOrderDTO
@@ -15,7 +14,6 @@ from shop_project.application.dto.base_dto import BaseDTO
 
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.infrastructure.database.models.store_item import StoreItem as StoreItemORM
-from shop_project.infrastructure.database.models.store import Store as StoreORM
 from shop_project.infrastructure.database.models.purchase_active import PurchaseActive as PurchaseActiveORM, PurchaseActiveItem as PurchaseActiveItemORM
 from shop_project.infrastructure.database.models.supplier_order import SupplierOrder as SupplierOrderORM, SupplierOrderItem as SupplierOrderItemORM
 from shop_project.infrastructure.database.models.purchase_draft import PurchaseDraft as PurchaseDraftORM, PurchaseDraftItem as PurchaseDraftItemORM
@@ -24,7 +22,6 @@ from shop_project.domain.customer import Customer
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.supplier_order import SupplierOrder
-from shop_project.domain.store import Store
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.base_aggregate import BaseAggregate
 
@@ -59,14 +56,6 @@ def _translate_domain(model_type: Type[StoreItem], query: DomainLoadQuery) -> An
         .where(query.criteria.to_sqlalchemy(StoreItemORM))
     )
     return _apply_lock(base_query, query.lock, [StoreItemORM])
-
-@overload
-def _translate_domain(model_type: Type[Store], query: DomainLoadQuery) -> Any:
-    base_query = (
-        select(StoreORM)
-        .where(query.criteria.to_sqlalchemy(StoreORM))
-    )
-    return _apply_lock(base_query, query.lock, [StoreORM])
 
 @overload
 def _translate_domain(model_type: Type[PurchaseActive], query: DomainLoadQuery) -> Any:

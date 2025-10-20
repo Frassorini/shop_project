@@ -14,7 +14,7 @@ def test_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = supplier_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     snapshot = order.to_dict()
     
@@ -27,7 +27,7 @@ def test_from_snapshot(supplier_order_factory: Callable[[], SupplierOrder],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     order = supplier_order_factory()
     store_item: StoreItem = potatoes_store_item_10()
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     order_from_snapshot = SupplierOrder.from_dict(order.to_dict())
     
@@ -42,7 +42,7 @@ def test_add_item(supplier_order_factory: Callable[[], SupplierOrder],
     order = supplier_order_factory()
     
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
 
 
 def test_add_negative_amount(supplier_order_factory: Callable[[], SupplierOrder],
@@ -51,7 +51,7 @@ def test_add_negative_amount(supplier_order_factory: Callable[[], SupplierOrder]
     order = supplier_order_factory()
     
     with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, amount=-2, store_id=store_item.store_id)
+        order.add_item(store_item_id=store_item.entity_id, amount=-2)
 
 
 def test_get_item(supplier_order_factory: Callable[[], SupplierOrder],
@@ -59,7 +59,7 @@ def test_get_item(supplier_order_factory: Callable[[], SupplierOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order = supplier_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     order_item: SupplierOrderItem = order.get_item(store_item.entity_id)
     
@@ -71,18 +71,9 @@ def test_cannot_add_duplicate_item(supplier_order_factory: Callable[[], Supplier
     store_item: StoreItem = potatoes_store_item_10()
     order = supplier_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, amount=3, store_id=store_item.store_id)
-
-
-def test_cannot_add_from_another_store(supplier_order_factory: Callable[[], SupplierOrder],
-                                       potatoes_store_item_10: Callable[..., StoreItem]) -> None:
-    store_item: StoreItem = potatoes_store_item_10(store="Petersburg")
-    order = supplier_order_factory()
-    
-    with pytest.raises(DomainException):
-        order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+        order.add_item(store_item_id=store_item.entity_id, amount=3)
     
 
 def test_valid_transitions(supplier_order_factory: Callable[[], SupplierOrder],
@@ -90,7 +81,7 @@ def test_valid_transitions(supplier_order_factory: Callable[[], SupplierOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order = supplier_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     order.depart()
     
@@ -117,7 +108,7 @@ def test_invalid_transitions(from_state: SupplierOrderState, method: str,
     store_item: StoreItem = potatoes_store_item_10()
     order = supplier_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     match from_state:
         case SupplierOrderState.PENDING:
@@ -140,7 +131,7 @@ def test_valid_checks(supplier_order_factory: Callable[[], SupplierOrder],
     store_item: StoreItem = potatoes_store_item_10()
     order = supplier_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     assert order.can_be_departed()
     assert not order.can_be_cancelled()
@@ -171,7 +162,7 @@ def test_invalid_checks(from_state: SupplierOrderState, method: str,
     store_item: StoreItem = potatoes_store_item_10()
     order = supplier_order_factory()
     
-    order.add_item(store_item_id=store_item.entity_id, amount=2, store_id=store_item.store_id)
+    order.add_item(store_item_id=store_item.entity_id, amount=2)
     
     match from_state:
         case SupplierOrderState.PENDING:

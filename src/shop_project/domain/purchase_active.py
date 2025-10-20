@@ -61,20 +61,18 @@ class PurchaseActiveStateMachine(BaseStateMachine[PurchaseActiveState]):
 
 
 class PurchaseActive(BaseAggregate):
-    def __init__(self, entity_id: EntityId, customer_id: EntityId, store_id: EntityId) -> None:
+    def __init__(self, entity_id: EntityId, customer_id: EntityId) -> None:
         self._entity_id: EntityId = entity_id
         self._state_machine: PurchaseActiveStateMachine = PurchaseActiveStateMachine(PurchaseActiveState.PENDING)
         
         self.customer_id: EntityId = customer_id
-        self.store_id: EntityId = store_id
         
         self._items: dict[EntityId, PurchaseActiveItem] = {}
     
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         obj = cls(EntityId(snapshot['entity_id']), 
-                  EntityId(snapshot['customer_id']), 
-                  EntityId(snapshot['store_id']),
+                  EntityId(snapshot['customer_id']),
                   )
         obj._state_machine = PurchaseActiveStateMachine(PurchaseActiveState(snapshot['state']))
         
@@ -85,18 +83,14 @@ class PurchaseActive(BaseAggregate):
     
     def to_dict(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.value, 
-                'customer_id': self.customer_id.value, 
-                'store_id': self.store_id.value, 
+                'customer_id': self.customer_id.value,
                 'state': self.state.value, 
                 'items': [item.to_dict() for item in self._items.values()],
                 }
     
-    def _validate_item(self, store_item_id: EntityId, price: Decimal, amount: int, store_id: EntityId) -> None:
+    def _validate_item(self, store_item_id: EntityId, price: Decimal, amount: int) -> None:
         if store_item_id in self._items:
             raise DomainException('Item already added')
-        
-        if self.store_id != store_id:
-            raise DomainException('Item from another store')
         
         if amount <= 0:
             raise DomainException('Amount must be > 0')
@@ -104,8 +98,8 @@ class PurchaseActive(BaseAggregate):
         if price <= 0:
             raise DomainException('Price must be > 0')
     
-    def add_item(self, store_item_id: EntityId, price: Decimal, amount: int, store_id: EntityId) -> None:
-        self._validate_item(store_item_id, price, amount, store_id)
+    def add_item(self, store_item_id: EntityId, price: Decimal, amount: int) -> None:
+        self._validate_item(store_item_id, price, amount)
         
         self._items[store_item_id] = (PurchaseActiveItem(
             store_item_id=store_item_id, 

@@ -5,7 +5,6 @@ from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
 from shop_project.domain.base_aggregate import BaseAggregate
-from shop_project.domain.store import Store
 from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.shared.entity_id import EntityId
 
@@ -74,7 +73,6 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
     def __init__(self):
         self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
             Customer: [],
-            Store: [],
             StoreItem: [],
             PurchaseActive: [],
             SupplierOrder: [],
