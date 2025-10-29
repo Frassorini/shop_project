@@ -1,22 +1,23 @@
 from abc import ABC
 from typing import Any, Literal, Sequence, Type, TypeVar, cast
 
-from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.domain.customer import Customer
-from shop_project.domain.base_aggregate import BaseAggregate
-from shop_project.domain.supplier_order import SupplierOrder
 from shop_project.shared.entity_id import EntityId
 
-from shop_project.infrastructure.resource_manager.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
-from shop_project.exceptions import ResourcesException
-
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.store_item import StoreItem
-
+from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.mapper import to_dto
 
+from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.customer import Customer
+from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.purchase_active import PurchaseActive
+from shop_project.domain.purchase_summary import PurchaseSummary
+from shop_project.domain.escrow_account import EscrowAccount
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.supplier_order import SupplierOrder
 
+from shop_project.infrastructure.resource_manager.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
+
+from shop_project.exceptions import ResourcesException
 
 
 T = TypeVar('T', bound=BaseAggregate)
@@ -73,10 +74,12 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
     def __init__(self):
         self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
             Customer: [],
-            StoreItem: [],
             PurchaseActive: [],
-            SupplierOrder: [],
             PurchaseDraft: [],
+            PurchaseSummary: [],
+            EscrowAccount: [],
+            StoreItem: [],
+            SupplierOrder: [],
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
         self._resource_snapshot_current: ResourceSnapshot | None = None

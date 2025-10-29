@@ -3,7 +3,13 @@ from typing import Callable
 import pytest
 
 from shop_project.domain.customer import Customer
-from shop_project.domain.purchase_active import PurchaseActive, PurchaseActiveState
+from shop_project.domain.escrow_account import EscrowAccount
+from shop_project.domain.purchase_active import PurchaseActive
+from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.services.checkout_service import CheckoutService
+from shop_project.domain.services.purchase_activation_service import PurchaseActivationService, PurchaseActivation
+from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
 from shop_project.domain.store_item import StoreItem
 from shop_project.shared.entity_id import EntityId
 
@@ -11,64 +17,69 @@ from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
-def customer_order_factory(
-    unique_id_factory: Callable[[], EntityId],
-    customer_andrew: Callable[[], Customer],
-) -> Callable[[], PurchaseActive]:
-    def factory() -> PurchaseActive:
-        order = PurchaseActive(entity_id=unique_id_factory(), customer_id=customer_andrew().entity_id)
-        return order
+def purchase_active_filled_factory(
+    purchase_draft_factory: Callable[[], PurchaseDraft],
+    potatoes_store_item_10: Callable[[], StoreItem],
+    sausages_store_item_10: Callable[[], StoreItem],
+    purchase_activation_service_factory: Callable[[InventoryService], PurchaseActivationService],
+) -> Callable[[], PurchaseActivation]:
+    def factory() -> PurchaseActivation:
+        purchase_draft = purchase_draft_factory()
+        purchase_draft.add_item(potatoes_store_item_10().entity_id, 10)
+        purchase_draft.add_item(sausages_store_item_10().entity_id, 10)
+        
+        inventory_service = InventoryService(stock=[potatoes_store_item_10(), sausages_store_item_10()])
+        purchase_activation_service = purchase_activation_service_factory(inventory_service)
+        
+        purchase_activation = purchase_activation_service.activate(purchase_draft)
+        
+        return purchase_activation
     return factory
 
 
 @pytest.fixture
-def customer_order_container_factory(
-    unique_id_factory: Callable[[], EntityId],
-    customer_andrew: Callable[[], Customer],
-    store_item_container_factory: Callable[..., AggregateContainer],
+def purchase_active_filled_container_factory(
+    purchase_draft_factory: Callable[[], PurchaseDraft],
+    potatoes_store_item_10: Callable[[], StoreItem],
+    sausages_store_item_10: Callable[[], StoreItem],
+    purchase_activation_service_factory: Callable[[InventoryService], PurchaseActivationService],
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        customer = customer_andrew()
-        order = PurchaseActive(entity_id=unique_id_factory(), customer_id=customer.entity_id)
-        store_item = store_item_container_factory(name='potatoes', amount=1, price=1).aggregate
+        purchase_draft = purchase_draft_factory()
+        potatoes = potatoes_store_item_10()
+        sausages = sausages_store_item_10()
+        purchase_draft.add_item(potatoes.entity_id, 10)
+        purchase_draft.add_item(sausages.entity_id, 10)
+        
+        inventory_service = InventoryService(stock=[potatoes, sausages])
+        purchase_activation_service = purchase_activation_service_factory(inventory_service)
+        
+        purchase_activation = purchase_activation_service.activate(purchase_draft)
         
         container: AggregateContainer = AggregateContainer(
-            aggregate=order, 
-            dependencies={Customer: [customer], 
-                          StoreItem: [store_item],})
+            aggregate=purchase_activation.purchase_active, 
+            dependencies={EscrowAccount: [purchase_activation.escrow_account],
+                          StoreItem: [potatoes, sausages]})
         
         return container
     return factory
 
 
-@pytest.fixture
-def transition_order_to_state() -> Callable[[PurchaseActive, PurchaseActiveState], None]:
-    def factory(order: PurchaseActive, state: PurchaseActiveState) -> None:
-        if order.state != PurchaseActiveState.PENDING:
-            raise ValueError(f'TEST ERROR: PurchaseActive must be in {PurchaseActiveState.PENDING} state')
+# @pytest.fixture
+# def customer_order_container_factory(
+#     unique_id_factory: Callable[[], EntityId],
+#     customer_andrew: Callable[[], Customer],
+#     store_item_container_factory: Callable[..., AggregateContainer],
+# ) -> Callable[[], AggregateContainer]:
+#     def factory() -> AggregateContainer:
+#         customer = customer_andrew()
+#         order = PurchaseActive(entity_id=unique_id_factory(), customer_id=customer.entity_id)
+#         store_item = store_item_container_factory(name='potatoes', amount=1, price=1).aggregate
         
-        match state:
-            case PurchaseActiveState.PENDING:
-                pass
-            case PurchaseActiveState.RESERVED:
-                order.reserve()
-            case PurchaseActiveState.PAID:
-                order.reserve()
-                order.pay()
-            case PurchaseActiveState.CLAIMED:
-                order.reserve()
-                order.pay()
-                order.claim()
-            case PurchaseActiveState.UNCLAIMED:
-                order.reserve()
-                order.pay()
-                order.unclaim()
-            case PurchaseActiveState.REFUNDED:
-                order.reserve()
-                order.pay()
-                order.claim()
-                order.refund()
-            case PurchaseActiveState.CANCELLED:
-                order.reserve()
-                order.cancel()
-    return factory
+#         container: AggregateContainer = AggregateContainer(
+#             aggregate=order, 
+#             dependencies={Customer: [customer], 
+#                           StoreItem: [store_item],})
+        
+#         return container
+#     return factory

@@ -7,27 +7,27 @@ from shop_project.domain.purchase_draft import PurchaseDraft, PurchaseDraftItem
 
 
 
-def test_add_item(cart_factory: Callable[[], PurchaseDraft],
+def test_add_item(purchase_draft_factory: Callable[[], PurchaseDraft],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
-    cart = cart_factory()
+    cart = purchase_draft_factory()
     store_item: StoreItem = potatoes_store_item_10()
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2)
 
 
-def test_add_negative_amount(cart_factory: Callable[[], PurchaseDraft],
+def test_add_negative_amount(purchase_draft_factory: Callable[[], PurchaseDraft],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
-    cart = cart_factory()
+    cart = purchase_draft_factory()
     store_item: StoreItem = potatoes_store_item_10()
     
     with pytest.raises(DomainException):
         cart.add_item(store_item_id=store_item.entity_id, amount=-2)
 
 
-def test_get_item(cart_factory: Callable[[], PurchaseDraft],
+def test_get_item(purchase_draft_factory: Callable[[], PurchaseDraft],
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
-    cart = cart_factory()
+    cart = purchase_draft_factory()
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2)
     
@@ -36,20 +36,20 @@ def test_get_item(cart_factory: Callable[[], PurchaseDraft],
     assert cart_item.amount == 2
 
 
-def test_cannot_add_duplicate_item(cart_factory: Callable[[], PurchaseDraft], 
+def test_cannot_add_duplicate_item(purchase_draft_factory: Callable[[], PurchaseDraft], 
                                    potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
-    cart = cart_factory()
+    cart = purchase_draft_factory()
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2)
     with pytest.raises(DomainException):
         cart.add_item(store_item_id=store_item.entity_id, amount=3)
     
 
-def test_snapshot(cart_factory: Callable[[], PurchaseDraft], 
+def test_snapshot(purchase_draft_factory: Callable[[], PurchaseDraft], 
                   potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
-    cart: PurchaseDraft = cart_factory()
+    cart: PurchaseDraft = purchase_draft_factory()
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2)
     
@@ -58,10 +58,10 @@ def test_snapshot(cart_factory: Callable[[], PurchaseDraft],
     assert snapshot['items'][0] == {'store_item_id': store_item.entity_id.value, 'amount': 2}
 
 
-def test_from_snapshot(cart_factory: Callable[[], PurchaseDraft], 
+def test_from_snapshot(purchase_draft_factory: Callable[[], PurchaseDraft], 
                        potatoes_store_item_10: Callable[[], StoreItem]) -> None:
     store_item: StoreItem = potatoes_store_item_10()
-    cart: PurchaseDraft = cart_factory()
+    cart: PurchaseDraft = purchase_draft_factory()
     
     cart.add_item(store_item_id=store_item.entity_id, amount=2)
     

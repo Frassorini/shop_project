@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Type, TypeVar
 
-from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
+from shop_project.domain.purchase_summary import PurchaseSummary
+from shop_project.domain.escrow_account import EscrowAccount
 from shop_project.domain.store_item import StoreItem
 from shop_project.domain.supplier_order import SupplierOrder
 
@@ -34,29 +36,53 @@ class DomainReferenceRegistry():
             Customer: {
                 PurchaseActive: DomainReferenceDescriptor(
                     attribute_name="customer_id",
-                    strategy=lambda customer: [customer.entity_id]
+                    strategy=lambda customer: [customer.entity_id.value]
                 ),
                 PurchaseDraft: DomainReferenceDescriptor(
-                    attribute_name="entity_id",
-                    strategy=lambda customer: [customer.entity_id]
+                    attribute_name="customer_id",
+                    strategy=lambda customer: [customer.entity_id.value]
                 ),
-            },
-            PurchaseActive: {
-                StoreItem: DomainReferenceDescriptor(
-                    attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id for item in order.get_items()],
+                PurchaseSummary: DomainReferenceDescriptor(
+                    attribute_name="customer_id",
+                    strategy=lambda customer: [customer.entity_id.value]
                 ),
-            },
-            SupplierOrder: {
-                StoreItem: DomainReferenceDescriptor(
-                    attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id for item in order.get_items()]
+                EscrowAccount: DomainReferenceDescriptor(
+                    attribute_name="customer_id",
+                    strategy=lambda customer: [customer.entity_id.value]
                 ),
             },
             PurchaseDraft: {
                 StoreItem: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda cart: [item.store_item_id for item in cart.get_items()]
+                    strategy=lambda cart: [item.store_item_id.value for item in cart.get_items()]
+                ),
+            },
+            PurchaseActive: {
+                StoreItem: DomainReferenceDescriptor(
+                    attribute_name="entity_id",
+                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()],
+                ),
+                EscrowAccount: DomainReferenceDescriptor(
+                    attribute_name="entity_id",
+                    strategy=lambda order: [order.escrow_account_id.value],
+                ),
+            },
+            PurchaseSummary: {
+                StoreItem: DomainReferenceDescriptor(
+                    attribute_name="entity_id",
+                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()]
+                ),
+            },
+            EscrowAccount: {
+                PurchaseSummary: DomainReferenceDescriptor(
+                    attribute_name="escrow_account_id",
+                    strategy=lambda escrow_account: [escrow_account.entity_id.value]
+                ),
+            },
+            SupplierOrder: {
+                StoreItem: DomainReferenceDescriptor(
+                    attribute_name="entity_id",
+                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()]
                 ),
             },
             StoreItem: {},

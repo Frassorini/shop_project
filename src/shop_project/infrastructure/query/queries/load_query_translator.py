@@ -5,25 +5,31 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased, contains_eager, joinedload
 from sqlalchemy.sql import select, delete, insert, update
 
+from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.customer_dto import CustomerDTO
-from shop_project.application.dto.store_item_dto import StoreItemDTO
 from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
+from shop_project.application.dto.purchase_summary_dto import PurchaseSummaryDTO
+from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
+from shop_project.application.dto.store_item_dto import StoreItemDTO
 from shop_project.application.dto.supplier_order_dto import SupplierOrderDTO
-from shop_project.application.dto.base_dto import BaseDTO
 
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
-from shop_project.infrastructure.database.models.store_item import StoreItem as StoreItemORM
-from shop_project.infrastructure.database.models.purchase_active import PurchaseActive as PurchaseActiveORM, PurchaseActiveItem as PurchaseActiveItemORM
-from shop_project.infrastructure.database.models.supplier_order import SupplierOrder as SupplierOrderORM, SupplierOrderItem as SupplierOrderItemORM
 from shop_project.infrastructure.database.models.purchase_draft import PurchaseDraft as PurchaseDraftORM, PurchaseDraftItem as PurchaseDraftItemORM
+from shop_project.infrastructure.database.models.purchase_active import PurchaseActive as PurchaseActiveORM, PurchaseActiveItem as PurchaseActiveItemORM
+from shop_project.infrastructure.database.models.purchase_summary import PurchaseSummary as PurchaseSummaryORM, PurchaseSummaryItem as PurchaseSummaryItemORM
+from shop_project.infrastructure.database.models.escrow_account import EscrowAccount as EscrowAccountORM
+from shop_project.infrastructure.database.models.store_item import StoreItem as StoreItemORM
+from shop_project.infrastructure.database.models.supplier_order import SupplierOrder as SupplierOrderORM, SupplierOrderItem as SupplierOrderItemORM
 
-from shop_project.domain.customer import Customer
-from shop_project.domain.store_item import StoreItem
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.supplier_order import SupplierOrder
-from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.customer import Customer
+from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.purchase_active import PurchaseActive
+from shop_project.domain.purchase_summary import PurchaseSummary
+from shop_project.domain.escrow_account import EscrowAccount
+from shop_project.domain.store_item import StoreItem
+from shop_project.domain.supplier_order import SupplierOrder
 
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery, QueryLock
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
@@ -50,12 +56,16 @@ def _translate_domain(model_type: Type[Customer], query: DomainLoadQuery) -> Any
     return _apply_lock(base_query, query.lock, [CustomerORM])
 
 @overload
-def _translate_domain(model_type: Type[StoreItem], query: DomainLoadQuery) -> Any:
+def _translate_domain(model_type: Type[PurchaseDraft], query: DomainLoadQuery) -> Any:
+    item_alias = aliased(PurchaseDraftItemORM, name="cart_item")
+    
     base_query = (
-        select(StoreItemORM)
-        .where(query.criteria.to_sqlalchemy(StoreItemORM))
+        select(PurchaseDraftORM)
+        .outerjoin(item_alias, PurchaseDraftORM.items)
+        .where(query.criteria.to_sqlalchemy(PurchaseDraftORM))
+        .options(joinedload(PurchaseDraftORM.items))
     )
-    return _apply_lock(base_query, query.lock, [StoreItemORM])
+    return _apply_lock(base_query, query.lock, [PurchaseDraftORM, item_alias])
 
 @overload
 def _translate_domain(model_type: Type[PurchaseActive], query: DomainLoadQuery) -> Any:
@@ -70,6 +80,35 @@ def _translate_domain(model_type: Type[PurchaseActive], query: DomainLoadQuery) 
     return _apply_lock(base_query, query.lock, [PurchaseActiveORM, item_alias])
 
 @overload
+def _translate_domain(model_type: Type[PurchaseSummary], query: DomainLoadQuery) -> Any:
+    item_alias = aliased(PurchaseSummaryItemORM, name="purchase_summary_item")
+    
+    base_query = (
+        select(PurchaseSummaryORM)
+        .outerjoin(item_alias, PurchaseSummaryORM.items)
+        .where(query.criteria.to_sqlalchemy(PurchaseSummaryORM))
+        .options(joinedload(PurchaseSummaryORM.items))
+    )
+    return _apply_lock(base_query, query.lock, [PurchaseSummaryORM, item_alias])
+
+@overload
+def _translate_domain(model_type: Type[EscrowAccount], query: DomainLoadQuery) -> Any:
+    base_query = (
+        select(EscrowAccountORM)
+        .where(query.criteria.to_sqlalchemy(EscrowAccountORM))
+    )
+    return _apply_lock(base_query, query.lock, [EscrowAccountORM])
+
+
+@overload
+def _translate_domain(model_type: Type[StoreItem], query: DomainLoadQuery) -> Any:
+    base_query = (
+        select(StoreItemORM)
+        .where(query.criteria.to_sqlalchemy(StoreItemORM))
+    )
+    return _apply_lock(base_query, query.lock, [StoreItemORM])
+
+@overload
 def _translate_domain(model_type: Type[SupplierOrder], query: DomainLoadQuery) -> Any:
     item_alias = aliased(SupplierOrderItemORM, name="supplier_order_item")
     
@@ -80,18 +119,6 @@ def _translate_domain(model_type: Type[SupplierOrder], query: DomainLoadQuery) -
         .options(joinedload(SupplierOrderORM.items))
     )
     return _apply_lock(base_query, query.lock, [SupplierOrderORM, item_alias])
-
-@overload
-def _translate_domain(model_type: Type[PurchaseDraft], query: DomainLoadQuery) -> Any:
-    item_alias = aliased(PurchaseDraftItemORM, name="cart_item")
-    
-    base_query = (
-        select(PurchaseDraftORM)
-        .outerjoin(item_alias, PurchaseDraftORM.items)
-        .where(query.criteria.to_sqlalchemy(PurchaseDraftORM))
-        .options(joinedload(PurchaseDraftORM.items))
-    )
-    return _apply_lock(base_query, query.lock, [PurchaseDraftORM, item_alias])
 
 @dispatch
 def _translate_domain(model_type: Type[BaseAggregate], query: DomainLoadQuery) -> Any:

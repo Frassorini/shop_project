@@ -18,20 +18,20 @@ from tests.helpers import AggregateContainer
 
 @pytest.fixture
 def domain_object_factory(customer_andrew: Callable[[], Customer],
-                          customer_order_container_factory: Callable[[], AggregateContainer],
+                          purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                           supplier_order_container_factory: Callable[[], AggregateContainer],
-                          cart_container_factory: Callable[[], AggregateContainer],
+                          purchase_draft_container_factory: Callable[[], AggregateContainer],
                           store_item_container_factory: Callable[..., AggregateContainer]
                           ) -> Callable[[Type[BaseAggregate]], AggregateContainer]:
     def factory(model_type: Type[BaseAggregate]) -> AggregateContainer:
         if model_type is Customer:
             return AggregateContainer(customer_andrew(), dependencies={})
         elif model_type is PurchaseActive:
-            return customer_order_container_factory()
+            return purchase_active_filled_container_factory()
         elif model_type is SupplierOrder:
             return supplier_order_container_factory()
         elif model_type is PurchaseDraft:
-            return cart_container_factory()
+            return purchase_draft_container_factory()
         elif model_type is StoreItem:
             return store_item_container_factory(name='potatoes', amount=1, price=1)
         else:

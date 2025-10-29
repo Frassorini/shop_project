@@ -15,139 +15,91 @@ from shop_project.shared.base_state_machine import BaseStateMachine
 class PurchaseActiveItem(StockItem, PSnapshotable):
     store_item_id: EntityId
     amount: int
-    price: Decimal
+    
+    def __post_init__(self) -> None:
+        self._validate()
     
     def to_dict(self) -> dict[str, Any]:
         return {
             'store_item_id': self.store_item_id.value,
             'amount': self.amount,
-            'price': self.price,
         }
     
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         return cls(store_item_id=EntityId(snapshot['store_item_id']), 
-                   amount=snapshot['amount'], 
-                   price=snapshot['price'],
+                   amount=snapshot['amount'],
                    )
+    
+    def _validate(self) -> None:
+        if self.amount <= 0:
+            raise DomainException('Amount must be > 0')
 
 
 class PurchaseActiveState(Enum):
-    PENDING = 'PENDING'
-    RESERVED = 'RESERVED'
-    PAID = 'PAID'
-
-    CLAIMED = 'CLAIMED'
-    UNCLAIMED = 'UNCLAIMED'
-
-    REFUNDED = 'REFUNDED'
-
-    CANCELLED = 'CANCELLED'
+    ACTIVE = 'ACTIVE'
+    FINALIZED = 'FINALIZED'
 
 
 class PurchaseActiveStateMachine(BaseStateMachine[PurchaseActiveState]):
-    _transitions: dict[PurchaseActiveState, list[PurchaseActiveState]] = {
-        PurchaseActiveState.PENDING: [PurchaseActiveState.RESERVED],
-        PurchaseActiveState.RESERVED: [PurchaseActiveState.PAID,
-                                      PurchaseActiveState.CANCELLED,],
-        PurchaseActiveState.PAID: [PurchaseActiveState.CLAIMED, 
-                                  PurchaseActiveState.UNCLAIMED, 
-                                  PurchaseActiveState.REFUNDED],
-        PurchaseActiveState.CLAIMED: [],
-        PurchaseActiveState.UNCLAIMED: [PurchaseActiveState.REFUNDED],
-        PurchaseActiveState.REFUNDED: [],
-        PurchaseActiveState.CANCELLED: [],
+    _transitions = {
+        PurchaseActiveState.ACTIVE: [PurchaseActiveState.FINALIZED],
     }
 
 
 class PurchaseActive(BaseAggregate):
-    def __init__(self, entity_id: EntityId, customer_id: EntityId) -> None:
+    def __init__(self, entity_id: EntityId, customer_id: EntityId, escrow_account_id: EntityId, items: list[PurchaseActiveItem]) -> None:
         self._entity_id: EntityId = entity_id
-        self._state_machine: PurchaseActiveStateMachine = PurchaseActiveStateMachine(PurchaseActiveState.PENDING)
         
         self.customer_id: EntityId = customer_id
+        self.escrow_account_id: EntityId = escrow_account_id
         
         self._items: dict[EntityId, PurchaseActiveItem] = {}
-    
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(EntityId(snapshot['entity_id']), 
-                  EntityId(snapshot['customer_id']),
-                  )
-        obj._state_machine = PurchaseActiveStateMachine(PurchaseActiveState(snapshot['state']))
         
-        items: list[PurchaseActiveItem] = [PurchaseActiveItem.from_dict(item) for item in snapshot['items']]
-        obj._items = {item.store_item_id: item for item in items}
+        self._state_machine = PurchaseActiveStateMachine(PurchaseActiveState.ACTIVE)
         
-        return obj
-    
-    def to_dict(self) -> dict[str, Any]:
-        return {'entity_id': self.entity_id.value, 
-                'customer_id': self.customer_id.value,
-                'state': self.state.value, 
-                'items': [item.to_dict() for item in self._items.values()],
-                }
-    
-    def _validate_item(self, store_item_id: EntityId, price: Decimal, amount: int) -> None:
-        if store_item_id in self._items:
-            raise DomainException('Item already added')
-        
-        if amount <= 0:
-            raise DomainException('Amount must be > 0')
-        
-        if price <= 0:
-            raise DomainException('Price must be > 0')
-    
-    def add_item(self, store_item_id: EntityId, price: Decimal, amount: int) -> None:
-        self._validate_item(store_item_id, price, amount)
-        
-        self._items[store_item_id] = (PurchaseActiveItem(
-            store_item_id=store_item_id, 
-            amount=amount, 
-            price=price))
-    
-    def get_item(self, store_item_id: EntityId) -> PurchaseActiveItem:
-        return self._items[store_item_id]
-        
-    def get_items(self) -> list[PurchaseActiveItem]:
-        return list(self._items.values())    
+        for item in items:
+            self._validate_item(item)
+            self._items[item.store_item_id] = item
     
     @property
     def state(self) -> PurchaseActiveState:
         return self._state_machine.state
     
-    def can_be_reserved(self) -> bool:
-        return self._state_machine.can_be_transitioned_to(PurchaseActiveState.RESERVED)
+    @classmethod
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
+        obj = cls(EntityId(snapshot['entity_id']), 
+                  EntityId(snapshot['customer_id']),
+                  EntityId(snapshot['escrow_account_id']),
+                  [PurchaseActiveItem.from_dict(item) for item in snapshot['items']]
+                  )
+        obj._state_machine = PurchaseActiveStateMachine(PurchaseActiveState(snapshot['state']))
+        return obj
     
-    def can_be_paid(self) -> bool:
-        return self._state_machine.can_be_transitioned_to(PurchaseActiveState.PAID)
+    def to_dict(self) -> dict[str, Any]:
+        return {'entity_id': self.entity_id.value, 
+                'customer_id': self.customer_id.value,
+                'escrow_account_id': self.escrow_account_id.value,
+                'state': self.state.value,
+                'items': [item.to_dict() for item in self._items.values()],
+                }
     
-    def can_be_claimed(self) -> bool:
-        return self._state_machine.can_be_transitioned_to(PurchaseActiveState.CLAIMED)
+    def _validate_item(self, item: PurchaseActiveItem) -> None:
+        if item.store_item_id in self._items:
+            raise DomainException('Item already added')
     
-    def can_be_unclaimed(self) -> bool:
-        return self._state_machine.can_be_transitioned_to(PurchaseActiveState.UNCLAIMED)
+    def get_item(self, store_item_id: EntityId) -> PurchaseActiveItem:
+        return self._items[store_item_id]
+        
+    def get_items(self) -> list[PurchaseActiveItem]:
+        return list(self._items.values())
+
+    def finalize(self) -> None:
+        self._state_machine.try_transition_to(PurchaseActiveState.FINALIZED)
     
-    def can_be_refunded(self) -> bool:
-        return self._state_machine.can_be_transitioned_to(PurchaseActiveState.REFUNDED)
+    def is_finalized(self) -> bool:
+        return self.state == PurchaseActiveState.FINALIZED
     
-    def can_be_cancelled(self) -> bool:
-        return self._state_machine.can_be_transitioned_to(PurchaseActiveState.CANCELLED)
-    
-    def reserve(self) -> None:
-        self._state_machine.try_transition_to(PurchaseActiveState.RESERVED)
-    
-    def pay(self) -> None:
-        self._state_machine.try_transition_to(PurchaseActiveState.PAID)
-    
-    def claim(self) -> None:
-        self._state_machine.try_transition_to(PurchaseActiveState.CLAIMED)
-    
-    def unclaim(self) -> None:
-        self._state_machine.try_transition_to(PurchaseActiveState.UNCLAIMED)
-    
-    def refund(self) -> None:
-        self._state_machine.try_transition_to(PurchaseActiveState.REFUNDED)
-    
-    def cancel(self) -> None:
-        self._state_machine.try_transition_to(PurchaseActiveState.CANCELLED)
+    def is_active(self) -> bool:
+        return self.state == PurchaseActiveState.ACTIVE
+

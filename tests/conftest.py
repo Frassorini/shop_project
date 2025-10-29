@@ -21,4 +21,5 @@ pytest_plugins = [
     "tests.fixtures.domain.purchase_active",
     "tests.fixtures.domain.supplier_order",
     "tests.fixtures.domain.domain_object",
+    "tests.fixtures.domain.services",
 ]

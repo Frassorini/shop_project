@@ -7,6 +7,7 @@ from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQu
 from shop_project.infrastructure.query.query_plan import QueryPlan, LockQueryPlan, NoLockQueryPlan
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
+from shop_project.infrastructure.resource_manager.total_order_registry import TotalOrderRegistry
 from shop_project.shared.entity_id import EntityId
 
 
@@ -48,7 +49,14 @@ class ResourceManager:
         
         self.query_plan.validate_changes(difference)
         
-        await self.repository_container.save(difference)
+        ordered_types = TotalOrderRegistry.backward()
+        sorted_diff = {
+            model: difference[model]
+            for model in ordered_types
+            if model in difference
+        }
+        
+        await self.repository_container.save(sorted_diff)
     
     def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
         return self.repository_container.get_unique_id(model_type)

@@ -9,8 +9,8 @@ from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
-def cart_factory(unique_id_factory: Callable[[], EntityId],
-                 customer_andrew: Callable[[], Customer]) -> Callable[[], PurchaseDraft]:
+def purchase_draft_factory(unique_id_factory: Callable[[], EntityId],
+                           customer_andrew: Callable[[], Customer]) -> Callable[[], PurchaseDraft]:
     def factory() -> PurchaseDraft:
         cart = PurchaseDraft(unique_id_factory(), customer_id=customer_andrew().entity_id)
         return cart
@@ -19,8 +19,8 @@ def cart_factory(unique_id_factory: Callable[[], EntityId],
 
 
 @pytest.fixture
-def cart_container_factory(unique_id_factory: Callable[[], EntityId],
-                 customer_andrew: Callable[[], Customer]
+def purchase_draft_container_factory(unique_id_factory: Callable[[], EntityId],
+                                     customer_andrew: Callable[[], Customer]
                  ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
         customer = customer_andrew()

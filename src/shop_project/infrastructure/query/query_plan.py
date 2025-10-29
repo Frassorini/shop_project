@@ -8,7 +8,7 @@ from shop_project.exceptions import QueryPlanException
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
-from shop_project.infrastructure.resource_manager.lock_total_order_registry import LockTotalOrderRegistry
+from shop_project.infrastructure.resource_manager.total_order_registry import TotalOrderRegistry
 
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
@@ -125,8 +125,8 @@ class LockQueryPlan(QueryPlan):
         self._validate_single_query_per_model_type()
         
         for previous_query, current_query in zip(self.queries, self.queries[1:]):
-            previous_priority = LockTotalOrderRegistry.get_priority(previous_query.model_type)
-            current_priority = LockTotalOrderRegistry.get_priority(current_query.model_type)
+            previous_priority = TotalOrderRegistry.get_priority(previous_query.model_type)
+            current_priority = TotalOrderRegistry.get_priority(current_query.model_type)
             
             if previous_priority >= current_priority:
                 raise QueryPlanException("locking order violation")

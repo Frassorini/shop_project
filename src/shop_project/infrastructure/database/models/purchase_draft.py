@@ -5,13 +5,14 @@ from shop_project.infrastructure.database.uuid_binary import UUIDBinary
 
 
 class PurchaseDraft(Base):
-    __tablename__ = 'cart'
+    __tablename__ = 'purchase_draft'
     
     entity_id = Column(UUIDBinary(), nullable=False)
     customer_id = Column(UUIDBinary(), nullable=False)
+    state = Column(String(50), nullable=False)
     
     items: Mapped[list["PurchaseDraftItem"]] = relationship(
-        back_populates="order",
+        back_populates="purchase_draft",
         cascade="all, delete-orphan",
         lazy="raise",
     )
@@ -22,19 +23,19 @@ class PurchaseDraft(Base):
     
     
 class PurchaseDraftItem(Base):
-    __tablename__ = 'cart_item'
+    __tablename__ = 'purchase_draft_item'
     
-    cart_id = Column(UUIDBinary(), nullable=False)
+    purchase_draft_id = Column(UUIDBinary(), nullable=False)
     store_item_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     
-    order: Mapped["PurchaseDraft"] = relationship(
+    purchase_draft: Mapped["PurchaseDraft"] = relationship(
         back_populates="items",
         lazy="raise",
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('cart_id', 'store_item_id'),
-        ForeignKeyConstraint(['cart_id'], ['cart.entity_id']),
+        PrimaryKeyConstraint('purchase_draft_id', 'store_item_id'),
+        ForeignKeyConstraint(['purchase_draft_id'], ['purchase_draft.entity_id']),
         ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
     )

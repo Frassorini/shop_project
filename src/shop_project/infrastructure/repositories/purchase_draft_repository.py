@@ -28,10 +28,10 @@ class PurchaseDraftRepository(BaseRepository[PurchaseDraft]):
         # --- PurchaseDraftItems ---
         item_snapshots: list[dict[str, Any]] = []
         for order_snap in order_snapshots:
-            customer_order_id = order_snap["entity_id"]
+            purchase_draft_id = order_snap["entity_id"]
             for item in order_snap.get("items", []):  # items — список словарей
                 snap = item.copy()
-                snap["customer_order_id"] = customer_order_id
+                snap["purchase_draft_id"] = purchase_draft_id
                 item_snapshots.append(snap)
 
         if item_snapshots:
@@ -59,12 +59,12 @@ class PurchaseDraftRepository(BaseRepository[PurchaseDraft]):
         for snap in order_snapshots:
             for item in snap.get("items", []):
                 snapshot = item.copy()
-                snapshot["cart_id"] = snap["entity_id"]
+                snapshot["purchase_draft_id"] = snap["entity_id"]
                 item_snapshots.append(snapshot)
 
         await self._replace_children(
             session=self.session,
-            root_id_name="cart_id",
+            root_id_name="purchase_draft_id",
             root_ids=order_ids,
             child_model=PurchaseDraftItemORM,
             new_items=item_snapshots,
@@ -80,7 +80,7 @@ class PurchaseDraftRepository(BaseRepository[PurchaseDraft]):
         # --- Удаляем сначала order_items ---
         ids = [item.entity_id.value for item in items]
         await self.session.execute(
-            delete(PurchaseDraftItemORM).where(PurchaseDraftItemORM.cart_id.in_(ids))
+            delete(PurchaseDraftItemORM).where(PurchaseDraftItemORM.purchase_draft_id.in_(ids))
         )
 
         # --- Затем PurchaseDrafts ---

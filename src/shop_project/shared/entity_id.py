@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Self, cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
 
 @dataclass(frozen=True)
@@ -19,3 +19,7 @@ class EntityId:
     def from_str(cls, raw: str) -> "EntityId":
         """Создаёт EntityId из строки (например, из БД)"""
         return cls(UUID(raw))
+    
+    @classmethod
+    def get_random(cls) -> Self:
+        return cls(uuid4())

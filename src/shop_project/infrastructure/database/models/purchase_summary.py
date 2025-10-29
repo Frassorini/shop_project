@@ -5,16 +5,16 @@ from shop_project.infrastructure.database.models.escrow_account import EscrowAcc
 from shop_project.infrastructure.database.uuid_binary import UUIDBinary
 
 
-class PurchaseActive(Base):
-    __tablename__ = 'purchase_active'
+class PurchaseSummary(Base):
+    __tablename__ = 'purchase_summary'
     
     entity_id = Column(UUIDBinary(), nullable=False)
     customer_id = Column(UUIDBinary(), nullable=False)
     escrow_account_id = Column(UUIDBinary(), nullable=False)
-    state = Column(String(50), nullable=False)
+    reason = Column(String(50), nullable=False)
     
-    items: Mapped[list["PurchaseActiveItem"]] = relationship(
-        back_populates="purchase_active",
+    items: Mapped[list["PurchaseSummaryItem"]] = relationship(
+        back_populates="purchase_summary",
         cascade="all, delete-orphan",
         lazy="raise",
     )
@@ -29,20 +29,20 @@ class PurchaseActive(Base):
     )
     
     
-class PurchaseActiveItem(Base):
-    __tablename__ = 'purchase_active_item'
+class PurchaseSummaryItem(Base):
+    __tablename__ = 'purchase_summary_item'
     
-    purchase_active_id = Column(UUIDBinary(), nullable=False)
+    purchase_summary_id = Column(UUIDBinary(), nullable=False)
     store_item_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     
-    purchase_active: Mapped["PurchaseActive"] = relationship(
+    purchase_summary: Mapped["PurchaseSummary"] = relationship(
         back_populates="items",
         lazy="raise",
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('purchase_active_id', 'store_item_id'),
-        ForeignKeyConstraint(['purchase_active_id'], ['purchase_active.entity_id']),
+        PrimaryKeyConstraint('purchase_summary_id', 'store_item_id'),
+        ForeignKeyConstraint(['purchase_summary_id'], ['purchase_summary.entity_id']),
         ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
     )

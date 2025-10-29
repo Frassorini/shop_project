@@ -4,95 +4,94 @@ from uuid import uuid4
 import pytest
 from shop_project.exceptions import ResourcesException
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceContainer
-from shop_project.domain.purchase_active import PurchaseActive
+from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.shared.entity_id import EntityId
 from shop_project.application.dto.mapper import to_dto
 
 
-def test_get_by_id(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_get_by_id(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order_1 = customer_order_factory()
+    purchase_draft = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order_1)
+    container.put(PurchaseDraft, purchase_draft)
     
-    assert container.get_by_id(PurchaseActive, customer_order_1.entity_id) == customer_order_1
+    assert container.get_by_id(PurchaseDraft, purchase_draft.entity_id) == purchase_draft
 
 
-def test_get_by_attribute(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_get_by_attribute(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order_1 = customer_order_factory()
-    customer_order_2 = customer_order_factory()
+    purchase_draft_1 = purchase_draft_factory()
+    purchase_draft_2 = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order_1)
-    container.put(PurchaseActive, customer_order_2)
+    container.put(PurchaseDraft, purchase_draft_1)
+    container.put(PurchaseDraft, purchase_draft_2)
 
-    assert container.get_by_attribute(PurchaseActive, "entity_id", [customer_order_1.entity_id, customer_order_2.entity_id]) == [customer_order_1, customer_order_2]
-    assert container.get_by_attribute(PurchaseActive, "customer_id", [customer_order_1.customer_id]) == [customer_order_1]
+    assert container.get_by_attribute(PurchaseDraft, "entity_id", [purchase_draft_1.entity_id, purchase_draft_2.entity_id]) == [purchase_draft_1, purchase_draft_2]
+    assert container.get_by_attribute(PurchaseDraft, "customer_id", [purchase_draft_1.customer_id]) == [purchase_draft_1]
     
 
-def test_get_by_wrong_attribute(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_get_by_wrong_attribute(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order_1 = customer_order_factory()
+    purchase_draft_1 = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order_1)
+    container.put(PurchaseDraft, purchase_draft_1)
 
     with pytest.raises(AttributeError):
-        container.get_by_attribute(PurchaseActive, "wrong_attribute", [customer_order_1.entity_id])
+        container.get_by_attribute(PurchaseDraft, "wrong_attribute", [purchase_draft_1.entity_id])
 
 
-def test_get_by_id_not_found(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_get_by_id_not_found(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order_1 = customer_order_factory()
+    purchase_draft_1 = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order_1)
+    container.put(PurchaseDraft, purchase_draft_1)
 
     with pytest.raises(ResourcesException):
-        container.get_by_id(PurchaseActive, EntityId(uuid4()))
+        container.get_by_id(PurchaseDraft, EntityId(uuid4()))
 
 
-def test_snapshot_create(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_snapshot_create(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
     container.take_snapshot()
-    customer_order = customer_order_factory()
+    purchase_draft = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order)
+    container.put(PurchaseDraft, purchase_draft)
 
     container.take_snapshot()
     
-    assert to_dto(customer_order) in container.get_resource_changes()[PurchaseActive]['CREATED']
+    assert to_dto(purchase_draft) in container.get_resource_changes()[PurchaseDraft]['CREATED']
 
 
-def test_snapshot_delete(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_snapshot_delete(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order = customer_order_factory()
+    purchase_draft = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order)
+    container.put(PurchaseDraft, purchase_draft)
     container.take_snapshot()
-    container.delete(PurchaseActive, customer_order)
+    container.delete(PurchaseDraft, purchase_draft)
     container.take_snapshot()
 
     
-    assert to_dto(customer_order) in container.get_resource_changes()[PurchaseActive]['DELETED']
+    assert to_dto(purchase_draft) in container.get_resource_changes()[PurchaseDraft]['DELETED']
 
 
-# TODO: тест ничего не делает
-def test_snapshot_update(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_snapshot_update(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order: PurchaseActive = customer_order_factory()
+    purchase_draft: PurchaseDraft = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order)
+    container.put(PurchaseDraft, purchase_draft)
     container.take_snapshot()
-    # ...
+    purchase_draft.finalize()
     container.take_snapshot()
     
-    assert to_dto(customer_order) in container.get_resource_changes()[PurchaseActive]['UPDATED']
+    assert to_dto(purchase_draft) in container.get_resource_changes()[PurchaseDraft]['UPDATED']
 
 
-def test_snapshot_no_previous(customer_order_factory: Callable[[], PurchaseActive]) -> None:
+def test_snapshot_no_previous(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
     container = ResourceContainer()
-    customer_order_1 = customer_order_factory()
+    purchase_draft_1 = purchase_draft_factory()
     
-    container.put(PurchaseActive, customer_order_1)
+    container.put(PurchaseDraft, purchase_draft_1)
 
     container.take_snapshot()
     
