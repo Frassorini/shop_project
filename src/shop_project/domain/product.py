@@ -7,7 +7,7 @@ from shop_project.shared.entity_id import EntityId
 from shop_project.shared.p_snapshotable import PSnapshotable
 
 
-class StoreItem(BaseAggregate):
+class Product(BaseAggregate):
     def __init__(self, entity_id: EntityId, name: str, amount: int, price: Decimal) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id
@@ -18,7 +18,7 @@ class StoreItem(BaseAggregate):
         self.price: Decimal = price
     
     @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> 'StoreItem':
+    def from_dict(cls, snapshot: dict[str, Any]) -> 'Product':
         return cls(
             entity_id=EntityId(snapshot['entity_id']), 
             name=snapshot['name'], 

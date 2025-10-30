@@ -13,7 +13,7 @@ from shop_project.shared.base_state_machine import BaseStateMachine
 
 @dataclass(frozen=True)
 class PurchaseActiveItem(StockItem, PSnapshotable):
-    store_item_id: EntityId
+    product_id: EntityId
     amount: int
     
     def __post_init__(self) -> None:
@@ -21,13 +21,13 @@ class PurchaseActiveItem(StockItem, PSnapshotable):
     
     def to_dict(self) -> dict[str, Any]:
         return {
-            'store_item_id': self.store_item_id.value,
+            'product_id': self.product_id.value,
             'amount': self.amount,
         }
     
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(store_item_id=EntityId(snapshot['store_item_id']), 
+        return cls(product_id=EntityId(snapshot['product_id']), 
                    amount=snapshot['amount'],
                    )
     
@@ -60,7 +60,7 @@ class PurchaseActive(BaseAggregate):
         
         for item in items:
             self._validate_item(item)
-            self._items[item.store_item_id] = item
+            self._items[item.product_id] = item
     
     @property
     def state(self) -> PurchaseActiveState:
@@ -85,11 +85,11 @@ class PurchaseActive(BaseAggregate):
                 }
     
     def _validate_item(self, item: PurchaseActiveItem) -> None:
-        if item.store_item_id in self._items:
+        if item.product_id in self._items:
             raise DomainException('Item already added')
     
-    def get_item(self, store_item_id: EntityId) -> PurchaseActiveItem:
-        return self._items[store_item_id]
+    def get_item(self, product_id: EntityId) -> PurchaseActiveItem:
+        return self._items[product_id]
         
     def get_items(self) -> list[PurchaseActiveItem]:
         return list(self._items.values())

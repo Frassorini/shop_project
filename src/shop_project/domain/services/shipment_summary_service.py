@@ -24,7 +24,7 @@ class ShipmentSummaryService():
         for item in shipment.get_items():
             shipment_summary_items.append(
                 ShipmentSummaryItem(
-                    store_item_id=item.store_item_id, 
+                    product_id=item.product_id, 
                     amount=item.amount, 
                 )
             )

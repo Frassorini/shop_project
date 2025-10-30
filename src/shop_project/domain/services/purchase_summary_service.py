@@ -27,7 +27,7 @@ class PurchaseSummaryService():
         for item in purchase.get_items():
             purchase_summary_items.append(
                 PurchaseSummaryItem(
-                    store_item_id=item.store_item_id, 
+                    product_id=item.product_id, 
                     amount=item.amount, 
                 )
             )

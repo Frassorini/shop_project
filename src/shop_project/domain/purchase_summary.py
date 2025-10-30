@@ -13,18 +13,18 @@ from shop_project.shared.base_state_machine import BaseStateMachine
 
 @dataclass(frozen=True)
 class PurchaseSummaryItem(PSnapshotable):
-    store_item_id: EntityId
+    product_id: EntityId
     amount: int
     
     def to_dict(self) -> dict[str, Any]:
         return {
-            'store_item_id': self.store_item_id.value,
+            'product_id': self.product_id.value,
             'amount': self.amount,
         }
     
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(store_item_id=EntityId(snapshot['store_item_id']), 
+        return cls(product_id=EntityId(snapshot['product_id']), 
                    amount=snapshot['amount'], 
                    )
 
@@ -51,7 +51,7 @@ class PurchaseSummary(BaseAggregate):
         self._items: dict[EntityId, PurchaseSummaryItem] = {}
         
         for item in items:
-            self._items[item.store_item_id] = item
+            self._items[item.product_id] = item
     
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
@@ -72,8 +72,8 @@ class PurchaseSummary(BaseAggregate):
                 'items': [item.to_dict() for item in self._items.values()],
                 }
     
-    def get_item(self, store_item_id: EntityId) -> PurchaseSummaryItem:
-        return self._items[store_item_id]
+    def get_item(self, product_id: EntityId) -> PurchaseSummaryItem:
+        return self._items[product_id]
         
     def get_items(self) -> list[PurchaseSummaryItem]:
         return list(self._items.values())

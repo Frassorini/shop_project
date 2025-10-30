@@ -19,7 +19,7 @@ class PurchaseReservationService():
         for item in purchase_draft.get_items():
             purchase_active_items.append(
                 PurchaseActiveItem(
-                    store_item_id=item.store_item_id, 
+                    product_id=item.product_id, 
                     amount=item.amount, 
                 )
             )

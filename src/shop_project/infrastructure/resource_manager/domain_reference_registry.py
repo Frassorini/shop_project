@@ -6,7 +6,7 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
@@ -53,15 +53,15 @@ class DomainReferenceRegistry():
                 ),
             },
             PurchaseDraft: {
-                StoreItem: DomainReferenceDescriptor(
+                Product: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda cart: [item.store_item_id.value for item in cart.get_items()]
+                    strategy=lambda cart: [item.product_id.value for item in cart.get_items()]
                 ),
             },
             PurchaseActive: {
-                StoreItem: DomainReferenceDescriptor(
+                Product: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()],
+                    strategy=lambda order: [item.product_id.value for item in order.get_items()],
                 ),
                 EscrowAccount: DomainReferenceDescriptor(
                     attribute_name="entity_id",
@@ -69,9 +69,9 @@ class DomainReferenceRegistry():
                 ),
             },
             PurchaseSummary: {
-                StoreItem: DomainReferenceDescriptor(
+                Product: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()]
+                    strategy=lambda order: [item.product_id.value for item in order.get_items()]
                 ),
             },
             EscrowAccount: {
@@ -81,17 +81,17 @@ class DomainReferenceRegistry():
                 ),
             },
             Shipment: {
-                StoreItem: DomainReferenceDescriptor(
+                Product: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()]
+                    strategy=lambda order: [item.product_id.value for item in order.get_items()]
                 ),
             },
             ShipmentSummary: {
-                StoreItem: DomainReferenceDescriptor(
+                Product: DomainReferenceDescriptor(
                     attribute_name="entity_id",
-                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()]
+                    strategy=lambda order: [item.product_id.value for item in order.get_items()]
                 ),
             },
-            StoreItem: {},
+            Product: {},
         }
     

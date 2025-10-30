@@ -4,7 +4,7 @@ from shop_project.application.customer_order_service import PurchaseActiveServic
 from shop_project.application.schemas.customer_order_schema import CreatePurchaseActiveItemSchema, CreatePurchaseActiveSchema
 from shop_project.unit_of_work import UnitOfWork
 from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.shared.entity_id import EntityId
 
@@ -12,11 +12,11 @@ from shop_project.shared.entity_id import EntityId
 
 def test_reserve(fake_uow_factory: Callable[[dict[Type[Any], list[Any]], str], UnitOfWork],
           rebuild_fake_uow: Callable[[UnitOfWork, str], UnitOfWork],
-          potatoes_store_item_10: Callable[..., StoreItem],
+          potatoes_product_10: Callable[..., Product],
           customer_order_factory: Callable[[], PurchaseActive]) -> None:
-    potatoes = potatoes_store_item_10()
+    potatoes = potatoes_product_10()
     customer_order = customer_order_factory()
-    uow = fake_uow_factory({StoreItem: [potatoes]}, 'read_write')
+    uow = fake_uow_factory({Product: [potatoes]}, 'read_write')
     service = PurchaseActiveService(uow)
     
     customer_order_schema = service.reserve_order(

@@ -5,13 +5,13 @@ import pytest
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.exceptions import QueryPlanException, UnitOfWorkException
-from shop_project.infrastructure.query.queries.prebuilt_queries import CountStoreItemsQuery
+from shop_project.infrastructure.query.queries.prebuilt_queries import CountProductsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 from shop_project.shared.entity_id import EntityId
 
@@ -69,20 +69,20 @@ def test_load_from_previous(purchase_draft_factory: Callable[[], PurchaseDraft])
                       QueryCriteria().criterion_in("entity_id", ValueContainer([purchase_active.entity_id.value])), 
                       QueryLock.NO_LOCK)
     query.load([purchase_active])
-    query_store_item = DomainLoadQuery(StoreItem, 
+    query_product = DomainLoadQuery(Product, 
                                  QueryCriteria().criterion_in("entity_id", 
                                  ValueExtractor(query,
-                                                    lambda x: [item.store_item_id for item in x.get_items()])
+                                                    lambda x: [item.product_id for item in x.get_items()])
                                  ),
                                  QueryLock.NO_LOCK)
 
-    query_builder = QueryPlanBuilder(mutating=False).load(StoreItem)
+    query_builder = QueryPlanBuilder(mutating=False).load(Product)
     query_builder.query_plan.queries.append(query)
     query_built: QueryPlan = query_builder.from_previous().no_lock().build()
 
     assert isinstance(query_built.queries[1], DomainLoadQuery) and query_built.queries[0]
-    assert query_built.queries[1].criteria.criteria[0].value_provider.get() == query_store_item.criteria.criteria[0].value_provider.get()
-    assert query_built.queries[1].model_type == query_store_item.model_type
+    assert query_built.queries[1].criteria.criteria[0].value_provider.get() == query_product.criteria.criteria[0].value_provider.get()
+    assert query_built.queries[1].model_type == query_product.model_type
 
 
 def test_lock_violation():
@@ -100,7 +100,7 @@ def test_correct_locking_load_order():
         QueryPlanBuilder(mutating=True)
         .load(Customer).from_id([uuid4()]).for_share()
         .load(PurchaseDraft).from_previous().for_share()
-        .load(StoreItem).from_previous(1).for_update()
+        .load(Product).from_previous(1).for_update()
         .build()
     )
     
@@ -111,11 +111,11 @@ def xtest_wrong_locking_load_order():
             QueryPlanBuilder(mutating=True)
             .load(PurchaseDraft).from_id([uuid4()]).for_share()
             .load(Customer).from_previous().for_share()
-            .load(StoreItem).from_previous().for_update()
+            .load(Product).from_previous().for_update()
             .build()
         )
 
 
 def test_prebuilt_query():
-    query = QueryPlanBuilder(mutating=False).add_prebuilt(CountStoreItemsQuery(lock="NO_LOCK")).build()
+    query = QueryPlanBuilder(mutating=False).add_prebuilt(CountProductsQuery(lock="NO_LOCK")).build()
     assert len(query.queries) == 1

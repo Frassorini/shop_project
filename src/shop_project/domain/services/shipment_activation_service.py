@@ -9,9 +9,9 @@ class ShipmentRequest:
     def __init__(self) -> None:
         self._items: list[ShipmentItem] = []
     
-    def add_item(self, store_item_id: EntityId, amount: int) -> None:
+    def add_item(self, product_id: EntityId, amount: int) -> None:
         self._items.append(
-            ShipmentItem(store_item_id, amount)
+            ShipmentItem(product_id, amount)
         )
         
     def get_items(self) -> list[ShipmentItem]:

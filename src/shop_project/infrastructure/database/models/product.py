@@ -3,8 +3,8 @@ from shop_project.infrastructure.database.models.base import Base
 from shop_project.infrastructure.database.uuid_binary import UUIDBinary
 
 
-class StoreItem(Base):
-    __tablename__ = 'store_item'
+class Product(Base):
+    __tablename__ = 'product'
     
     entity_id = Column(UUIDBinary(), nullable=False)
     name = Column(String(50), nullable=False)

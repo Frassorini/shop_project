@@ -4,21 +4,21 @@ import pytest
 
 from shop_project.domain.services.inventory_service import InventoryService
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.domain.stock_item import StockItem
 from shop_project.shared.entity_id import EntityId
 
 
 class AbstractStockItem(StockItem):
-    def __init__(self, store_item_id: EntityId, amount: int) -> None:
-        self.store_item_id = store_item_id
+    def __init__(self, product_id: EntityId, amount: int) -> None:
+        self.product_id = product_id
         self.amount = amount
 
 
-def test_reserve_order(potatoes_store_item_10: Callable[[], StoreItem], 
-                       sausages_store_item_10: Callable[[], StoreItem],) -> None:
-    potatoes: StoreItem = potatoes_store_item_10()
-    sausages: StoreItem = sausages_store_item_10()
+def test_reserve_order(potatoes_product_10: Callable[[], Product], 
+                       sausages_product_10: Callable[[], Product],) -> None:
+    potatoes: Product = potatoes_product_10()
+    sausages: Product = sausages_product_10()
     inventory_service: InventoryService = InventoryService(stock=[potatoes, sausages])
     
     items: list[StockItem] = [
@@ -32,10 +32,10 @@ def test_reserve_order(potatoes_store_item_10: Callable[[], StoreItem],
     assert sausages.amount == 8
 
 
-def test_reserve_insufficient_stock(potatoes_store_item_10: Callable[[], StoreItem], 
-                            sausages_store_item_10: Callable[[], StoreItem],) -> None:
-    potatoes: StoreItem = potatoes_store_item_10()
-    sausages: StoreItem = sausages_store_item_10()
+def test_reserve_insufficient_stock(potatoes_product_10: Callable[[], Product], 
+                            sausages_product_10: Callable[[], Product],) -> None:
+    potatoes: Product = potatoes_product_10()
+    sausages: Product = sausages_product_10()
     inventory_service: InventoryService = InventoryService(stock=[potatoes, sausages])
     
     items: list[StockItem] = [
@@ -46,10 +46,10 @@ def test_reserve_insufficient_stock(potatoes_store_item_10: Callable[[], StoreIt
         inventory_service.reserve_stock(items)
 
 
-def test_reserve_invalid_stock(potatoes_store_item_10: Callable[[], StoreItem], 
-                       sausages_store_item_10: Callable[[], StoreItem],) -> None:
-    potatoes: StoreItem = potatoes_store_item_10()
-    sausages: StoreItem = sausages_store_item_10()
+def test_reserve_invalid_stock(potatoes_product_10: Callable[[], Product], 
+                       sausages_product_10: Callable[[], Product],) -> None:
+    potatoes: Product = potatoes_product_10()
+    sausages: Product = sausages_product_10()
     inventory_service: InventoryService = InventoryService(stock=[sausages])
     
     items: list[StockItem] = [
@@ -60,10 +60,10 @@ def test_reserve_invalid_stock(potatoes_store_item_10: Callable[[], StoreItem],
         inventory_service.reserve_stock(items)
 
 
-def test_restock_invalid_stock(potatoes_store_item_10: Callable[[], StoreItem], 
-                 sausages_store_item_10: Callable[[], StoreItem],) -> None:
-    potatoes: StoreItem = potatoes_store_item_10()
-    sausages: StoreItem = sausages_store_item_10()
+def test_restock_invalid_stock(potatoes_product_10: Callable[[], Product], 
+                 sausages_product_10: Callable[[], Product],) -> None:
+    potatoes: Product = potatoes_product_10()
+    sausages: Product = sausages_product_10()
     inventory_service: InventoryService = InventoryService(stock=[potatoes])
     
     items: list[StockItem] = [
@@ -76,10 +76,10 @@ def test_restock_invalid_stock(potatoes_store_item_10: Callable[[], StoreItem],
     assert potatoes.amount == 10
 
 
-def test_restock_invalid_stock(potatoes_store_item_10: Callable[[], StoreItem], 
-                 sausages_store_item_10: Callable[[], StoreItem],) -> None:
-    potatoes: StoreItem = potatoes_store_item_10()
-    sausages: StoreItem = sausages_store_item_10()
+def test_restock_invalid_stock(potatoes_product_10: Callable[[], Product], 
+                 sausages_product_10: Callable[[], Product],) -> None:
+    potatoes: Product = potatoes_product_10()
+    sausages: Product = sausages_product_10()
     inventory_service: InventoryService = InventoryService(stock=[potatoes])
     
     items: list[StockItem] = [

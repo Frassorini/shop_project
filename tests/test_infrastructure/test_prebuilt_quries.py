@@ -8,7 +8,7 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
@@ -18,7 +18,7 @@ from shop_project.infrastructure.unit_of_work import UnitOfWork
 from shop_project.exceptions import UnitOfWorkException, ResourcesException
 
 from shop_project.infrastructure.query.queries.prebuilt_queries import (
-    CountStoreItemsQuery,
+    CountProductsQuery,
     BiggestPurchaseActivesQuery,
 )
 
@@ -27,24 +27,24 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 
 @pytest.mark.asyncio
-async def test_count_store_items(store_item_factory: Callable[..., StoreItem],
+async def test_count_products(product_factory: Callable[..., Product],
                                  test_db: Database,
                                  uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
                                  fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]],
                                  ) -> None:
-    model_type: Type[BaseAggregate] = StoreItem
+    model_type: Type[BaseAggregate] = Product
     
-    store_items: list[StoreItem] = [
-        store_item_factory(name='sausages_1', amount=1, price="1.0"),
-        store_item_factory(name='sausages_2', amount=4, price="1.0"),
-        store_item_factory(name='sausages_3', amount=2, price="1.0"),
-        store_item_factory(name='sausages_4', amount=3, price="1.0"),
+    products: list[Product] = [
+        product_factory(name='sausages_1', amount=1, price="1.0"),
+        product_factory(name='sausages_2', amount=4, price="1.0"),
+        product_factory(name='sausages_3', amount=2, price="1.0"),
+        product_factory(name='sausages_4', amount=3, price="1.0"),
     ]
     
-    await fill_database(test_db, {StoreItem: cast(list[BaseAggregate], store_items)})
+    await fill_database(test_db, {Product: cast(list[BaseAggregate], products)})
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_only')
     
-    query = CountStoreItemsQuery(lock="NO_LOCK")
+    query = CountProductsQuery(lock="NO_LOCK")
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=False).add_prebuilt(query)

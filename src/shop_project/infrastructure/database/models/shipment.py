@@ -25,7 +25,7 @@ class ShipmentItem(Base):
     __tablename__ = 'shipment_item'
     
     shipment_id = Column(UUIDBinary(), nullable=False)
-    store_item_id = Column(UUIDBinary(), nullable=False)
+    product_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     
     order: Mapped["Shipment"] = relationship(
@@ -34,7 +34,7 @@ class ShipmentItem(Base):
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('shipment_id', 'store_item_id'),
+        PrimaryKeyConstraint('shipment_id', 'product_id'),
         ForeignKeyConstraint(['shipment_id'], ['shipment.entity_id']),
-        ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
+        ForeignKeyConstraint(['product_id'], ['product.entity_id']),
     )

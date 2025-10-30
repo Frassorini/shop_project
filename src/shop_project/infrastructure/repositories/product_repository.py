@@ -2,28 +2,28 @@ from typing import Any, Type
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select, delete, insert, update
 
-from shop_project.application.dto.store_item_dto import StoreItemDTO
+from shop_project.application.dto.product_dto import ProductDTO
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.domain.store_item import StoreItem
-from shop_project.infrastructure.database.models.store_item import StoreItem as StoreItemORM
+from shop_project.domain.product import Product
+from shop_project.infrastructure.database.models.product import Product as ProductORM
 from shop_project.shared.entity_id import EntityId
 
-class StoreItemRepository(BaseRepository[StoreItem]):
-    model_type = StoreItem
-    dto_type = StoreItemDTO
+class ProductRepository(BaseRepository[Product]):
+    model_type = Product
+    dto_type = ProductDTO
     
-    async def create(self, items: list[StoreItem]) -> None:
-        """Создает список StoreItems одним запросом через bulk_insert."""
+    async def create(self, items: list[Product]) -> None:
+        """Создает список Products одним запросом через bulk_insert."""
         if not items:
             return
 
         values = [item.to_dict() for item in items]
-        await self.session.execute(insert(StoreItemORM), values)
+        await self.session.execute(insert(ProductORM), values)
     
-    async def update(self, items: list[StoreItem]) -> None:
+    async def update(self, items: list[Product]) -> None:
         """Обновляет список Stores одним bulk-запросом."""
         if not items:
             return
@@ -32,20 +32,20 @@ class StoreItemRepository(BaseRepository[StoreItem]):
         ids = [snap["entity_id"] for snap in snapshots]
         fields = snapshots[0].keys()
 
-        update_values = {field: self._build_bulk_update_case(field, snapshots, StoreItemORM, ["entity_id"]) for field in fields}
+        update_values = {field: self._build_bulk_update_case(field, snapshots, ProductORM, ["entity_id"]) for field in fields}
 
         stmt = (
-            update(StoreItemORM)
-            .where(StoreItemORM.entity_id.in_(ids))
+            update(ProductORM)
+            .where(ProductORM.entity_id.in_(ids))
             .values(**update_values)
         )
         await self.session.execute(stmt)
 
-    async def delete(self, items: list[StoreItem]) -> None:
-        """Удаляет список StoreItems одним запросом через bulk_delete."""
+    async def delete(self, items: list[Product]) -> None:
+        """Удаляет список Products одним запросом через bulk_delete."""
         if not items:
             return
         
         ids = [item.entity_id.value for item in items]
-        await self.session.execute(delete(StoreItemORM).where(StoreItemORM.entity_id.in_(ids)))
+        await self.session.execute(delete(ProductORM).where(ProductORM.entity_id.in_(ids)))
     

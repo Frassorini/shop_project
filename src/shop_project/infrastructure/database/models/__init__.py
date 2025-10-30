@@ -3,7 +3,7 @@ from shop_project.infrastructure.database.models.customer import Customer
 from shop_project.infrastructure.database.models.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.database.models.purchase_active import PurchaseActive
 from shop_project.infrastructure.database.models.escrow_account import EscrowAccount
-from shop_project.infrastructure.database.models.store_item import StoreItem
+from shop_project.infrastructure.database.models.product import Product
 from shop_project.infrastructure.database.models.shipment import Shipment
 from shop_project.infrastructure.database.models.shipment_summary import ShipmentSummary
 
@@ -13,7 +13,7 @@ __all__ = ['Base',
            'PurchaseDraft', 
            'PurchaseActive', 
            'EscrowAccount', 
-           'StoreItem', 
+           'Product', 
            'Shipment', 
            'ShipmentSummary',
            ]

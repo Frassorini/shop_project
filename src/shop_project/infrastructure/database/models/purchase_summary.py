@@ -33,7 +33,7 @@ class PurchaseSummaryItem(Base):
     __tablename__ = 'purchase_summary_item'
     
     purchase_summary_id = Column(UUIDBinary(), nullable=False)
-    store_item_id = Column(UUIDBinary(), nullable=False)
+    product_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     
     purchase_summary: Mapped["PurchaseSummary"] = relationship(
@@ -42,7 +42,7 @@ class PurchaseSummaryItem(Base):
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('purchase_summary_id', 'store_item_id'),
+        PrimaryKeyConstraint('purchase_summary_id', 'product_id'),
         ForeignKeyConstraint(['purchase_summary_id'], ['purchase_summary.entity_id']),
-        ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
+        ForeignKeyConstraint(['product_id'], ['product.entity_id']),
     )

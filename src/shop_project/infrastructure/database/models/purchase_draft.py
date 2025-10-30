@@ -26,7 +26,7 @@ class PurchaseDraftItem(Base):
     __tablename__ = 'purchase_draft_item'
     
     purchase_draft_id = Column(UUIDBinary(), nullable=False)
-    store_item_id = Column(UUIDBinary(), nullable=False)
+    product_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     
     purchase_draft: Mapped["PurchaseDraft"] = relationship(
@@ -35,7 +35,7 @@ class PurchaseDraftItem(Base):
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('purchase_draft_id', 'store_item_id'),
+        PrimaryKeyConstraint('purchase_draft_id', 'product_id'),
         ForeignKeyConstraint(['purchase_draft_id'], ['purchase_draft.entity_id']),
-        ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
+        ForeignKeyConstraint(['product_id'], ['product.entity_id']),
     )

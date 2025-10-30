@@ -9,7 +9,7 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
@@ -75,7 +75,7 @@ async def test_purchase_draft(test_db: Database,
                            prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]],
                            uow_check: Callable[..., Any],
                            uow_delete_and_check: Callable[..., Awaitable[None]],
-                           store_item_container_factory: Callable[..., AggregateContainer]) -> None:
+                           product_container_factory: Callable[..., AggregateContainer]) -> None:
     model_type: Type[Any] = PurchaseDraft
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
@@ -83,17 +83,17 @@ async def test_purchase_draft(test_db: Database,
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True)
         .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
-        .load(StoreItem).from_previous().for_update()
+        .load(Product).from_previous().for_update()
         )
     
     async with uow:
         resources = uow.get_resorces()
         domain_obj: PurchaseDraft = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
-        store_item = store_item_container_factory(
+        product = product_container_factory(
             name="test item", amount=10, price=1
         )
-        resources.put(StoreItem, store_item.aggregate)
-        domain_obj.add_item(store_item.aggregate.entity_id, 1)
+        resources.put(Product, product.aggregate)
+        domain_obj.add_item(product.aggregate.entity_id, 1)
         
         snapshot_before = domain_obj.to_dict()
         await uow.commit()
@@ -120,7 +120,7 @@ async def test_uow_purchase_claim(test_db: Database,
         QueryPlanBuilder(mutating=True)
         .load(PurchaseActive).from_id([purchase_active_container.aggregate.entity_id.value]).for_update()
         .load(EscrowAccount).from_previous().for_update()
-        .load(StoreItem).from_previous(0).for_update()
+        .load(Product).from_previous(0).for_update()
         )
     
     async with uow:
@@ -160,12 +160,12 @@ async def test_uow_purchase_claim(test_db: Database,
 
 
 @pytest.mark.asyncio
-async def test_store_item(test_db: Database,
+async def test_product(test_db: Database,
                           uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
                           prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]],
                           uow_check: Callable[..., Any],
                           uow_delete_and_check: Callable[..., Awaitable[None]],) -> None:
-    model_type: Type[Any] = StoreItem
+    model_type: Type[Any] = Product
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
@@ -175,7 +175,7 @@ async def test_store_item(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
-        domain_obj: StoreItem = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        domain_obj: Product = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         
         domain_obj.price = domain_obj.price + 1
         

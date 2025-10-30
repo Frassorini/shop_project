@@ -15,7 +15,7 @@ pytest_plugins = [
     
     "tests.fixtures.shared.unique_id",
     
-    "tests.fixtures.domain.store_item",
+    "tests.fixtures.domain.product",
     "tests.fixtures.domain.customer",
     "tests.fixtures.domain.purchase_draft",
     "tests.fixtures.domain.purchase_active",

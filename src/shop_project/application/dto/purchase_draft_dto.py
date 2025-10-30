@@ -6,7 +6,7 @@ from shop_project.application.dto.base_dto import BaseDTO
 
 
 class PurchaseDraftItemDTO(BaseDTO):
-    store_item_id: UUID
+    product_id: UUID
     amount: int
 
 

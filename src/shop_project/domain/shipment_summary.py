@@ -14,18 +14,18 @@ from shop_project.shared.base_state_machine import BaseStateMachine
 
 @dataclass(frozen=True)
 class ShipmentSummaryItem(StockItem, PSnapshotable):
-    store_item_id: EntityId
+    product_id: EntityId
     amount: int
     
     def to_dict(self) -> dict[str, Any]:
         return {
-            'store_item_id': self.store_item_id.value,
+            'product_id': self.product_id.value,
             'amount': self.amount,
         }
 
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(EntityId(snapshot['store_item_id']), snapshot['amount'])
+        return cls(EntityId(snapshot['product_id']), snapshot['amount'])
 
     def _validate(self) -> None:
         if self.amount <= 0:
@@ -48,7 +48,7 @@ class ShipmentSummary(BaseAggregate):
         
         for item in items:
             self._validate_item(item)
-            self._items[item.store_item_id] = item
+            self._items[item.product_id] = item
     
     def to_dict(self) -> dict[str, Any]:
         return {'entity_id': self.entity_id.value, 
@@ -65,11 +65,11 @@ class ShipmentSummary(BaseAggregate):
         return obj
         
     def _validate_item(self, item: ShipmentSummaryItem) -> None:
-        if item.store_item_id in self._items:
+        if item.product_id in self._items:
             raise DomainException('Item already added')
     
-    def get_item(self, store_item_id: EntityId) -> ShipmentSummaryItem:
-        return self._items[store_item_id]
+    def get_item(self, product_id: EntityId) -> ShipmentSummaryItem:
+        return self._items[product_id]
         
     def get_items(self) -> list[ShipmentSummaryItem]:
         return list(self._items.values())

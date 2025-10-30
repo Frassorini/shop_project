@@ -12,7 +12,7 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
@@ -79,7 +79,7 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
             PurchaseDraft: [],
             PurchaseSummary: [],
             EscrowAccount: [],
-            StoreItem: [],
+            Product: [],
             Shipment: [],
             ShipmentSummary: [],
         }

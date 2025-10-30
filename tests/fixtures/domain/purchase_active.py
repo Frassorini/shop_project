@@ -10,7 +10,7 @@ from shop_project.domain.services.inventory_service import InventoryService
 from shop_project.domain.services.checkout_service import CheckoutService
 from shop_project.domain.services.purchase_activation_service import PurchaseActivationService, PurchaseActivation
 from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.shared.entity_id import EntityId
 
 from tests.helpers import AggregateContainer
@@ -19,14 +19,14 @@ from tests.helpers import AggregateContainer
 @pytest.fixture
 def purchase_active_filled_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    sausages_store_item_10: Callable[[], StoreItem],
+    potatoes_product_10: Callable[[], Product],
+    sausages_product_10: Callable[[], Product],
     purchase_activation_service_factory: Callable[[InventoryService], PurchaseActivationService],
 ) -> Callable[[], PurchaseActivation]:
     def factory() -> PurchaseActivation:
         purchase_draft = purchase_draft_factory()
-        potatoes = potatoes_store_item_10()
-        sausages = sausages_store_item_10()
+        potatoes = potatoes_product_10()
+        sausages = sausages_product_10()
         purchase_draft.add_item(potatoes.entity_id, 10)
         purchase_draft.add_item(sausages.entity_id, 10)
         
@@ -42,14 +42,14 @@ def purchase_active_filled_factory(
 @pytest.fixture
 def purchase_active_filled_container_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
-    potatoes_store_item_10: Callable[[], StoreItem],
-    sausages_store_item_10: Callable[[], StoreItem],
+    potatoes_product_10: Callable[[], Product],
+    sausages_product_10: Callable[[], Product],
     purchase_activation_service_factory: Callable[[InventoryService], PurchaseActivationService],
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
         purchase_draft = purchase_draft_factory()
-        potatoes = potatoes_store_item_10()
-        sausages = sausages_store_item_10()
+        potatoes = potatoes_product_10()
+        sausages = sausages_product_10()
         purchase_draft.add_item(potatoes.entity_id, 10)
         purchase_draft.add_item(sausages.entity_id, 10)
         
@@ -61,7 +61,7 @@ def purchase_active_filled_container_factory(
         container: AggregateContainer = AggregateContainer(
             aggregate=purchase_activation.purchase_active, 
             dependencies={EscrowAccount: [purchase_activation.escrow_account],
-                          StoreItem: [potatoes, sausages]})
+                          Product: [potatoes, sausages]})
         
         return container
     return factory
@@ -71,17 +71,17 @@ def purchase_active_filled_container_factory(
 # def customer_order_container_factory(
 #     unique_id_factory: Callable[[], EntityId],
 #     customer_andrew: Callable[[], Customer],
-#     store_item_container_factory: Callable[..., AggregateContainer],
+#     product_container_factory: Callable[..., AggregateContainer],
 # ) -> Callable[[], AggregateContainer]:
 #     def factory() -> AggregateContainer:
 #         customer = customer_andrew()
 #         order = PurchaseActive(entity_id=unique_id_factory(), customer_id=customer.entity_id)
-#         store_item = store_item_container_factory(name='potatoes', amount=1, price=1).aggregate
+#         product = product_container_factory(name='potatoes', amount=1, price=1).aggregate
         
 #         container: AggregateContainer = AggregateContainer(
 #             aggregate=order, 
 #             dependencies={Customer: [customer], 
-#                           StoreItem: [store_item],})
+#                           Product: [product],})
         
 #         return container
 #     return factory

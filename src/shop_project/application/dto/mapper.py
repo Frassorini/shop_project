@@ -8,7 +8,7 @@ from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
 from shop_project.application.dto.purchase_summary_dto import PurchaseSummaryDTO
-from shop_project.application.dto.store_item_dto import StoreItemDTO
+from shop_project.application.dto.product_dto import ProductDTO
 from shop_project.application.dto.shipment_dto import ShipmentDTO
 from shop_project.application.dto.shipment_summary_dto import ShipmentSummaryDTO
 
@@ -18,7 +18,7 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.store_item import StoreItem
+from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
@@ -39,8 +39,8 @@ def to_dto(domain_object: PurchaseSummary) -> PurchaseSummaryDTO:
 def to_dto(domain_object: EscrowAccount) -> EscrowAccountDTO:
     return EscrowAccountDTO.model_validate(domain_object.to_dict())
 @overload
-def to_dto(domain_object: StoreItem) -> StoreItemDTO:
-    return StoreItemDTO.model_validate(domain_object.to_dict())
+def to_dto(domain_object: Product) -> ProductDTO:
+    return ProductDTO.model_validate(domain_object.to_dict())
 @overload
 def to_dto(domain_object: Shipment) -> ShipmentDTO:
     return ShipmentDTO.model_validate(domain_object.to_dict())
@@ -72,8 +72,8 @@ def to_domain(dto_object: PurchaseSummaryDTO) -> PurchaseSummary:
 def to_domain(dto_object: EscrowAccountDTO) -> EscrowAccount:
     return EscrowAccount.from_dict(dto_object.model_dump())
 @overload
-def to_domain(dto_object: StoreItemDTO) -> StoreItem:
-    return StoreItem.from_dict(dto_object.model_dump())
+def to_domain(dto_object: ProductDTO) -> Product:
+    return Product.from_dict(dto_object.model_dump())
 @overload
 def to_domain(dto_object: ShipmentDTO) -> Shipment:
     return Shipment.from_dict(dto_object.model_dump())

@@ -14,7 +14,7 @@ class CheckoutService():
     def _count_total_price(self, purchase_draft: PurchaseDraft) -> Decimal:
         total_price = Decimal(0)
         for item in purchase_draft.get_items():
-            total_price += self._inventory_service.get_item(item.store_item_id).price * item.amount
+            total_price += self._inventory_service.get_item(item.product_id).price * item.amount
         return total_price
 
     def checkout(self, purchase_draft: PurchaseDraft) -> EscrowAccount:
