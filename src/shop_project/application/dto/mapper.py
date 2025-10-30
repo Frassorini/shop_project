@@ -9,7 +9,8 @@ from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
 from shop_project.application.dto.purchase_summary_dto import PurchaseSummaryDTO
 from shop_project.application.dto.store_item_dto import StoreItemDTO
-from shop_project.application.dto.supplier_order_dto import SupplierOrderDTO
+from shop_project.application.dto.shipment_dto import ShipmentDTO
+from shop_project.application.dto.shipment_summary_dto import ShipmentSummaryDTO
 
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
@@ -18,7 +19,8 @@ from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
 from shop_project.domain.store_item import StoreItem
-from shop_project.domain.supplier_order import SupplierOrder
+from shop_project.domain.shipment import Shipment
+from shop_project.domain.shipment_summary import ShipmentSummary
 
 
 @overload
@@ -40,8 +42,11 @@ def to_dto(domain_object: EscrowAccount) -> EscrowAccountDTO:
 def to_dto(domain_object: StoreItem) -> StoreItemDTO:
     return StoreItemDTO.model_validate(domain_object.to_dict())
 @overload
-def to_dto(domain_object: SupplierOrder) -> SupplierOrderDTO:
-    return SupplierOrderDTO.model_validate(domain_object.to_dict())
+def to_dto(domain_object: Shipment) -> ShipmentDTO:
+    return ShipmentDTO.model_validate(domain_object.to_dict())
+@overload
+def to_dto(domain_object: ShipmentSummary) -> ShipmentSummaryDTO:
+    return ShipmentSummaryDTO.model_validate(domain_object.to_dict())
 @overload
 def to_dto(domain_object: BaseAggregate) -> BaseDTO:
     raise NotImplementedError
@@ -70,8 +75,11 @@ def to_domain(dto_object: EscrowAccountDTO) -> EscrowAccount:
 def to_domain(dto_object: StoreItemDTO) -> StoreItem:
     return StoreItem.from_dict(dto_object.model_dump())
 @overload
-def to_domain(dto_object: SupplierOrderDTO) -> SupplierOrder:
-    return SupplierOrder.from_dict(dto_object.model_dump())
+def to_domain(dto_object: ShipmentDTO) -> Shipment:
+    return Shipment.from_dict(dto_object.model_dump())
+@overload
+def to_domain(dto_object: ShipmentSummaryDTO) -> ShipmentSummary:
+    return ShipmentSummary.from_dict(dto_object.model_dump())
 @overload
 def to_domain(dto_object: BaseDTO) -> BaseAggregate:
     raise NotImplementedError

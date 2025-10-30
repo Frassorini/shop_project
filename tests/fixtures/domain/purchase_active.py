@@ -25,10 +25,12 @@ def purchase_active_filled_factory(
 ) -> Callable[[], PurchaseActivation]:
     def factory() -> PurchaseActivation:
         purchase_draft = purchase_draft_factory()
-        purchase_draft.add_item(potatoes_store_item_10().entity_id, 10)
-        purchase_draft.add_item(sausages_store_item_10().entity_id, 10)
+        potatoes = potatoes_store_item_10()
+        sausages = sausages_store_item_10()
+        purchase_draft.add_item(potatoes.entity_id, 10)
+        purchase_draft.add_item(sausages.entity_id, 10)
         
-        inventory_service = InventoryService(stock=[potatoes_store_item_10(), sausages_store_item_10()])
+        inventory_service = InventoryService(stock=[potatoes, sausages])
         purchase_activation_service = purchase_activation_service_factory(inventory_service)
         
         purchase_activation = purchase_activation_service.activate(purchase_draft)

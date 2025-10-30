@@ -36,5 +36,8 @@ class InventoryService:
         self._ensure_stock_is_valid(items)
         self._increase_stock(items)
     
+    def check_stock_validity(self, items: Sequence[StockItem]) -> None:
+        self._ensure_stock_is_valid(items)
+    
     def get_item(self, store_item_id: EntityId) -> StoreItem:
         return self._stock[store_item_id]

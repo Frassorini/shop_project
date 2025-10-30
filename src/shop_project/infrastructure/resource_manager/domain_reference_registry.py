@@ -7,7 +7,8 @@ from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
 from shop_project.domain.store_item import StoreItem
-from shop_project.domain.supplier_order import SupplierOrder
+from shop_project.domain.shipment import Shipment
+from shop_project.domain.shipment_summary import ShipmentSummary
 
 
 SourceType = TypeVar('SourceType')
@@ -79,7 +80,13 @@ class DomainReferenceRegistry():
                     strategy=lambda escrow_account: [escrow_account.entity_id.value]
                 ),
             },
-            SupplierOrder: {
+            Shipment: {
+                StoreItem: DomainReferenceDescriptor(
+                    attribute_name="entity_id",
+                    strategy=lambda order: [item.store_item_id.value for item in order.get_items()]
+                ),
+            },
+            ShipmentSummary: {
                 StoreItem: DomainReferenceDescriptor(
                     attribute_name="entity_id",
                     strategy=lambda order: [item.store_item_id.value for item in order.get_items()]

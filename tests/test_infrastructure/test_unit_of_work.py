@@ -10,9 +10,11 @@ from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_summary import PurchaseSummary
 from shop_project.domain.escrow_account import EscrowAccount
 from shop_project.domain.store_item import StoreItem
-from shop_project.domain.supplier_order import SupplierOrder
+from shop_project.domain.shipment import Shipment
+from shop_project.domain.shipment_summary import ShipmentSummary
 
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
+from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
 
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
@@ -117,7 +119,6 @@ async def test_uow_purchase_claim(test_db: Database,
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True)
         .load(PurchaseActive).from_id([purchase_active_container.aggregate.entity_id.value]).for_update()
-        
         .load(EscrowAccount).from_previous().for_update()
         .load(StoreItem).from_previous(0).for_update()
         )
@@ -190,38 +191,43 @@ async def test_store_item(test_db: Database,
 
 
 @pytest.mark.asyncio
-async def test_supplier_order(test_db: Database,
+async def test_shipment(test_db: Database,
                                      uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
                                      prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]],
+                                     shipment_cancel_service_factory: Callable[[], ShipmentCancelService],
                                      uow_check: Callable[..., Any],
-                                     store_item_container_factory: Callable[..., AggregateContainer],
                                      uow_delete_and_check: Callable[..., Awaitable[None]]) -> None:
-    model_type: Type[Any] = SupplierOrder
-    domain_container: AggregateContainer = await prepare_container(model_type, test_db)
+    shipment_container: AggregateContainer = await prepare_container(Shipment, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        QueryPlanBuilder(mutating=True).load(Shipment).from_id([shipment_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
         resources = uow.get_resorces()
-        domain_obj: SupplierOrder = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
-        store_item = store_item_container_factory(
-            name="test item", amount=10, price=1
-        )
-        resources.put(StoreItem, store_item.aggregate)
-        domain_obj.add_item(store_item.aggregate.entity_id, 1)
+        shipment: Shipment = resources.get_by_id(Shipment, shipment_container.aggregate.entity_id)
+        shipment_cancel_service = shipment_cancel_service_factory()
         
-        snapshot_before = domain_obj.to_dict()
+        shipment_summary: ShipmentSummary = shipment_cancel_service.cancel(shipment)
+        resources.put(ShipmentSummary, shipment_summary)
+        
+        shipment_snapshot_before = shipment.to_dict()
+        shipment_summary_snapshot_before = shipment_summary.to_dict()
         await uow.commit()
     
-    async with uow_check(uow_factory, test_db, model_type, domain_container.aggregate) as uow2:
+    async with uow_check(uow_factory, test_db, Shipment, shipment_container.aggregate) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
-        assert snapshot_before == snapshot_after
+        snapshot_after = resources.get_by_id(Shipment, shipment_container.aggregate.entity_id).to_dict()
+        assert shipment_snapshot_before == snapshot_after
     
-    await uow_delete_and_check(uow_factory, test_db, model_type, domain_container.aggregate)
+    async with uow_check(uow_factory, test_db, ShipmentSummary, shipment_summary) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = resources.get_by_id(ShipmentSummary, shipment_summary.entity_id).to_dict()
+        assert shipment_summary_snapshot_before == snapshot_after
+    
+    await uow_delete_and_check(uow_factory, test_db, Shipment, shipment_container.aggregate)
+    await uow_delete_and_check(uow_factory, test_db, ShipmentSummary, shipment_summary)
 
 
 @pytest.mark.asyncio

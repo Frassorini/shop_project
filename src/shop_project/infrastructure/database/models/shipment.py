@@ -4,15 +4,13 @@ from shop_project.infrastructure.database.models.base import Base
 from shop_project.infrastructure.database.uuid_binary import UUIDBinary
 
 
-class SupplierOrder(Base):
-    __tablename__ = 'supplier_order'
+class Shipment(Base):
+    __tablename__ = 'shipment'
     
     entity_id = Column(UUIDBinary(), nullable=False)
-    departure = Column(DateTime(timezone=True), nullable=False)
-    arrival = Column(DateTime(timezone=True), nullable=False)
     state = Column(String(50), nullable=False)
     
-    items: Mapped[list["SupplierOrderItem"]] = relationship(
+    items: Mapped[list["ShipmentItem"]] = relationship(
         back_populates="order",
         cascade="all, delete-orphan",
         lazy="raise",
@@ -23,20 +21,20 @@ class SupplierOrder(Base):
     )
     
     
-class SupplierOrderItem(Base):
-    __tablename__ = 'supplier_order_item'
+class ShipmentItem(Base):
+    __tablename__ = 'shipment_item'
     
-    supplier_order_id = Column(UUIDBinary(), nullable=False)
+    shipment_id = Column(UUIDBinary(), nullable=False)
     store_item_id = Column(UUIDBinary(), nullable=False)
     amount = Column(Integer(), nullable=False)
     
-    order: Mapped["SupplierOrder"] = relationship(
+    order: Mapped["Shipment"] = relationship(
         back_populates="items",
         lazy="raise",
     )
     
     __table_args__ = (
-        PrimaryKeyConstraint('supplier_order_id', 'store_item_id'),
-        ForeignKeyConstraint(['supplier_order_id'], ['supplier_order.entity_id']),
+        PrimaryKeyConstraint('shipment_id', 'store_item_id'),
+        ForeignKeyConstraint(['shipment_id'], ['shipment.entity_id']),
         ForeignKeyConstraint(['store_item_id'], ['store_item.entity_id']),
     )

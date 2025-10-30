@@ -9,7 +9,7 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.store_item import StoreItem
-from shop_project.domain.supplier_order import SupplierOrder
+from shop_project.domain.shipment import Shipment
 from shop_project.shared.entity_id import EntityId
 from shop_project.domain.base_aggregate import BaseAggregate
 
@@ -19,7 +19,7 @@ from tests.helpers import AggregateContainer
 @pytest.fixture
 def domain_object_factory(customer_andrew: Callable[[], Customer],
                           purchase_active_filled_container_factory: Callable[[], AggregateContainer],
-                          supplier_order_container_factory: Callable[[], AggregateContainer],
+                          shipment_conatiner_factory: Callable[[], AggregateContainer],
                           purchase_draft_container_factory: Callable[[], AggregateContainer],
                           store_item_container_factory: Callable[..., AggregateContainer]
                           ) -> Callable[[Type[BaseAggregate]], AggregateContainer]:
@@ -28,8 +28,8 @@ def domain_object_factory(customer_andrew: Callable[[], Customer],
             return AggregateContainer(customer_andrew(), dependencies={})
         elif model_type is PurchaseActive:
             return purchase_active_filled_container_factory()
-        elif model_type is SupplierOrder:
-            return supplier_order_container_factory()
+        elif model_type is Shipment:
+            return shipment_conatiner_factory()
         elif model_type is PurchaseDraft:
             return purchase_draft_container_factory()
         elif model_type is StoreItem:

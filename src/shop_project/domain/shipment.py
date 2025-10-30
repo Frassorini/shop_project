@@ -1,0 +1,92 @@
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Mapping, Self, Sequence, cast
+
+from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.stock_item import StockItem
+from shop_project.shared.entity_id import EntityId
+from shop_project.shared.identity_mixin import IdentityMixin
+from shop_project.domain.exceptions import DomainException
+from shop_project.shared.p_snapshotable import PSnapshotable
+from shop_project.shared.base_state_machine import BaseStateMachine
+
+
+@dataclass(frozen=True)
+class ShipmentItem(StockItem, PSnapshotable):
+    store_item_id: EntityId
+    amount: int
+    
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'store_item_id': self.store_item_id.value,
+            'amount': self.amount,
+        }
+
+    @classmethod
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
+        return cls(EntityId(snapshot['store_item_id']), snapshot['amount'])
+
+    def _validate(self) -> None:
+        if self.amount <= 0:
+            raise DomainException('Amount must be > 0')
+
+class ShipmentState(Enum):
+    ACTIVE = 'ACTIVE'
+    FINALIZED = 'FINALIZED'
+
+
+class ShipmentStateMachine(BaseStateMachine[ShipmentState]):
+    _transitions: dict[ShipmentState, list[ShipmentState]] = {
+        ShipmentState.ACTIVE: [ShipmentState.FINALIZED],
+        ShipmentState.FINALIZED: [],
+    }
+
+
+class Shipment(BaseAggregate):
+    def __init__(self, entity_id: EntityId, items: list[ShipmentItem]) -> None:
+        self._entity_id: EntityId = entity_id
+        self._state_machine: ShipmentStateMachine = ShipmentStateMachine(ShipmentState.ACTIVE)
+        
+        self._items: dict[EntityId, ShipmentItem] = {}
+        
+        for item in items:
+            self._validate_item(item)
+            self._items[item.store_item_id] = item
+    
+    @property
+    def state(self) -> ShipmentState:
+        return self._state_machine.state
+    
+    def to_dict(self) -> dict[str, Any]:
+        return {'entity_id': self.entity_id.value, 
+                'state': self.state.value,
+                'items': [item.to_dict() for item in self._items.values()],
+                }
+    
+    @classmethod
+    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
+        obj = cls(EntityId(snapshot['entity_id']), 
+                  [ShipmentItem.from_dict(item) for item in snapshot['items']]
+                  )
+        obj._state_machine = ShipmentStateMachine(ShipmentState(snapshot['state']))
+        return obj
+        
+    def _validate_item(self, item: ShipmentItem) -> None:
+        if item.store_item_id in self._items:
+            raise DomainException('Item already added')
+    
+    def get_item(self, store_item_id: EntityId) -> ShipmentItem:
+        return self._items[store_item_id]
+        
+    def get_items(self) -> list[ShipmentItem]:
+        return list(self._items.values()) 
+    
+    def finalize(self) -> None:
+        self._state_machine.try_transition_to(ShipmentState.FINALIZED)
+    
+    def is_finalized(self) -> bool:
+        return self.state == ShipmentState.FINALIZED
+    
+    def is_active(self) -> bool:
+        return self.state == ShipmentState.ACTIVE
