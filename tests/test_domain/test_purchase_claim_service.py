@@ -1,6 +1,8 @@
 from typing import Callable, cast
 import pytest
 
+from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_summary import PurchaseSummaryReason
@@ -12,15 +14,12 @@ from shop_project.domain.escrow_account import EscrowAccount
 from tests.helpers import AggregateContainer
 
 
-def test_(purchase_claim_service_factory: Callable[[], PurchaseClaimService]) -> None:
-    purchase_claim_service = purchase_claim_service_factory()
+def test_purchase_claim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
+                        domain_container: DomainContainer,) -> None:
+    purchase_claim_service = domain_container[PurchaseClaimService]
 
-
-def test_purchase_claim(purchase_claim_service_factory: Callable[[], PurchaseClaimService],
-                        purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
-    purchase_claim_service = purchase_claim_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
@@ -41,11 +40,12 @@ def test_purchase_claim(purchase_claim_service_factory: Callable[[], PurchaseCla
     assert purchase_summary.reason == PurchaseSummaryReason.CLAIMED
 
 
-def test_purchase_pending_claim(purchase_claim_service_factory: Callable[[], PurchaseClaimService],
-                        purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
+def test_purchase_pending_claim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
+                                domain_container: DomainContainer,) -> None:
+    purchase_claim_service = domain_container[PurchaseClaimService]
+
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
-    purchase_claim_service = purchase_claim_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]

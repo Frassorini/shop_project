@@ -1,7 +1,10 @@
 from decimal import Decimal
 from typing import Any, Awaitable, Callable, Coroutine, Literal, Type, TypeVar
-import pytest
+
 from sqlalchemy.ext.asyncio import AsyncSession
+import pytest
+
+from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
 
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
@@ -112,7 +115,7 @@ async def test_uow_purchase_claim(test_db: Database,
                                      prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]],
                                      uow_check: Callable[..., Any],
                                      uow_delete_and_check: Callable[..., Awaitable[None]],
-                                     purchase_claim_service_factory: Callable[[], PurchaseClaimService]) -> None:
+                                     domain_container: DomainContainer,) -> None:
     purchase_active_container: AggregateContainer = await prepare_container(PurchaseActive, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
@@ -125,11 +128,11 @@ async def test_uow_purchase_claim(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
+        purchase_claim_service = domain_container[PurchaseClaimService]
         purchase_active: PurchaseActive = resources.get_by_id(PurchaseActive, purchase_active_container.aggregate.entity_id)
         escrow_account = resources.get_by_id(EscrowAccount, purchase_active.escrow_account_id)
         
         escrow_account.mark_as_paid()
-        purchase_claim_service = purchase_claim_service_factory()
         purchase_summary = purchase_claim_service.claim(purchase_active, escrow_account)
         resources.put(PurchaseSummary, purchase_summary)
         
@@ -194,9 +197,9 @@ async def test_product(test_db: Database,
 async def test_shipment(test_db: Database,
                                      uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
                                      prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]],
-                                     shipment_cancel_service_factory: Callable[[], ShipmentCancelService],
                                      uow_check: Callable[..., Any],
-                                     uow_delete_and_check: Callable[..., Awaitable[None]]) -> None:
+                                     uow_delete_and_check: Callable[..., Awaitable[None]],
+                                     domain_container: DomainContainer,) -> None:
     shipment_container: AggregateContainer = await prepare_container(Shipment, test_db)
     uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
     
@@ -206,8 +209,8 @@ async def test_shipment(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
+        shipment_cancel_service = domain_container[ShipmentCancelService]
         shipment: Shipment = resources.get_by_id(Shipment, shipment_container.aggregate.entity_id)
-        shipment_cancel_service = shipment_cancel_service_factory()
         
         shipment_summary: ShipmentSummary = shipment_cancel_service.cancel(shipment)
         resources.put(ShipmentSummary, shipment_summary)

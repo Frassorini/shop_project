@@ -12,6 +12,7 @@ pytest_plugins = [
     "tests.fixtures.infrastructure.uow",
     "tests.fixtures.infrastructure.database",
     "tests.fixtures.infrastructure.repository",
+    "tests.fixtures.infrastructure.dependency_injection",
     
     "tests.fixtures.shared.unique_id",
     
@@ -21,5 +22,4 @@ pytest_plugins = [
     "tests.fixtures.domain.purchase_active",
     "tests.fixtures.domain.shipment",
     "tests.fixtures.domain.domain_object",
-    "tests.fixtures.domain.services",
 ]

@@ -604,6 +604,45 @@ files = [
 ]
 
 [[package]]
+name = "lagom"
+version = "2.7.7"
+description = "Lagom is a dependency injection container designed to give you 'just enough' help with building your dependencies."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "lagom-2.7.7-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:09a825e3be03b29120327d8883ad5a2d9fd415c24e4ac72c3ced24ebe100c205"},
+    {file = "lagom-2.7.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:26a0565ead382a74bf2368a6b313302214829a48f6f7014f01fafdc5df2f5803"},
+    {file = "lagom-2.7.7-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:5f34d83bf571e4cae1c0631a7a12026685c1055c2988d1524bc60efe5e935d5e"},
+    {file = "lagom-2.7.7-cp310-cp310-win32.whl", hash = "sha256:11e513fb2bf7459204c714c361187f3dc441570fe5d4f255676b53877614d152"},
+    {file = "lagom-2.7.7-cp310-cp310-win_amd64.whl", hash = "sha256:e68c275b7ecd212502089981f1688808587408fb1349fa896f8ca5518bc51ba7"},
+    {file = "lagom-2.7.7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c5035aa948b5b3fcea4ee89cac5a1aa143506f19b37c3e97d5a34ced6e9ed992"},
+    {file = "lagom-2.7.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ff5c3312221b69b5ea629d8f3f29563c281d76c23ec0266cbf1a6e898e6ad224"},
+    {file = "lagom-2.7.7-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:46f2b5b3e8533df6b7de28e21278810796e5f76b83e140db412cdf15b389ee1d"},
+    {file = "lagom-2.7.7-cp311-cp311-win32.whl", hash = "sha256:063b323c7105665a38f0ca7959f1abcae7ad88b74c02de3b63674e05258f24ca"},
+    {file = "lagom-2.7.7-cp311-cp311-win_amd64.whl", hash = "sha256:11dfb34dc6af203cb82f299be18c78d9beccbc6bad7c18d3577db07f2be43f6b"},
+    {file = "lagom-2.7.7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:57031a288cbd549fc26b4107f1f1fabba1f01632d20de197389ec0948b2d0726"},
+    {file = "lagom-2.7.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:abeab675e4d3d505254b6eeb9665aa90e79e60f4adc5cc05c2082b0ac899bad4"},
+    {file = "lagom-2.7.7-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:e3b54f06ff474a2c82e02c3fbc17a5cd38581560885933c56422d2524a533079"},
+    {file = "lagom-2.7.7-cp312-cp312-win32.whl", hash = "sha256:e336733b7fad9397081e736ca3dc3e35b70cc8df11f63df38053921760acf6a7"},
+    {file = "lagom-2.7.7-cp312-cp312-win_amd64.whl", hash = "sha256:45874bcb18f08ad92d2356d19ca7c374658b51e68e91ce25885396ee832104b7"},
+    {file = "lagom-2.7.7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:36961c52a8debcc122ebc5caece4bdca7cf6c1cdf07159e17b84913259b386bd"},
+    {file = "lagom-2.7.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a446273396437774a3defff5a9baa4e0d88c9bad4e9cf318d98748005f5a6c57"},
+    {file = "lagom-2.7.7-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:0d8f734641a75c4c7ce632f60fd6a65850a3a55d02938acc6d9348812741a167"},
+    {file = "lagom-2.7.7-cp313-cp313-win32.whl", hash = "sha256:348c324cac8ad79d670c38b8d1b4de36280032963abd5127e9abce5f396583f5"},
+    {file = "lagom-2.7.7-cp313-cp313-win_amd64.whl", hash = "sha256:f3ec6675496579c67057884b6b33cef56eb7867b6a98d500bbbe70cd7071f921"},
+    {file = "lagom-2.7.7-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:85c5373e502bc9142c8cbac50cb14072c2bc7cc81593de6bb2b0d97e84d92950"},
+    {file = "lagom-2.7.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:292ea7d8184c4642e7b1a65e65ff9e8b7bdb05a2303d0e8cb91a0b3059e78df8"},
+    {file = "lagom-2.7.7-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:b779317f08d7f8e523ee801e843506f1d34faa14ba3d51b7820b591d8ef1ef9f"},
+    {file = "lagom-2.7.7-cp39-cp39-win32.whl", hash = "sha256:1be4c29f2c41a3e11647accad450f034173b4721b1231bb4de4ecd81bf7ef4c6"},
+    {file = "lagom-2.7.7-cp39-cp39-win_amd64.whl", hash = "sha256:21bf278ecb4379cf8c30ff2cb6a11a96f8b13acc1e61338407d58811f10212c5"},
+    {file = "lagom-2.7.7-py3-none-any.whl", hash = "sha256:704b52f5b028eec84344fb14164c24cec4853c1b699b2cc008b356a7ebc9c8a9"},
+]
+
+[package.extras]
+env = ["pydantic (>=1.0.0,<3.0.0)"]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -1138,4 +1177,4 @@ typing-extensions = ">=4.12.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "56ebaeb71753cae7171adcb1ae92ede338991a7490a02c948e15633234e4ea48"
+content-hash = "a12bb20fc1eecc2f6d50c0202ed8fad2fc5cc1613350d15009597860bcc888ff"

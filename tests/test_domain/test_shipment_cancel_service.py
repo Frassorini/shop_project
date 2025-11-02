@@ -1,6 +1,8 @@
 from typing import Any, Callable, cast
 import pytest
 
+from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
@@ -11,20 +13,13 @@ from shop_project.shared.entity_id import EntityId
 from tests.helpers import AggregateContainer
 
 
-def test_(potatoes_product_10: Callable[[], Product], 
-          shipment_cancel_service_factory: Callable[[], ShipmentCancelService]) -> None:
-    potatoes = potatoes_product_10()
-    product_inventory = ProductInventory([potatoes])
-    
-    shipment_cancel_service = shipment_cancel_service_factory()
-
-
 def test_cancel(shipment_conatiner_factory: Callable[[], AggregateContainer],
-                  shipment_cancel_service_factory: Callable[[], ShipmentCancelService]) -> None:
+                domain_container: DomainContainer,) -> None:
+    shipment_cancel_service = domain_container[ShipmentCancelService]
+
     container = shipment_conatiner_factory()
     shipment: Shipment = cast(Shipment, container.aggregate)
     products: list[Product] = container.dependencies[Product]
-    shipment_cancel_service = shipment_cancel_service_factory()
 
     products_snapshot = [item.to_dict() for item in products]
     shipment_summary: ShipmentSummary = shipment_cancel_service.cancel(shipment)

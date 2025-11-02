@@ -2,6 +2,8 @@ from typing import Callable
 
 import pytest
 
+from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+
 from shop_project.domain.customer import Customer
 from shop_project.domain.escrow_account import EscrowAccount
 from shop_project.domain.purchase_active import PurchaseActive
@@ -21,9 +23,11 @@ def purchase_active_filled_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    purchase_activation_service_factory: Callable[[], PurchaseActivationService],
+    domain_container: DomainContainer,
 ) -> Callable[[], PurchaseActivation]:
     def factory() -> PurchaseActivation:
+        purchase_activation_service = domain_container[PurchaseActivationService]
+
         purchase_draft = purchase_draft_factory()
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
@@ -31,7 +35,6 @@ def purchase_active_filled_factory(
         purchase_draft.add_item(sausages.entity_id, 10)
         
         product_inventory = ProductInventory(stock=[potatoes, sausages])
-        purchase_activation_service = purchase_activation_service_factory()
         
         purchase_activation = purchase_activation_service.activate(product_inventory, purchase_draft)
         
@@ -44,9 +47,11 @@ def purchase_active_filled_container_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    purchase_activation_service_factory: Callable[[], PurchaseActivationService],
+    domain_container: DomainContainer,
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
+        purchase_activation_service = domain_container[PurchaseActivationService]
+        
         purchase_draft = purchase_draft_factory()
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
@@ -54,7 +59,6 @@ def purchase_active_filled_container_factory(
         purchase_draft.add_item(sausages.entity_id, 10)
         
         product_inventory = ProductInventory(stock=[potatoes, sausages])
-        purchase_activation_service = purchase_activation_service_factory()
         
         purchase_activation = purchase_activation_service.activate(product_inventory, purchase_draft)
         
@@ -65,23 +69,3 @@ def purchase_active_filled_container_factory(
         
         return container
     return factory
-
-
-# @pytest.fixture
-# def customer_order_container_factory(
-#     unique_id_factory: Callable[[], EntityId],
-#     customer_andrew: Callable[[], Customer],
-#     product_container_factory: Callable[..., AggregateContainer],
-# ) -> Callable[[], AggregateContainer]:
-#     def factory() -> AggregateContainer:
-#         customer = customer_andrew()
-#         order = PurchaseActive(entity_id=unique_id_factory(), customer_id=customer.entity_id)
-#         product = product_container_factory(name='potatoes', amount=1, price=1).aggregate
-        
-#         container: AggregateContainer = AggregateContainer(
-#             aggregate=order, 
-#             dependencies={Customer: [customer], 
-#                           Product: [product],})
-        
-#         return container
-#     return factory
