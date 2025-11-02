@@ -3,17 +3,16 @@ from shop_project.domain.purchase_active import PurchaseActive, PurchaseActiveIt
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_summary import PurchaseSummary, PurchaseSummaryItem, PurchaseSummaryReason
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.services.purchase_summary_service import PurchaseSummaryService
 from shop_project.shared.entity_id import EntityId
 
 
 class PurchaseReturnService():
-    def __init__(self, purchase_summary_service: PurchaseSummaryService, inventory_service: InventoryService) -> None:
+    def __init__(self, purchase_summary_service: PurchaseSummaryService) -> None:
         self._purchase_summary_service: PurchaseSummaryService = purchase_summary_service
-        self._inventory_service: InventoryService = inventory_service
 
-    def payment_cancel(self, purchase_active: PurchaseActive, escrow_account: EscrowAccount) -> PurchaseSummary:
+    def payment_cancel(self, product_inventory: ProductInventory, purchase_active: PurchaseActive, escrow_account: EscrowAccount) -> PurchaseSummary:
         if purchase_active.is_finalized():
             raise DomainException('Cannot cancel finalized purchase')
         
@@ -22,11 +21,11 @@ class PurchaseReturnService():
         
         escrow_account.finalize()
         
-        self._inventory_service.restock(purchase_active.get_items())
+        product_inventory.restock(purchase_active.get_items())
         
         return self._purchase_summary_service.finalize_cancel_payment(purchase_active)
 
-    def unclaim(self, purchase_active: PurchaseActive, escrow_account: EscrowAccount) -> PurchaseSummary:
+    def unclaim(self, product_inventory: ProductInventory, purchase_active: PurchaseActive, escrow_account: EscrowAccount) -> PurchaseSummary:
         if purchase_active.is_finalized():
             raise DomainException('Cannot unclaim finalized purchase')
         
@@ -35,6 +34,6 @@ class PurchaseReturnService():
         
         escrow_account.begin_refund()
         
-        self._inventory_service.restock(purchase_active.get_items())
+        product_inventory.restock(purchase_active.get_items())
         
         return self._purchase_summary_service.finalize_unclaim(purchase_active)

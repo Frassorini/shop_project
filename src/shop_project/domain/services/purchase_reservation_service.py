@@ -3,16 +3,13 @@ from shop_project.domain.purchase_active import PurchaseActive, PurchaseActiveIt
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_summary import PurchaseSummary, PurchaseSummaryItem, PurchaseSummaryReason
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.shared.entity_id import EntityId
 
 
 class PurchaseReservationService():
-    def __init__(self, inventory_service: InventoryService) -> None:
-        self._inventory_service: InventoryService = inventory_service
-
-    def reserve(self, purchase_draft: PurchaseDraft, escrow_account: EscrowAccount) -> PurchaseActive:
-        self._inventory_service.reserve_stock(purchase_draft.get_items())
+    def reserve(self, product_inventory: ProductInventory, purchase_draft: PurchaseDraft, escrow_account: EscrowAccount) -> PurchaseActive:
+        product_inventory.reserve_stock(purchase_draft.get_items())
         
         purchase_active_items: list[PurchaseActiveItem] = []
         

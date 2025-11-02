@@ -2,7 +2,7 @@ from typing import Any, Callable, cast
 import pytest
 
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
 from shop_project.domain.shipment_summary import ShipmentSummary, ShipmentSummaryReason
 from shop_project.domain.product import Product
@@ -14,7 +14,7 @@ from tests.helpers import AggregateContainer
 def test_(potatoes_product_10: Callable[[], Product], 
           shipment_cancel_service_factory: Callable[[], ShipmentCancelService]) -> None:
     potatoes = potatoes_product_10()
-    inventory_service = InventoryService([potatoes])
+    product_inventory = ProductInventory([potatoes])
     
     shipment_cancel_service = shipment_cancel_service_factory()
 

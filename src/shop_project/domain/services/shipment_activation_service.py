@@ -1,5 +1,5 @@
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_summary_service import ShipmentSummaryService
 from shop_project.domain.shipment import Shipment, ShipmentItem
 from shop_project.shared.entity_id import EntityId
@@ -19,10 +19,7 @@ class ShipmentRequest:
 
 
 class ShipmentActivationService:
-    def __init__(self, inventory_service: InventoryService) -> None:
-        self._inventory_service: InventoryService = inventory_service
-        
-    def activate(self, request: ShipmentRequest) -> Shipment:
-        self._inventory_service.check_stock_validity(request.get_items())
+    def activate(self, product_inventory: ProductInventory, request: ShipmentRequest) -> Shipment:
+        product_inventory.check_stock_validity(request.get_items())
         
         return Shipment(EntityId.get_random(), request.get_items())

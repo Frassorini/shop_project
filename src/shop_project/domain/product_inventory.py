@@ -5,7 +5,7 @@ from shop_project.domain.stock_item import StockItem
 from shop_project.domain.product import Product
 
 
-class InventoryService:
+class ProductInventory:
     def __init__(self, stock: Sequence[Product]) -> None:
         self._stock: dict[EntityId, Product] = {item.entity_id: item for item in stock}
 

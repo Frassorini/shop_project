@@ -2,7 +2,7 @@ from typing import Any, Callable, cast
 import pytest
 
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
 from shop_project.domain.shipment_summary import ShipmentSummary, ShipmentSummaryReason
 from shop_project.domain.product import Product
@@ -12,23 +12,23 @@ from tests.helpers import AggregateContainer
 
 
 def test_(potatoes_product_10: Callable[[], Product], 
-          shipment_receive_service_factory: Callable[[InventoryService], ShipmentReceiveService]) -> None:
+          shipment_receive_service_factory: Callable[[], ShipmentReceiveService]) -> None:
     potatoes = potatoes_product_10()
-    inventory_service = InventoryService([potatoes])
+    product_inventory = ProductInventory([potatoes])
     
-    shipment_receive_service = shipment_receive_service_factory(inventory_service)
+    shipment_receive_service = shipment_receive_service_factory()
 
 
 def test_receive(shipment_conatiner_factory: Callable[[], AggregateContainer],
-                  shipment_receive_service_factory: Callable[[InventoryService], ShipmentReceiveService]) -> None:
+                  shipment_receive_service_factory: Callable[[], ShipmentReceiveService]) -> None:
     container = shipment_conatiner_factory()
     shipment: Shipment = cast(Shipment, container.aggregate)
     products: list[Product] = container.dependencies[Product]
-    inventory_service = InventoryService(products)
-    shipment_receive_service = shipment_receive_service_factory(inventory_service)
+    product_inventory = ProductInventory(products)
+    shipment_receive_service = shipment_receive_service_factory()
 
     products_snapshot = [item.to_dict() for item in products]
-    shipment_summary: ShipmentSummary = shipment_receive_service.receive(shipment)
+    shipment_summary: ShipmentSummary = shipment_receive_service.receive(product_inventory, shipment)
     products_snapshot_after = [item.to_dict() for item in products]
     
     difference = get_difference(products_snapshot, products_snapshot_after)

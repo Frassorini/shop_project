@@ -5,38 +5,40 @@ from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_summary import PurchaseSummaryReason
 from shop_project.domain.services.purchase_return_service import PurchaseReturnService
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.product import Product
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.escrow_account import EscrowAccount
 from tests.helpers import AggregateContainer
 
 
-def test_(purchase_return_service_factory: Callable[[InventoryService], PurchaseReturnService],
+def test_(purchase_return_service_factory: Callable[[], PurchaseReturnService],
           purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
-    purchase_return_service = purchase_return_service_factory(inventory_service)
+    product_inventory = ProductInventory(container.dependencies[Product])
+    purchase_return_service = purchase_return_service_factory()
 
 
-def test_purchase_cancel_payment(purchase_return_service_factory: Callable[[InventoryService], PurchaseReturnService],
+def test_purchase_cancel_payment(purchase_return_service_factory: Callable[[], PurchaseReturnService],
                                  purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
-    purchase_return_service = purchase_return_service_factory(inventory_service)
+    product_inventory = ProductInventory(container.dependencies[Product])
+    purchase_return_service = purchase_return_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
     
     purchase_summary = purchase_return_service.payment_cancel(
-        purchase, 
-        escrow
+        product_inventory=product_inventory,
+        purchase_active=purchase, 
+        escrow_account=escrow
     )
     
     with pytest.raises(DomainException):
         purchase_summary = purchase_return_service.payment_cancel(
-            purchase, 
-            escrow
+            product_inventory=product_inventory,
+            purchase_active=purchase, 
+            escrow_account=escrow
         )
     
     assert purchase.is_finalized()
@@ -46,11 +48,11 @@ def test_purchase_cancel_payment(purchase_return_service_factory: Callable[[Inve
         assert item.amount == 10
 
 
-def test_purchase_paid_cancel_payment(purchase_return_service_factory: Callable[[InventoryService], PurchaseReturnService],
+def test_purchase_paid_cancel_payment(purchase_return_service_factory: Callable[[], PurchaseReturnService],
                                  purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
-    purchase_return_service = purchase_return_service_factory(inventory_service)
+    product_inventory = ProductInventory(container.dependencies[Product])
+    purchase_return_service = purchase_return_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
@@ -58,32 +60,35 @@ def test_purchase_paid_cancel_payment(purchase_return_service_factory: Callable[
     
     with pytest.raises(DomainException):
         purchase_summary = purchase_return_service.payment_cancel(
-            purchase, 
-            escrow
+            product_inventory=product_inventory,
+            purchase_active=purchase, 
+            escrow_account=escrow
         )
     
     assert purchase.is_active()
     assert escrow.is_paid()
 
 
-def test_purchase_unclaim(purchase_return_service_factory: Callable[[InventoryService], PurchaseReturnService],
+def test_purchase_unclaim(purchase_return_service_factory: Callable[[], PurchaseReturnService],
                                  purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
-    purchase_return_service = purchase_return_service_factory(inventory_service)
+    product_inventory = ProductInventory(container.dependencies[Product])
+    purchase_return_service = purchase_return_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
     escrow.mark_as_paid()
     purchase_summary = purchase_return_service.unclaim(
-        purchase, 
-        escrow
+        product_inventory=product_inventory,
+        purchase_active=purchase, 
+        escrow_account=escrow
     )
     
     with pytest.raises(DomainException):
         purchase_summary = purchase_return_service.unclaim(
-            purchase, 
-            escrow
+            product_inventory=product_inventory,
+            purchase_active=purchase, 
+            escrow_account=escrow
         )
     
     assert purchase.is_finalized()
@@ -93,19 +98,20 @@ def test_purchase_unclaim(purchase_return_service_factory: Callable[[InventorySe
         assert item.amount == 10
 
 
-def test_purchase_pending_unclaim(purchase_return_service_factory: Callable[[InventoryService], PurchaseReturnService],
+def test_purchase_pending_unclaim(purchase_return_service_factory: Callable[[], PurchaseReturnService],
                                  purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
-    purchase_return_service = purchase_return_service_factory(inventory_service)
+    product_inventory = ProductInventory(container.dependencies[Product])
+    purchase_return_service = purchase_return_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
     
     with pytest.raises(DomainException):
         purchase_summary = purchase_return_service.unclaim(
-            purchase, 
-            escrow
+            product_inventory=product_inventory,
+            purchase_active=purchase, 
+            escrow_account=escrow
         )
     
     assert purchase.is_active()

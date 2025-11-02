@@ -6,7 +6,7 @@ from shop_project.domain.customer import Customer
 from shop_project.domain.escrow_account import EscrowAccount
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.services.checkout_service import CheckoutService
 from shop_project.domain.services.purchase_activation_service import PurchaseActivationService, PurchaseActivation
 from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
@@ -21,7 +21,7 @@ def purchase_active_filled_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    purchase_activation_service_factory: Callable[[InventoryService], PurchaseActivationService],
+    purchase_activation_service_factory: Callable[[], PurchaseActivationService],
 ) -> Callable[[], PurchaseActivation]:
     def factory() -> PurchaseActivation:
         purchase_draft = purchase_draft_factory()
@@ -30,10 +30,10 @@ def purchase_active_filled_factory(
         purchase_draft.add_item(potatoes.entity_id, 10)
         purchase_draft.add_item(sausages.entity_id, 10)
         
-        inventory_service = InventoryService(stock=[potatoes, sausages])
-        purchase_activation_service = purchase_activation_service_factory(inventory_service)
+        product_inventory = ProductInventory(stock=[potatoes, sausages])
+        purchase_activation_service = purchase_activation_service_factory()
         
-        purchase_activation = purchase_activation_service.activate(purchase_draft)
+        purchase_activation = purchase_activation_service.activate(product_inventory, purchase_draft)
         
         return purchase_activation
     return factory
@@ -44,7 +44,7 @@ def purchase_active_filled_container_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    purchase_activation_service_factory: Callable[[InventoryService], PurchaseActivationService],
+    purchase_activation_service_factory: Callable[[], PurchaseActivationService],
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
         purchase_draft = purchase_draft_factory()
@@ -53,10 +53,10 @@ def purchase_active_filled_container_factory(
         purchase_draft.add_item(potatoes.entity_id, 10)
         purchase_draft.add_item(sausages.entity_id, 10)
         
-        inventory_service = InventoryService(stock=[potatoes, sausages])
-        purchase_activation_service = purchase_activation_service_factory(inventory_service)
+        product_inventory = ProductInventory(stock=[potatoes, sausages])
+        purchase_activation_service = purchase_activation_service_factory()
         
-        purchase_activation = purchase_activation_service.activate(purchase_draft)
+        purchase_activation = purchase_activation_service.activate(product_inventory, purchase_draft)
         
         container: AggregateContainer = AggregateContainer(
             aggregate=purchase_activation.purchase_active, 

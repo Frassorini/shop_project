@@ -4,7 +4,7 @@ import pytest
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.customer import Customer
 from shop_project.domain.services.checkout_service import CheckoutService
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
@@ -23,26 +23,25 @@ from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
-def purchase_activation_service_factory() -> Callable[[InventoryService], PurchaseActivationService]:
-    def factory(inventory_service: InventoryService) -> PurchaseActivationService:
-        checkout_service = CheckoutService(inventory_service)
-        purchase_reservation_service = PurchaseReservationService(inventory_service)
+def purchase_activation_service_factory() -> Callable[[], PurchaseActivationService]:
+    def factory() -> PurchaseActivationService:
+        checkout_service = CheckoutService()
+        purchase_reservation_service = PurchaseReservationService()
         
-        return PurchaseActivationService(inventory_service, 
-                                         purchase_reservation_service, 
-                                         checkout_service
+        return PurchaseActivationService(purchase_reservation_service=purchase_reservation_service, 
+                                         checkout_service=checkout_service
                                          )
         
     return factory
 
 
 @pytest.fixture
-def purchase_return_service_factory() -> Callable[[InventoryService], PurchaseReturnService]:
-    def factory(inventory_service: InventoryService) -> PurchaseReturnService:
-        checkout_service = CheckoutService(inventory_service)
+def purchase_return_service_factory() -> Callable[[], PurchaseReturnService]:
+    def factory() -> PurchaseReturnService:
+        checkout_service = CheckoutService()
         purchase_summary_service = PurchaseSummaryService()
         
-        return PurchaseReturnService(purchase_summary_service, inventory_service)
+        return PurchaseReturnService(purchase_summary_service)
         
     return factory
 
@@ -58,19 +57,19 @@ def purchase_claim_service_factory() -> Callable[[], PurchaseClaimService]:
 
 
 @pytest.fixture
-def shipment_activation_service_factory() -> Callable[[InventoryService], ShipmentActivationService]:
-    def factory(inventory_service: InventoryService) -> ShipmentActivationService:
-        return ShipmentActivationService(inventory_service=inventory_service)
+def shipment_activation_service_factory() -> Callable[[], ShipmentActivationService]:
+    def factory() -> ShipmentActivationService:
+        return ShipmentActivationService()
         
     return factory
 
 
 @pytest.fixture
-def shipment_receive_service_factory() -> Callable[[InventoryService], ShipmentReceiveService]:
-    def factory(inventory_service: InventoryService) -> ShipmentReceiveService:
+def shipment_receive_service_factory() -> Callable[[], ShipmentReceiveService]:
+    def factory() -> ShipmentReceiveService:
         shipment_summary_service = ShipmentSummaryService()
         
-        return ShipmentReceiveService(shipment_summary_service, inventory_service=inventory_service)
+        return ShipmentReceiveService(shipment_summary_service)
         
     return factory
 

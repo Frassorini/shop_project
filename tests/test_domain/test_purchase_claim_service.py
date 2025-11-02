@@ -5,7 +5,7 @@ from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_summary import PurchaseSummaryReason
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
-from shop_project.domain.services.inventory_service import InventoryService
+from shop_project.domain.product_inventory import ProductInventory
 from shop_project.domain.product import Product
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.escrow_account import EscrowAccount
@@ -19,7 +19,7 @@ def test_(purchase_claim_service_factory: Callable[[], PurchaseClaimService]) ->
 def test_purchase_claim(purchase_claim_service_factory: Callable[[], PurchaseClaimService],
                         purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
+    product_inventory = ProductInventory(container.dependencies[Product])
     purchase_claim_service = purchase_claim_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
@@ -44,7 +44,7 @@ def test_purchase_claim(purchase_claim_service_factory: Callable[[], PurchaseCla
 def test_purchase_pending_claim(purchase_claim_service_factory: Callable[[], PurchaseClaimService],
                         purchase_active_filled_container_factory: Callable[[], AggregateContainer]) -> None:
     container = purchase_active_filled_container_factory()
-    inventory_service = InventoryService(container.dependencies[Product])
+    product_inventory = ProductInventory(container.dependencies[Product])
     purchase_claim_service = purchase_claim_service_factory()
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
