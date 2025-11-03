@@ -42,7 +42,7 @@ async def test_count_products(product_factory: Callable[..., Product],
     ]
     
     await fill_database(test_db, {Product: cast(list[BaseAggregate], products)})
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_only')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_only')
     
     query = CountProductsQuery(lock="NO_LOCK")
     

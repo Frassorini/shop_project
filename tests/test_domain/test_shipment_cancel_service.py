@@ -15,7 +15,7 @@ from tests.helpers import AggregateContainer
 
 def test_cancel(shipment_conatiner_factory: Callable[[], AggregateContainer],
                 domain_container: DomainContainer,) -> None:
-    shipment_cancel_service = domain_container[ShipmentCancelService]
+    shipment_cancel_service = domain_container.shipment_cancel_service()
 
     container = shipment_conatiner_factory()
     shipment: Shipment = cast(Shipment, container.aggregate)

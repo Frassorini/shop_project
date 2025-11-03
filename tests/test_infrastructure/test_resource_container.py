@@ -8,9 +8,11 @@ from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.shared.entity_id import EntityId
 from shop_project.application.dto.mapper import to_dto
 
+from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
+
 
 def test_get_by_id(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft = purchase_draft_factory()
     
     container.put(PurchaseDraft, purchase_draft)
@@ -19,7 +21,7 @@ def test_get_by_id(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
 
 
 def test_get_by_attribute(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft_1 = purchase_draft_factory()
     purchase_draft_2 = purchase_draft_factory()
     
@@ -31,7 +33,7 @@ def test_get_by_attribute(purchase_draft_factory: Callable[[], PurchaseDraft]) -
     
 
 def test_get_by_wrong_attribute(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft_1 = purchase_draft_factory()
     
     container.put(PurchaseDraft, purchase_draft_1)
@@ -41,7 +43,7 @@ def test_get_by_wrong_attribute(purchase_draft_factory: Callable[[], PurchaseDra
 
 
 def test_get_by_id_not_found(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft_1 = purchase_draft_factory()
     
     container.put(PurchaseDraft, purchase_draft_1)
@@ -51,7 +53,7 @@ def test_get_by_id_not_found(purchase_draft_factory: Callable[[], PurchaseDraft]
 
 
 def test_snapshot_create(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     container.take_snapshot()
     purchase_draft = purchase_draft_factory()
     
@@ -63,7 +65,7 @@ def test_snapshot_create(purchase_draft_factory: Callable[[], PurchaseDraft]) ->
 
 
 def test_snapshot_delete(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft = purchase_draft_factory()
     
     container.put(PurchaseDraft, purchase_draft)
@@ -76,7 +78,7 @@ def test_snapshot_delete(purchase_draft_factory: Callable[[], PurchaseDraft]) ->
 
 
 def test_snapshot_update(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft: PurchaseDraft = purchase_draft_factory()
     
     container.put(PurchaseDraft, purchase_draft)
@@ -88,7 +90,7 @@ def test_snapshot_update(purchase_draft_factory: Callable[[], PurchaseDraft]) ->
 
 
 def test_snapshot_no_previous(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     purchase_draft_1 = purchase_draft_factory()
     
     container.put(PurchaseDraft, purchase_draft_1)
@@ -100,7 +102,7 @@ def test_snapshot_no_previous(purchase_draft_factory: Callable[[], PurchaseDraft
 
 
 def test_too_many_snapshots() -> None:
-    container = ResourceContainer()
+    container = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
     container.take_snapshot()
 
     container.take_snapshot()

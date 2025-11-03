@@ -1,4 +1,4 @@
-from typing import Any, Literal, Type, TypeVar, cast
+from typing import Any, Literal, Mapping, Type, TypeVar, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.session import Session
@@ -18,31 +18,12 @@ from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.infrastructure.repositories.mock_repository import MockRepository
-from shop_project.infrastructure.repositories.customer_repository import CustomerRepository
-from shop_project.infrastructure.repositories.purchase_draft_repository import PurchaseDraftRepository
-from shop_project.infrastructure.repositories.purchase_active_repository import PurchaseActiveRepository
-from shop_project.infrastructure.repositories.purchase_summary_repository import PurchaseSummaryRepository
-from shop_project.infrastructure.repositories.escrow_account_repository import EscrowAccountRepository
-from shop_project.infrastructure.repositories.product_repository import ProductRepository
-from shop_project.infrastructure.repositories.shipment_repository import ShipmentRepository
-from shop_project.infrastructure.repositories.shipment_summary_repository import ShipmentSummaryRepository
 
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 
 
-REPOSITORIES: dict[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
-    Customer: CustomerRepository,
-    PurchaseDraft: PurchaseDraftRepository,
-    PurchaseActive: PurchaseActiveRepository,
-    PurchaseSummary: PurchaseSummaryRepository,
-    EscrowAccount: EscrowAccountRepository,
-    Product: ProductRepository,
-    Shipment: ShipmentRepository,
-    ShipmentSummary: ShipmentSummaryRepository
-}
 
 class RepositoryContainer:
     def __init__(self, repositories: dict[Type[BaseAggregate], BaseRepository[BaseAggregate]]) -> None:
@@ -62,5 +43,30 @@ class RepositoryContainer:
         raise NotImplementedError
 
 
-def repository_container_factory(session: AsyncSession) -> RepositoryContainer:
-    return RepositoryContainer({model_type: repository(session) for model_type, repository in REPOSITORIES.items()})
+def repository_container_factory(session: AsyncSession, repositories: Mapping[Type[BaseAggregate], Type[BaseRepository[Any]]]) -> RepositoryContainer:
+    return RepositoryContainer({model_type: repository(session) for model_type, repository in repositories.items()})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

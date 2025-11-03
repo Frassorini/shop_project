@@ -11,6 +11,11 @@ from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory
+from shop_project.infrastructure.resource_manager.resource_manager import ResourceManager
+
+from shop_project.infrastructure.registries.repository_registry import RepositoryRegistry
+from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
+from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
 from shop_project.exceptions import UnitOfWorkException, ResourcesException
 
@@ -20,9 +25,18 @@ from tests.helpers import AggregateContainer
 @pytest.fixture
 def uow_factory():
     def factory(session: AsyncSession, mode: Literal["read_only", "read_write"]) -> UnitOfWork:
-        repository_container: RepositoryContainer = repository_container_factory(session)
+        repository_container: RepositoryContainer = repository_container_factory(session=session, repositories=RepositoryRegistry.get_map())
+        
+        if not mode in ['read_only', 'read_write']:
+            raise ValueError(f'Invalid mode: {mode}')
+        ro: bool = mode == 'read_only'
+        
+        resource_manager: ResourceManager = ResourceManager(repository_container=repository_container, 
+                                                            resources_registry=ResourcesRegistry.get_map(),
+                                                            total_order=TotalOrderRegistry, 
+                                                            read_only=ro)
  
-        return UnitOfWork(session, repository_container, mode=mode)
+        return UnitOfWork(session=session, resource_manager=resource_manager)
     
     return factory
 
@@ -30,10 +44,10 @@ def uow_factory():
 @pytest.fixture
 def uow_delete_and_check(uow_check: Callable[..., Any]) -> Callable[..., Awaitable[None]]:
     async def _inner(uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-               test_db: Database, 
+               database: Database, 
                model_type: Type[BaseAggregate], 
                domain_object: BaseAggregate) -> None:
-        uow = uow_factory(test_db.get_session(), 'read_write')
+        uow = uow_factory(database.create_session(), 'read_write')
         uow.set_query_plan(
             QueryPlanBuilder(mutating=False)
             .load(model_type)
@@ -51,7 +65,7 @@ def uow_delete_and_check(uow_check: Callable[..., Any]) -> Callable[..., Awaitab
             resources.delete(model_type, purchase_summary_from_db)
             await uow.commit()
 
-        async with uow_check(uow_factory, test_db, model_type, domain_object) as uow2:
+        async with uow_check(uow_factory, database, model_type, domain_object) as uow2:
             resources = uow2.get_resorces()
             with pytest.raises(ResourcesException):
                 resources.get_by_id(model_type, domain_object.entity_id)
@@ -62,10 +76,10 @@ def uow_delete_and_check(uow_check: Callable[..., Any]) -> Callable[..., Awaitab
 @pytest.fixture
 def uow_check() -> Callable[..., UnitOfWork]:
     def _inner(uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-               test_db: Database, 
+               database: Database, 
                model_type: Type[BaseAggregate], 
                domain_object: BaseAggregate) -> UnitOfWork:
-        uow = uow_factory(test_db.get_session(), 'read_only')
+        uow = uow_factory(database.create_session(), 'read_only')
         uow.set_query_plan(
             QueryPlanBuilder(mutating=False)
             .load(model_type)
@@ -80,12 +94,13 @@ def uow_check() -> Callable[..., UnitOfWork]:
 def prepare_container(domain_object_factory: Callable[[Type[BaseAggregate]], AggregateContainer], 
                             fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]
                             ) -> Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]]:
-    async def _prepare(model_type: Type[BaseAggregate], test_db: Database) -> AggregateContainer:
+    async def _prepare(model_type: Type[BaseAggregate],
+                       database: Database) -> AggregateContainer:
         domain_container = domain_object_factory(model_type)
         to_fill = domain_container.dependencies.dependencies.copy()
 
         to_fill.setdefault(model_type, []).append(domain_container.aggregate)
-        await fill_database(test_db, to_fill)
+        await fill_database(database, to_fill)
 
         return domain_container
     return _prepare

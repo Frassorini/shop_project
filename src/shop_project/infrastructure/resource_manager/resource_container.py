@@ -72,16 +72,9 @@ class ResourceSnapshotSentinelMixin(ABC):
         return result
         
 class ResourceContainer(ResourceSnapshotSentinelMixin):
-    def __init__(self):
+    def __init__(self, resources_registry: list[Type[BaseAggregate]]):
         self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
-            Customer: [],
-            PurchaseActive: [],
-            PurchaseDraft: [],
-            PurchaseSummary: [],
-            EscrowAccount: [],
-            Product: [],
-            Shipment: [],
-            ShipmentSummary: [],
+            resource: [] for resource in resources_registry
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
         self._resource_snapshot_current: ResourceSnapshot | None = None

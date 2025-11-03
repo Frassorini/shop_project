@@ -12,6 +12,18 @@ from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
 
+_REGISTRY: dict[Type[BaseAggregate], int] = {
+    Customer: 0,
+    PurchaseDraft: 1,
+    PurchaseActive: 2,
+    PurchaseSummary: 3,
+    EscrowAccount: 4,
+    Shipment: 5,
+    ShipmentSummary: 6,
+    Product: 7,
+}
+
+
 class TotalOrderRegistry:
     """Регистр агрегатов с фиксированным топологическим порядком зависимостей."""
 
@@ -41,13 +53,4 @@ class TotalOrderRegistry:
     @classmethod
     def _get_map(cls) -> dict[Type[Any], int]:
         """Определяет фиксированный топологический порядок зависимостей."""
-        return {
-            Customer: 0,
-            PurchaseDraft: 1,
-            PurchaseActive: 2,
-            PurchaseSummary: 3,
-            EscrowAccount: 4,
-            Shipment: 5,
-            ShipmentSummary: 6,
-            Product: 7,
-        }
+        return _REGISTRY

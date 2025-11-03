@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, Type
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import UnitOfWorkException
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
@@ -7,16 +7,21 @@ from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQu
 from shop_project.infrastructure.query.query_plan import QueryPlan, LockQueryPlan, NoLockQueryPlan
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
-from shop_project.infrastructure.resource_manager.total_order_registry import TotalOrderRegistry
+from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 from shop_project.shared.entity_id import EntityId
 
 
 class ResourceManager:
-    def __init__(self, repository_container: RepositoryContainer, *, read_only: bool, raise_on_not_found: bool = True) -> None:
-        self.repository_container = repository_container
-        self.raise_on_not_found = raise_on_not_found
-        self.read_only = read_only
-        self.resource_container: ResourceContainer = ResourceContainer()
+    def __init__(self, repository_container: RepositoryContainer, 
+                 total_order: Type[TotalOrderRegistry], *, 
+                 resources_registry: list[Type[BaseAggregate]],
+                 read_only: bool, 
+                 raise_on_not_found: bool = True) -> None:
+        self.repository_container: RepositoryContainer = repository_container
+        self.raise_on_not_found: bool = raise_on_not_found
+        self.read_only: bool = read_only
+        self.total_order: Type[TotalOrderRegistry] = total_order
+        self.resource_container: ResourceContainer = ResourceContainer(resources_registry)
         if read_only:
             self.query_plan: QueryPlan = NoLockQueryPlan()
         else:
@@ -49,7 +54,7 @@ class ResourceManager:
         
         self.query_plan.validate_changes(difference)
         
-        ordered_types = TotalOrderRegistry.backward()
+        ordered_types = self.total_order.backward()
         sorted_diff = {
             model: difference[model]
             for model in ordered_types

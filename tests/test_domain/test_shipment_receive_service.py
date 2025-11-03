@@ -15,7 +15,7 @@ from tests.helpers import AggregateContainer
 
 def test_receive(shipment_conatiner_factory: Callable[[], AggregateContainer],
                  domain_container: DomainContainer,) -> None:
-    shipment_receive_service = domain_container[ShipmentReceiveService]
+    shipment_receive_service = domain_container.shipment_receive_service()
 
     container = shipment_conatiner_factory()
     shipment: Shipment = cast(Shipment, container.aggregate)

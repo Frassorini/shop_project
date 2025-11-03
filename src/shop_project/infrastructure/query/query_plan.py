@@ -7,8 +7,8 @@ from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.exceptions import QueryPlanException
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
-from shop_project.infrastructure.resource_manager.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
-from shop_project.infrastructure.resource_manager.total_order_registry import TotalOrderRegistry
+from shop_project.infrastructure.registries.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
+from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery

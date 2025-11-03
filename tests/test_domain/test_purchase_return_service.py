@@ -16,7 +16,7 @@ from tests.helpers import AggregateContainer
 
 def test_purchase_cancel_payment(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                                  domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container[PurchaseReturnService]
+    purchase_return_service = domain_container.purchase_return_service ()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -46,7 +46,7 @@ def test_purchase_cancel_payment(purchase_active_filled_container_factory: Calla
 
 def test_purchase_paid_cancel_payment(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                                       domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container[PurchaseReturnService]
+    purchase_return_service = domain_container.purchase_return_service ()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -68,7 +68,7 @@ def test_purchase_paid_cancel_payment(purchase_active_filled_container_factory: 
 
 def test_purchase_unclaim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                           domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container[PurchaseReturnService]
+    purchase_return_service = domain_container.purchase_return_service()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -98,7 +98,7 @@ def test_purchase_unclaim(purchase_active_filled_container_factory: Callable[[],
 
 def test_purchase_pending_unclaim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                                   domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container[PurchaseReturnService]
+    purchase_return_service = domain_container.purchase_return_service()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])

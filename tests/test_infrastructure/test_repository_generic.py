@@ -25,6 +25,7 @@ from shop_project.infrastructure.query.query_plan import (
 )
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
+from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.infrastructure.repositories.customer_repository import (
     CustomerRepository,
@@ -45,7 +46,7 @@ def get_customers() -> list[Customer]:
 @pytest.mark.asyncio
 async def test_repository_generic_read(test_db: Database,
                                        fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
-    async with test_db.get_session() as session:
+    async with test_db.create_session() as session:
         customers = get_customers()
         await fill_database(test_db, {Customer: cast(list[BaseAggregate], get_customers())})
         repository = CustomerRepository(session)
@@ -62,7 +63,7 @@ async def test_from_id(test_db: Database,
     customer = Customer(entity_id=EntityId(uuid_id), name='user_1')
 
     await fill_database(test_db, {Customer: cast(list[BaseAggregate], [customer])})
-    async with test_db.get_session() as session:
+    async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
         query = (QueryPlanBuilder(mutating=False)
@@ -81,7 +82,7 @@ async def test_from_attribute(test_db: Database,
     customers = get_customers()
     customers_filtered = [customer for customer in customers if customer.name in ['user_1', 'user_2']]
     await fill_database(test_db, {Customer: cast(list[BaseAggregate], customers)})
-    async with test_db.get_session() as session:
+    async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
         query = (
@@ -103,7 +104,7 @@ async def xtest_greater_than(test_db: Database,
                             fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
     customers = get_customers()
     await fill_database(test_db, {Customer: cast(list[BaseAggregate], customers)})
-    async with test_db.get_session() as session:
+    async with test_db.create_session() as session:
         repository = CustomerRepository(session)
         customers_filtered = [customer for customer in customers if customer.name > 'user_1']
 
@@ -122,12 +123,12 @@ async def xtest_greater_than(test_db: Database,
 @pytest.mark.asyncio
 async def test_repository_generic_create(test_db: Database,
                                          fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
-    async with test_db.get_session() as session:
+    async with test_db.create_session() as session:
         await fill_database(test_db, {Customer: cast(list[BaseAggregate], get_customers())})
         repository = CustomerRepository(session)
         uuid_id = uuid4()
 
-        resources = ResourceContainer()
+        resources = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
         resources.take_snapshot()
         resources.put(Customer, Customer(entity_id=EntityId(uuid_id), name='Bear Lover'))
         resources.take_snapshot()

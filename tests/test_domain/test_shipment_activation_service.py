@@ -12,7 +12,7 @@ from shop_project.domain.shipment import Shipment, ShipmentItem
 
 def test_activate(potatoes_product_10: Callable[[], Product],
                   domain_container: DomainContainer,) -> None:
-    shipment_activation_service = domain_container[ShipmentActivationService]
+    shipment_activation_service = domain_container.shipment_activation_service()
 
     potatoes = potatoes_product_10()
     request: ShipmentRequest = ShipmentRequest()

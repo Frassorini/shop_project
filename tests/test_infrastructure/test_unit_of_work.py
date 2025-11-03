@@ -33,7 +33,7 @@ async def test_customer(test_db: Database,
                                uow_check: Callable[..., Any],) -> None:
     model_type: Type[Any] = Customer
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
@@ -53,7 +53,7 @@ async def test_customer(test_db: Database,
         snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
         assert snapshot_before == snapshot_after
 
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
@@ -79,9 +79,10 @@ async def test_purchase_draft(test_db: Database,
                            uow_check: Callable[..., Any],
                            uow_delete_and_check: Callable[..., Awaitable[None]],
                            product_container_factory: Callable[..., AggregateContainer]) -> None:
+    
     model_type: Type[Any] = PurchaseDraft
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True)
@@ -116,8 +117,9 @@ async def test_uow_purchase_claim(test_db: Database,
                                      uow_check: Callable[..., Any],
                                      uow_delete_and_check: Callable[..., Awaitable[None]],
                                      domain_container: DomainContainer,) -> None:
+    
     purchase_active_container: AggregateContainer = await prepare_container(PurchaseActive, test_db)
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True)
@@ -128,7 +130,7 @@ async def test_uow_purchase_claim(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
-        purchase_claim_service = domain_container[PurchaseClaimService]
+        purchase_claim_service = domain_container.purchase_claim_service()
         purchase_active: PurchaseActive = resources.get_by_id(PurchaseActive, purchase_active_container.aggregate.entity_id)
         escrow_account = resources.get_by_id(EscrowAccount, purchase_active.escrow_account_id)
         
@@ -168,9 +170,10 @@ async def test_product(test_db: Database,
                           prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]],
                           uow_check: Callable[..., Any],
                           uow_delete_and_check: Callable[..., Awaitable[None]],) -> None:
+    
     model_type: Type[Any] = Product
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
@@ -200,8 +203,9 @@ async def test_shipment(test_db: Database,
                                      uow_check: Callable[..., Any],
                                      uow_delete_and_check: Callable[..., Awaitable[None]],
                                      domain_container: DomainContainer,) -> None:
+    
     shipment_container: AggregateContainer = await prepare_container(Shipment, test_db)
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True).load(Shipment).from_id([shipment_container.aggregate.entity_id.value]).for_update()
@@ -209,7 +213,7 @@ async def test_shipment(test_db: Database,
     
     async with uow:
         resources = uow.get_resorces()
-        shipment_cancel_service = domain_container[ShipmentCancelService]
+        shipment_cancel_service = domain_container.shipment_cancel_service()
         shipment: Shipment = resources.get_by_id(Shipment, shipment_container.aggregate.entity_id)
         
         shipment_summary: ShipmentSummary = shipment_cancel_service.cancel(shipment)
@@ -237,10 +241,11 @@ async def test_shipment(test_db: Database,
 async def test_enter_uow_twice(test_db: Database,
                                uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
                                prepare_container: Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]]) -> None:
+    
     model_type: Type[Any] = Customer
     domain_container: AggregateContainer = await prepare_container(model_type, test_db)
 
-    uow: UnitOfWork = uow_factory(test_db.get_session(), 'read_write')
+    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_write')
     
     uow.set_query_plan(
         QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()

@@ -20,7 +20,7 @@ def shipment_factory(
     domain_container: DomainContainer,
 ) -> Callable[[], Shipment]:
     def factory() -> Shipment:
-        shipment_activation_service = domain_container[ShipmentActivationService]
+        shipment_activation_service = domain_container.shipment_activation_service()
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
@@ -42,7 +42,7 @@ def shipment_conatiner_factory(
     domain_container: DomainContainer,
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        shipment_activation_service = domain_container[ShipmentActivationService]
+        shipment_activation_service = domain_container.shipment_activation_service()
         
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()

@@ -17,25 +17,33 @@ from shop_project.infrastructure.unit_of_work import UnitOfWork
 
 
 @pytest_asyncio.fixture
-async def test_db(request: pytest.FixtureRequest,
-                  test_db_in_memory: Callable[[], AbstractAsyncContextManager[Database, None]],
-                  test_db_docker: Callable[[], AbstractAsyncContextManager[Database, None]]
+async def test_db(test_db_factory: Callable[[], AbstractAsyncContextManager[Database, None]]
                   ) -> AsyncGenerator[Database, None]:
+    async with test_db_factory() as db:
+        try:
+            yield db
+        finally:
+            await db.close()
+
+
+@pytest.fixture
+def test_db_factory(request: pytest.FixtureRequest,
+                    test_db_in_memory: Callable[[], AbstractAsyncContextManager[Database, None]],
+                    test_db_docker: Callable[[], AbstractAsyncContextManager[Database, None]]
+                  ) -> Callable[[], AbstractAsyncContextManager[Database, None]]:
     if request.config.getoption("--real-db"):
-        async with test_db_docker() as db:
-            yield db
+        return test_db_docker
     else:
-        async with test_db_in_memory() as db:
-            yield db
+        return test_db_in_memory
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def test_db_docker() -> Callable[[], Any]:
     @asynccontextmanager
     async def fact() -> AsyncGenerator[Database, None]:
         db = Database.from_env()
 
-        async with db.engine.begin() as conn:
+        async with db.get_engine().begin() as conn:
             await conn.run_sync(models.Base.metadata.create_all)
             # await conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
             # await conn.commit()
@@ -44,13 +52,12 @@ def test_db_docker() -> Callable[[], Any]:
             yield db
 
         finally:
-            async with db.engine.begin() as conn:
+            async with db.get_engine().begin() as conn:
                 await conn.run_sync(models.Base.metadata.drop_all)
-            await db.engine.dispose()
     return fact
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_db_in_memory() -> Callable[[], Awaitable[sqlite3.Connection]]:
     value: sqlite3.Connection | None = None
     
@@ -60,7 +67,7 @@ def base_db_in_memory() -> Callable[[], Awaitable[sqlite3.Connection]]:
             return value
         sqlite_conn = sqlite3.connect(":memory:", check_same_thread=False)
         db = Database.from_sync_conn(sqlite_conn)
-        async with db.engine.begin() as conn:
+        async with db.get_engine().begin() as conn:
             await conn.run_sync(models.Base.metadata.create_all)
         value = sqlite_conn
         return sqlite_conn
@@ -78,7 +85,7 @@ def test_db_in_memory(base_db_in_memory: Callable[[], Awaitable[sqlite3.Connecti
         base_db.backup(clone_conn)
         db = Database.from_sync_conn(clone_conn)
 
-        async with db.engine.begin() as conn:
+        async with db.get_engine().begin() as conn:
             fk_list = await conn.run_sync(
                 lambda sync_conn: sync_conn.execute(
                     text("PRAGMA foreign_key_list('purchase_active');")
@@ -89,18 +96,15 @@ def test_db_in_memory(base_db_in_memory: Callable[[], Awaitable[sqlite3.Connecti
             assert len(fk_list) == 1
             fk = fk_list[0]
 
-        try:
-            yield db
-        finally:
-            await db.engine.dispose()
+        yield db
 
     return fact
 
 
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture
 async def fill_database(uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork]) -> Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]:
     async def _fill_db(database: Database, data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> Database:
-        session = database.get_session()
+        session = database.create_session()
         uow = uow_factory(session, 'read_write')
         async with uow:
             for model_type, domain_objects in data.items():

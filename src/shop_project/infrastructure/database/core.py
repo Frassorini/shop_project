@@ -62,9 +62,11 @@ class Database:
         )
         return cls.from_engine(engine)
 
-    @property
-    def engine(self) -> AsyncEngine:
+    def get_engine(self) -> AsyncEngine:
         return self._engine
 
-    def get_session(self) -> AsyncSession:
+    def create_session(self) -> AsyncSession:
         return self._session_factory()
+    
+    async def close(self) -> None:
+        await self._engine.dispose()

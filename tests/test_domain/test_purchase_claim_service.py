@@ -16,7 +16,7 @@ from tests.helpers import AggregateContainer
 
 def test_purchase_claim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                         domain_container: DomainContainer,) -> None:
-    purchase_claim_service = domain_container[PurchaseClaimService]
+    purchase_claim_service = domain_container.purchase_claim_service()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -42,7 +42,7 @@ def test_purchase_claim(purchase_active_filled_container_factory: Callable[[], A
 
 def test_purchase_pending_claim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
                                 domain_container: DomainContainer,) -> None:
-    purchase_claim_service = domain_container[PurchaseClaimService]
+    purchase_claim_service = domain_container.purchase_claim_service()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])

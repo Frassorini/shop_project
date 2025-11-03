@@ -457,6 +457,53 @@ test = ["certifi (>=2024)", "cryptography-vectors (==46.0.1)", "pretend (>=0.7)"
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
+name = "dependency-injector"
+version = "4.48.2"
+description = "Dependency injection framework for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "dependency_injector-4.48.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:54d0178be10f17b768afb5c0ed1c5c565abaa2d097b2bc5a529a31c580613df2"},
+    {file = "dependency_injector-4.48.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:12a15979fd534b728b3061c8aa52fd55adb77574758817daae9df8a1c2eb830b"},
+    {file = "dependency_injector-4.48.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:85cdf4b423884d4a24a18b970abe73352fb210761302cd6b5ebc6e9a20dbe53f"},
+    {file = "dependency_injector-4.48.2-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:a9b457b95a400b7a2de0978a55768cdd104bd265953bf0ed06e7f25d18f35ed2"},
+    {file = "dependency_injector-4.48.2-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:417809f565c39800adb744d666dfe4d94eae510b73ec33f932d592415d7c46d0"},
+    {file = "dependency_injector-4.48.2-cp310-abi3-win32.whl", hash = "sha256:f014aa7bab427932802d59967d9fe0863a0001db66446177dcc62e47f3a6b234"},
+    {file = "dependency_injector-4.48.2-cp310-abi3-win_amd64.whl", hash = "sha256:e3fcdeb8189f3e1f87fde9276061f8a6cc596c2fa139bc4b4d1f571035ebd645"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:dd99287ef31fe41cc1fecd5336f10255f3aca3a6a64f3f8a9ac1f0d37e1a23f2"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:390c6d675eec5a515e1a617af1eb20fd2abf6a12b6b16b1635067b0c341aa602"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1d64c9d70a75120554e6451ab62a1baf4f80e0d8894f89e4fbd9da9e7ed60577"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:20156ef8192780286600c760330d7d280aedf8154d667855efa8e3dcec3ad6dc"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:9822e112d73dec40d29b12aee1869587e45a6de9dd9a2f90b184d42b7cdcc5a0"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-win32.whl", hash = "sha256:9747a8ef5939f54ec2437fde2d7bf593e63d09c7e9404753d81917ce6efa350d"},
+    {file = "dependency_injector-4.48.2-cp38-cp38-win_amd64.whl", hash = "sha256:e4f52d6c1ffb23b683babb5a544cd369967d0852b83f34611ec094a00ee6e078"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:02618868c87e11b4a09ce49981faf340813726589e54d8f623094e144856d31c"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ec7166e70b8f0fcfd1259f22a6e85f58305736e760701fd48c767d398d154cc8"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:65492bda0217c7fad304ce57be19711252f7440f8f72b77f01fc396148192360"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:9c22aba674451f45993b026de83e8a4854d7927589158fe85d063dcda7f49141"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:d860c71bc3245046214b77da38451edbfa52fd91399cd07fe325227d5cf98eec"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-win32.whl", hash = "sha256:8691d46941f222d625c19eaa455d06d1b7d8c05f145e4f35a66b0ccead2719f3"},
+    {file = "dependency_injector-4.48.2-cp39-cp39-win_amd64.whl", hash = "sha256:82c733ce660f061a39e951e9035a016bef22540e907e69ccd4d253a70c714d0b"},
+    {file = "dependency_injector-4.48.2-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:f2e3df258cb3ca59f40fffb9c88677cc9dde3f3cdd0f8fc706cf88dad2ac2736"},
+    {file = "dependency_injector-4.48.2-pp310-pypy310_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:65d990ca81c8ec213e0b4b10c8e7c46caa69887502e5fc3ced7bcb04ad75ebdf"},
+    {file = "dependency_injector-4.48.2-pp310-pypy310_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f026957ba99997a9566cb846804ec712c67428a8041d93bf2e2966ed4a4d7dfc"},
+    {file = "dependency_injector-4.48.2-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:5e8773d3d2298c4ad446a57168e108dc9e46bdb62a5bc369ca553a14d9d239a1"},
+    {file = "dependency_injector-4.48.2-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:174b117a7a5a28d45c004a3242b28184db12f9818ff4ea8d0cebc230bb5f7b65"},
+    {file = "dependency_injector-4.48.2-pp311-pypy311_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:8eed93fa25368be43bc3486bddedcc5ad0a62e0a9a441d060eb80ae7980416b0"},
+    {file = "dependency_injector-4.48.2-pp311-pypy311_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:85368f039e7fbef1d5f38f8ba42eca28b950288dc72aca13534ed4b3e96ee8cf"},
+    {file = "dependency_injector-4.48.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:05ff29398e23a08e840c9a89a0b516d988b337a38534d33791857bd1defd2d23"},
+    {file = "dependency_injector-4.48.2.tar.gz", hash = "sha256:9ce6089d75a5dd0b6191a243f41d2c2746802bb39550ad431242c15136fefd60"},
+]
+
+[package.extras]
+aiohttp = ["aiohttp"]
+flask = ["flask"]
+pydantic = ["pydantic"]
+pydantic2 = ["pydantic-settings"]
+yaml = ["pyyaml"]
+
+[[package]]
 name = "dotenv"
 version = "0.9.9"
 description = "Deprecated package"
@@ -602,45 +649,6 @@ files = [
     {file = "iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760"},
     {file = "iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7"},
 ]
-
-[[package]]
-name = "lagom"
-version = "2.7.7"
-description = "Lagom is a dependency injection container designed to give you 'just enough' help with building your dependencies."
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "lagom-2.7.7-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:09a825e3be03b29120327d8883ad5a2d9fd415c24e4ac72c3ced24ebe100c205"},
-    {file = "lagom-2.7.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:26a0565ead382a74bf2368a6b313302214829a48f6f7014f01fafdc5df2f5803"},
-    {file = "lagom-2.7.7-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:5f34d83bf571e4cae1c0631a7a12026685c1055c2988d1524bc60efe5e935d5e"},
-    {file = "lagom-2.7.7-cp310-cp310-win32.whl", hash = "sha256:11e513fb2bf7459204c714c361187f3dc441570fe5d4f255676b53877614d152"},
-    {file = "lagom-2.7.7-cp310-cp310-win_amd64.whl", hash = "sha256:e68c275b7ecd212502089981f1688808587408fb1349fa896f8ca5518bc51ba7"},
-    {file = "lagom-2.7.7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c5035aa948b5b3fcea4ee89cac5a1aa143506f19b37c3e97d5a34ced6e9ed992"},
-    {file = "lagom-2.7.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ff5c3312221b69b5ea629d8f3f29563c281d76c23ec0266cbf1a6e898e6ad224"},
-    {file = "lagom-2.7.7-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:46f2b5b3e8533df6b7de28e21278810796e5f76b83e140db412cdf15b389ee1d"},
-    {file = "lagom-2.7.7-cp311-cp311-win32.whl", hash = "sha256:063b323c7105665a38f0ca7959f1abcae7ad88b74c02de3b63674e05258f24ca"},
-    {file = "lagom-2.7.7-cp311-cp311-win_amd64.whl", hash = "sha256:11dfb34dc6af203cb82f299be18c78d9beccbc6bad7c18d3577db07f2be43f6b"},
-    {file = "lagom-2.7.7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:57031a288cbd549fc26b4107f1f1fabba1f01632d20de197389ec0948b2d0726"},
-    {file = "lagom-2.7.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:abeab675e4d3d505254b6eeb9665aa90e79e60f4adc5cc05c2082b0ac899bad4"},
-    {file = "lagom-2.7.7-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:e3b54f06ff474a2c82e02c3fbc17a5cd38581560885933c56422d2524a533079"},
-    {file = "lagom-2.7.7-cp312-cp312-win32.whl", hash = "sha256:e336733b7fad9397081e736ca3dc3e35b70cc8df11f63df38053921760acf6a7"},
-    {file = "lagom-2.7.7-cp312-cp312-win_amd64.whl", hash = "sha256:45874bcb18f08ad92d2356d19ca7c374658b51e68e91ce25885396ee832104b7"},
-    {file = "lagom-2.7.7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:36961c52a8debcc122ebc5caece4bdca7cf6c1cdf07159e17b84913259b386bd"},
-    {file = "lagom-2.7.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a446273396437774a3defff5a9baa4e0d88c9bad4e9cf318d98748005f5a6c57"},
-    {file = "lagom-2.7.7-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:0d8f734641a75c4c7ce632f60fd6a65850a3a55d02938acc6d9348812741a167"},
-    {file = "lagom-2.7.7-cp313-cp313-win32.whl", hash = "sha256:348c324cac8ad79d670c38b8d1b4de36280032963abd5127e9abce5f396583f5"},
-    {file = "lagom-2.7.7-cp313-cp313-win_amd64.whl", hash = "sha256:f3ec6675496579c67057884b6b33cef56eb7867b6a98d500bbbe70cd7071f921"},
-    {file = "lagom-2.7.7-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:85c5373e502bc9142c8cbac50cb14072c2bc7cc81593de6bb2b0d97e84d92950"},
-    {file = "lagom-2.7.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:292ea7d8184c4642e7b1a65e65ff9e8b7bdb05a2303d0e8cb91a0b3059e78df8"},
-    {file = "lagom-2.7.7-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:b779317f08d7f8e523ee801e843506f1d34faa14ba3d51b7820b591d8ef1ef9f"},
-    {file = "lagom-2.7.7-cp39-cp39-win32.whl", hash = "sha256:1be4c29f2c41a3e11647accad450f034173b4721b1231bb4de4ecd81bf7ef4c6"},
-    {file = "lagom-2.7.7-cp39-cp39-win_amd64.whl", hash = "sha256:21bf278ecb4379cf8c30ff2cb6a11a96f8b13acc1e61338407d58811f10212c5"},
-    {file = "lagom-2.7.7-py3-none-any.whl", hash = "sha256:704b52f5b028eec84344fb14164c24cec4853c1b699b2cc008b356a7ebc9c8a9"},
-]
-
-[package.extras]
-env = ["pydantic (>=1.0.0,<3.0.0)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -1177,4 +1185,4 @@ typing-extensions = ">=4.12.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "a12bb20fc1eecc2f6d50c0202ed8fad2fc5cc1613350d15009597860bcc888ff"
+content-hash = "239de5ffa06429f281c4e59e5c6f90f6a17505ecd14eff6cfc5ac06c0fb95d47"

@@ -1,39 +1,23 @@
-from lagom import Container
-
-# --- Доменные сервисы ---
-from shop_project.domain.services.checkout_service import CheckoutService
-from shop_project.domain.services.purchase_activation_service import PurchaseActivationService
-from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
-from shop_project.domain.services.purchase_return_service import PurchaseReturnService
-from shop_project.domain.services.purchase_summary_service import PurchaseSummaryService
-from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
-from shop_project.domain.services.shipment_activation_service import ShipmentActivationService
-from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
-from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
-from shop_project.domain.services.shipment_summary_service import ShipmentSummaryService
+# shop_project/containers/domain_container.py
+from dependency_injector import containers, providers
+from shop_project.infrastructure.dependency_injection.domain import factories
 
 
-class DomainContainer(Container):
-    """
-    Контейнер для всех доменных сервисов.
-    Использует type-based auto-wiring Lagom.
-    """
+class DomainContainer(containers.DeclarativeContainer):
+    wiring_config = containers.WiringConfiguration(
+        modules=["shop_project.infrastructure.dependency_injection.domain.factories"]
+    )
 
-    def __init__(self):
-        super().__init__()
+    checkout_service = providers.Factory(factories.checkout_service_factory)
+    
+    purchase_summary_service = providers.Factory(factories.purchase_summary_service_factory)
+    purchase_reservation_service = providers.Factory(factories.purchase_reservation_service_factory)
+    purchase_activation_service = providers.Factory(factories.purchase_activation_service_factory)
+    purchase_claim_service = providers.Factory(factories.purchase_claim_service_factory)
+    purchase_return_service = providers.Factory(factories.purchase_return_service_factory)
+    
+    shipment_summary_service = providers.Factory(factories.shipment_summary_service_factory)
+    shipment_activation_service = providers.Factory(factories.shipment_activation_service_factory)
+    shipment_receive_service = providers.Factory(factories.shipment_receive_service_factory)
+    shipment_cancel_service = providers.Factory(factories.shipment_cancel_service_factory)
 
-        # --- Базовые сервисы ---
-        # Эти сервисы не зависят от других сервисов
-        self[CheckoutService] = CheckoutService
-        self[PurchaseReservationService] = PurchaseReservationService
-        self[PurchaseSummaryService] = PurchaseSummaryService
-        self[ShipmentSummaryService] = ShipmentSummaryService
-
-        # --- Сервисы с зависимостями ---
-        # Lagom сам создаст все зависимости через type hints __init__
-        self[PurchaseActivationService] = PurchaseActivationService
-        self[PurchaseReturnService] = PurchaseReturnService
-        self[PurchaseClaimService] = PurchaseClaimService
-        self[ShipmentActivationService] = ShipmentActivationService
-        self[ShipmentReceiveService] = ShipmentReceiveService
-        self[ShipmentCancelService] = ShipmentCancelService
