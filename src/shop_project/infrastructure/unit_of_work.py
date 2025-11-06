@@ -5,7 +5,7 @@ from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceManager
-from shop_project.exceptions import UnitOfWorkException
+from shop_project.infrastructure.exceptions import UnitOfWorkException
 from shop_project.shared.entity_id import EntityId
 
 

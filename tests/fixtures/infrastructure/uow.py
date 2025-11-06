@@ -17,7 +17,7 @@ from shop_project.infrastructure.registries.repository_registry import Repositor
 from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
 from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
-from shop_project.exceptions import UnitOfWorkException, ResourcesException
+from shop_project.infrastructure.exceptions import UnitOfWorkException, ResourcesException
 
 from tests.helpers import AggregateContainer
 
@@ -96,11 +96,11 @@ def prepare_container(domain_object_factory: Callable[[Type[BaseAggregate]], Agg
                             ) -> Callable[[Type[BaseAggregate], Database], Coroutine[None, None, AggregateContainer]]:
     async def _prepare(model_type: Type[BaseAggregate],
                        database: Database) -> AggregateContainer:
-        domain_container = domain_object_factory(model_type)
-        to_fill = domain_container.dependencies.dependencies.copy()
+        di_container = domain_object_factory(model_type)
+        to_fill = di_container.dependencies.dependencies.copy()
 
-        to_fill.setdefault(model_type, []).append(domain_container.aggregate)
+        to_fill.setdefault(model_type, []).append(di_container.aggregate)
         await fill_database(database, to_fill)
 
-        return domain_container
+        return di_container
     return _prepare

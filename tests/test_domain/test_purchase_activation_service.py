@@ -1,7 +1,7 @@
 from typing import Callable
 import pytest
 
-from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+from dishka.container import Container
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
@@ -13,8 +13,8 @@ from shop_project.domain.purchase_active import PurchaseActive
 
 def test_activate(purchase_draft_factory: Callable[[], PurchaseDraft],
                   potatoes_product_10: Callable[[], Product],
-                  domain_container: DomainContainer,) -> None:
-    purchase_activation_service = domain_container.purchase_activation_service()
+                  di_container: Container,) -> None:
+    purchase_activation_service = di_container.get(PurchaseActivationService)
 
     potatoes = potatoes_product_10()
     purchase_draft = purchase_draft_factory()
@@ -30,8 +30,8 @@ def test_activate(purchase_draft_factory: Callable[[], PurchaseDraft],
 
 def test_activate_twice(purchase_draft_factory: Callable[[], PurchaseDraft],
                         potatoes_product_10: Callable[[], Product],
-                        domain_container: DomainContainer,) -> None:
-    purchase_activation_service = domain_container.purchase_activation_service()
+                        di_container: Container,) -> None:
+    purchase_activation_service = di_container.get(PurchaseActivationService)
 
     potatoes = potatoes_product_10()
     purchase_draft = purchase_draft_factory()

@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+from dishka.container import Container
 
 from shop_project.domain.services.shipment_activation_service import ShipmentActivationService, ShipmentRequest
 from shop_project.domain.product import Product
@@ -17,10 +17,10 @@ from tests.helpers import AggregateContainer
 def shipment_factory(
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    domain_container: DomainContainer,
+    di_container: Container,
 ) -> Callable[[], Shipment]:
     def factory() -> Shipment:
-        shipment_activation_service = domain_container.shipment_activation_service()
+        shipment_activation_service = di_container.get(ShipmentActivationService)
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
@@ -39,10 +39,10 @@ def shipment_factory(
 def shipment_conatiner_factory(
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    domain_container: DomainContainer,
+    di_container: Container,
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        shipment_activation_service = domain_container.shipment_activation_service()
+        shipment_activation_service = di_container.get(ShipmentActivationService)
         
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()

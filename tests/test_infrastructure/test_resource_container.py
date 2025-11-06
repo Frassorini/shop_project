@@ -2,7 +2,7 @@ from typing import Callable
 from uuid import uuid4
 
 import pytest
-from shop_project.exceptions import ResourcesException
+from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceContainer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.shared.entity_id import EntityId

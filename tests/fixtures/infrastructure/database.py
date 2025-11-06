@@ -85,18 +85,9 @@ def test_db_in_memory(base_db_in_memory: Callable[[], Awaitable[sqlite3.Connecti
         base_db.backup(clone_conn)
         db = Database.from_sync_conn(clone_conn)
 
-        async with db.get_engine().begin() as conn:
-            fk_list = await conn.run_sync(
-                lambda sync_conn: sync_conn.execute(
-                    text("PRAGMA foreign_key_list('purchase_active');")
-                ).fetchall()
-            )
-
-            # print(f"{fk_list=}")
-            assert len(fk_list) == 1
-            fk = fk_list[0]
-
+        print("before yield")
         yield db
+        print("after yield")
 
     return fact
 

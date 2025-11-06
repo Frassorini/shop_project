@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngin
 from sqlalchemy.engine import URL
 import aiosqlite
 
-from shop_project.env_loader import get_env
+from shop_project.infrastructure.env_loader import get_env
 
 
 class Database:

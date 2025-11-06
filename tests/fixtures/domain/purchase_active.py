@@ -2,7 +2,7 @@ from typing import Callable
 
 import pytest
 
-from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+from dishka.container import Container
 
 from shop_project.domain.customer import Customer
 from shop_project.domain.escrow_account import EscrowAccount
@@ -23,10 +23,10 @@ def purchase_active_filled_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    domain_container: DomainContainer,
+    di_container: Container,
 ) -> Callable[[], PurchaseActivation]:
     def factory() -> PurchaseActivation:
-        purchase_activation_service = domain_container.purchase_activation_service()
+        purchase_activation_service = di_container.get(PurchaseActivationService)
 
         purchase_draft = purchase_draft_factory()
         potatoes = potatoes_product_10()
@@ -47,10 +47,10 @@ def purchase_active_filled_container_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    domain_container: DomainContainer,
+    di_container: Container,
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        purchase_activation_service = domain_container.purchase_activation_service()
+        purchase_activation_service = di_container.get(PurchaseActivationService)
         
         purchase_draft = purchase_draft_factory()
         potatoes = potatoes_product_10()

@@ -18,7 +18,7 @@ from shop_project.domain.shipment_summary import ShipmentSummary
 
 from shop_project.infrastructure.resource_manager.resource_snapshot import ResourceSnapshot, EntitySnapshot, EntitySnapshotSet
 
-from shop_project.exceptions import ResourcesException
+from shop_project.infrastructure.exceptions import ResourcesException
 
 
 T = TypeVar('T', bound=BaseAggregate)

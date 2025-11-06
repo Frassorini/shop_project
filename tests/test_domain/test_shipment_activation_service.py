@@ -1,7 +1,7 @@
 from typing import Callable
 import pytest
 
-from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+from dishka.container import Container
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.product_inventory import ProductInventory
@@ -11,8 +11,8 @@ from shop_project.domain.shipment import Shipment, ShipmentItem
 
 
 def test_activate(potatoes_product_10: Callable[[], Product],
-                  domain_container: DomainContainer,) -> None:
-    shipment_activation_service = domain_container.shipment_activation_service()
+                  di_container: Container,) -> None:
+    shipment_activation_service = di_container.get(ShipmentActivationService)
 
     potatoes = potatoes_product_10()
     request: ShipmentRequest = ShipmentRequest()

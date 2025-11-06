@@ -1,7 +1,7 @@
 from typing import Callable, cast
 import pytest
 
-from shop_project.infrastructure.dependency_injection.domain.container import DomainContainer
+from dishka.container import Container
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.purchase_draft import PurchaseDraft
@@ -15,8 +15,8 @@ from tests.helpers import AggregateContainer
 
 
 def test_purchase_cancel_payment(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
-                                 domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container.purchase_return_service ()
+                                 di_container: Container,) -> None:
+    purchase_return_service = di_container.get(PurchaseReturnService)
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -45,8 +45,8 @@ def test_purchase_cancel_payment(purchase_active_filled_container_factory: Calla
 
 
 def test_purchase_paid_cancel_payment(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
-                                      domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container.purchase_return_service ()
+                                      di_container: Container,) -> None:
+    purchase_return_service = di_container.get(PurchaseReturnService)
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -67,8 +67,8 @@ def test_purchase_paid_cancel_payment(purchase_active_filled_container_factory: 
 
 
 def test_purchase_unclaim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
-                          domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container.purchase_return_service()
+                          di_container: Container,) -> None:
+    purchase_return_service = di_container.get(PurchaseReturnService)
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -97,8 +97,8 @@ def test_purchase_unclaim(purchase_active_filled_container_factory: Callable[[],
 
 
 def test_purchase_pending_unclaim(purchase_active_filled_container_factory: Callable[[], AggregateContainer],
-                                  domain_container: DomainContainer,) -> None:
-    purchase_return_service = domain_container.purchase_return_service()
+                                  di_container: Container,) -> None:
+    purchase_return_service = di_container.get(PurchaseReturnService)
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])

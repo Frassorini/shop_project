@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.exceptions import QueryPlanException, UnitOfWorkException
+from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.query.queries.prebuilt_queries import CountProductsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.value_extractor import ValueExtractor

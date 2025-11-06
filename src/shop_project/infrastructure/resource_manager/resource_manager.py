@@ -1,6 +1,6 @@
 from typing import Any, Literal, Type
 from shop_project.domain.base_aggregate import BaseAggregate
-from shop_project.exceptions import UnitOfWorkException
+from shop_project.infrastructure.exceptions import UnitOfWorkException
 from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery

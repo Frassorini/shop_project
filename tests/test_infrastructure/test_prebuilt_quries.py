@@ -15,7 +15,7 @@ from shop_project.domain.shipment_summary import ShipmentSummary
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork
-from shop_project.exceptions import UnitOfWorkException, ResourcesException
+from shop_project.infrastructure.exceptions import UnitOfWorkException, ResourcesException
 
 from shop_project.infrastructure.query.queries.prebuilt_queries import (
     CountProductsQuery,

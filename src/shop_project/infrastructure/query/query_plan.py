@@ -4,7 +4,7 @@ from typing import Any, Literal, Self, Type, TypeVar
 
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.base_aggregate import BaseAggregate
-from shop_project.exceptions import QueryPlanException
+from shop_project.infrastructure.exceptions import QueryPlanException
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.registries.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry

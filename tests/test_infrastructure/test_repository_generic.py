@@ -12,7 +12,7 @@ from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.product import Product
-from shop_project.exceptions import QueryPlanException, UnitOfWorkException
+from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock

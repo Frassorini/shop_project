@@ -3,7 +3,7 @@ from typing import Any, Self, Type
 
 from sqlalchemy import BinaryExpression, Column, ColumnElement, and_, or_
 from sqlalchemy.sql import true
-from shop_project.exceptions import QueryPlanException
+from shop_project.infrastructure.exceptions import QueryPlanException
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
 from shop_project.infrastructure.database.models.base import Base as BaseORM
 
