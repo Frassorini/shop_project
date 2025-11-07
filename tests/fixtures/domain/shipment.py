@@ -17,10 +17,10 @@ from tests.helpers import AggregateContainer
 def shipment_factory(
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    di_container: Container,
+    domain_container: Container,
 ) -> Callable[[], Shipment]:
     def factory() -> Shipment:
-        shipment_activation_service = di_container.get(ShipmentActivationService)
+        shipment_activation_service = domain_container.get(ShipmentActivationService)
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
@@ -39,10 +39,10 @@ def shipment_factory(
 def shipment_conatiner_factory(
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    di_container: Container,
+    domain_container: Container,
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        shipment_activation_service = di_container.get(ShipmentActivationService)
+        shipment_activation_service = domain_container.get(ShipmentActivationService)
         
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()

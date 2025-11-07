@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine, Literal, Type, TypeVar, cast
+from typing import Any, Awaitable, Callable, Coroutine, Literal, Type, TypeVar, cast
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,7 @@ from shop_project.domain.shipment_summary import ShipmentSummary
 
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
-from shop_project.infrastructure.unit_of_work import UnitOfWork
+from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from shop_project.infrastructure.exceptions import UnitOfWorkException, ResourcesException
 
 from shop_project.infrastructure.query.queries.prebuilt_queries import (
@@ -28,9 +28,8 @@ DomainObject = TypeVar('DomainObject', bound=BaseAggregate)
 
 @pytest.mark.asyncio
 async def test_count_products(product_factory: Callable[..., Product],
-                                 test_db: Database,
-                                 uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork],
-                                 fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]],
+                                 uow_factory: UnitOfWorkFactory,
+                                 fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]],
                                  ) -> None:
     model_type: Type[BaseAggregate] = Product
     
@@ -41,8 +40,8 @@ async def test_count_products(product_factory: Callable[..., Product],
         product_factory(name='sausages_4', amount=3, price="1.0"),
     ]
     
-    await fill_database(test_db, {Product: cast(list[BaseAggregate], products)})
-    uow: UnitOfWork = uow_factory(test_db.create_session(), 'read_only')
+    await fill_database({Product: cast(list[BaseAggregate], products)})
+    uow: UnitOfWork = uow_factory.create('read_only')
     
     query = CountProductsQuery(lock="NO_LOCK")
     

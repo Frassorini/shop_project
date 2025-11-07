@@ -1,9 +1,9 @@
 import pytest
 import pytest_asyncio
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from typing import AsyncGenerator, Awaitable, Callable
 
-from dishka import make_async_container, make_container, Provider, provide, Scope
+from dishka import BaseScope, Component, make_async_container, make_container, Provider, provide, Scope # type: ignore
 
 class ResourceNotInitialized(Exception):
     pass
@@ -14,17 +14,18 @@ class MyTestResource:
         self.is_initialized = False
     
     async def init(self) -> None:
-        print("MyTestResource.init")
+        # print("MyTestResource.init")
         self.is_initialized = True
 
     async def show(self) -> None:
         if self.is_initialized:
-            print(self.value)
+            pass
+            # print(self.value)
         else:
             raise ResourceNotInitialized("Resource is not initialized")
 
     async def dispose(self) -> None:
-        print("MyTestResource.dispose")
+        # print("MyTestResource.dispose")
         self.is_initialized = False
 
 @asynccontextmanager
@@ -32,36 +33,40 @@ async def my_test_resource() -> AsyncGenerator[MyTestResource, None]:
     resource = MyTestResource()
     await resource.init()
     try:
-        print("context_manager.yield")
+        # print("context_manager.yield")
         yield resource
     finally:
-        print("context_manager.finally")
+        # print("context_manager.finally")
         await resource.dispose()
 
 
 class MyProvider(Provider):
     scope = Scope.APP
+    
+    def __init__(self, database_ctx: Callable[[], AbstractAsyncContextManager[MyTestResource]], *, scope: BaseScope | None = None, component: Component | None = None):
+        super().__init__(scope, component)
+        
+        self.database_ctx = database_ctx
+        
 
     @provide(scope=Scope.APP)
     async def provide_resource(self) -> AsyncGenerator[MyTestResource, None]:
-        ctx = my_test_resource()
+        ctx = self.database_ctx()
         res = await ctx.__aenter__()  # вручную войти
         try:
-            print("MyProvider.provide_resource.yield")
+            # print("MyProvider.provide_resource.yield")
             yield res
         finally:
-            print("MyProvider.provide_resource.finally")
+            # print("MyProvider.provide_resource.finally")
             await ctx.__aexit__(None, None, None)
 
 
 
 @pytest.mark.asyncio
 async def test_resource_lifecycle():
-    container = make_async_container(MyProvider())
+    container = make_async_container(MyProvider(my_test_resource))
     async with container() as ctx:
         resource = await ctx.get(MyTestResource)
         assert resource.is_initialized is True
         await resource.show()
-    # после выхода из контекста ресурс должен быть освобождён
-    assert resource.is_initialized is True
-    1 / 0
+

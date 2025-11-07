@@ -4,6 +4,7 @@ from re import A
 import sqlite3
 from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Generator, Literal, Type
 
+from dishka import AsyncContainer
 import pytest
 import pytest_asyncio
 from sqlalchemy import text
@@ -13,17 +14,13 @@ from sqlalchemy.orm import close_all_sessions
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database import models
-from shop_project.infrastructure.unit_of_work import UnitOfWork
+from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 
 
 @pytest_asyncio.fixture
-async def test_db(test_db_factory: Callable[[], AbstractAsyncContextManager[Database, None]]
+async def test_db(async_container: AsyncContainer,
                   ) -> AsyncGenerator[Database, None]:
-    async with test_db_factory() as db:
-        try:
-            yield db
-        finally:
-            await db.close()
+    yield await async_container.get(Database)
 
 
 @pytest.fixture
@@ -85,21 +82,17 @@ def test_db_in_memory(base_db_in_memory: Callable[[], Awaitable[sqlite3.Connecti
         base_db.backup(clone_conn)
         db = Database.from_sync_conn(clone_conn)
 
-        print("before yield")
         yield db
-        print("after yield")
 
     return fact
 
 
 @pytest_asyncio.fixture
-async def fill_database(uow_factory: Callable[[AsyncSession, Literal["read_write", "read_only"]], UnitOfWork]) -> Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]:
-    async def _fill_db(database: Database, data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> Database:
-        session = database.create_session()
-        uow = uow_factory(session, 'read_write')
+async def fill_database(uow_factory: UnitOfWorkFactory) -> Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]:
+    async def _fill_db(data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
+        uow = uow_factory.create('read_write')
         async with uow:
             for model_type, domain_objects in data.items():
                 uow.get_resorces().put_many(model_type, domain_objects)
             await uow.commit()
-        return database
     return _fill_db

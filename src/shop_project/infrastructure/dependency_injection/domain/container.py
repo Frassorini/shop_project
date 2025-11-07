@@ -1,4 +1,4 @@
-# shop_project/containers/di_container.py
+# shop_project/containers/domain_container.py
 from typing import Iterable
 from dishka import make_container, Provider, provide, Scope # type: ignore
 

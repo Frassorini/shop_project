@@ -13,8 +13,8 @@ from shop_project.domain.purchase_active import PurchaseActive
 
 def test_activate(purchase_draft_factory: Callable[[], PurchaseDraft],
                   potatoes_product_10: Callable[[], Product],
-                  di_container: Container,) -> None:
-    purchase_activation_service = di_container.get(PurchaseActivationService)
+                  domain_container: Container,) -> None:
+    purchase_activation_service = domain_container.get(PurchaseActivationService)
 
     potatoes = potatoes_product_10()
     purchase_draft = purchase_draft_factory()
@@ -30,8 +30,8 @@ def test_activate(purchase_draft_factory: Callable[[], PurchaseDraft],
 
 def test_activate_twice(purchase_draft_factory: Callable[[], PurchaseDraft],
                         potatoes_product_10: Callable[[], Product],
-                        di_container: Container,) -> None:
-    purchase_activation_service = di_container.get(PurchaseActivationService)
+                        domain_container: Container,) -> None:
+    purchase_activation_service = domain_container.get(PurchaseActivationService)
 
     potatoes = potatoes_product_10()
     purchase_draft = purchase_draft_factory()

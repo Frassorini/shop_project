@@ -1,9 +1,14 @@
-from fastapi import FastAPI
+from typing import AsyncGenerator
 from contextlib import asynccontextmanager
-from starlette.applications import Starlette
 
-from dishka.container import Container
-from shop_project.infrastructure.dependency_injection.infrastructure.container import InfrastructureContainer
+from dishka import make_async_container
+from dishka.integrations.fastapi import setup_dishka
+from fastapi import FastAPI
+from dishka.async_container import AsyncContainer
+
+from shop_project.infrastructure.database.core import Database
+from shop_project.infrastructure.dependency_injection.infrastructure.container import InfrastructureProvider
+from shop_project.infrastructure.dependency_injection.domain.container import DomainProvider
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,7 +19,18 @@ async def lifespan(app: FastAPI):
     pass
 
 
+@asynccontextmanager
+async def database_ctx() -> AsyncGenerator[Database, None]:
+    db = Database.from_env()
+    try:    
+        yield db
+    finally:
+        await db.close()
+
+
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
-    app.container: Container = container
+    container: AsyncContainer = make_async_container(DomainProvider(), InfrastructureProvider(database_ctx))
+
+    setup_dishka(container, app)
     return app

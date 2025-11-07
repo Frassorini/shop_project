@@ -2,11 +2,15 @@ from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
-from shop_project.infrastructure.repositories.repository_container import RepositoryContainer
+from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceManager
 from shop_project.infrastructure.exceptions import UnitOfWorkException
 from shop_project.shared.entity_id import EntityId
+
+from shop_project.infrastructure.registries.repository_registry import RepositoryRegistry
+from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
+from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
 
 class UnitOfWork():
@@ -46,8 +50,7 @@ class UnitOfWork():
         if exc_type is not None and not self.exhausted:
             if not self.read_only:
                 await self.rollback()
-        
-        await self.session.close()
+
         self.exhausted = True
     
     async def commit(self):
@@ -63,3 +66,20 @@ class UnitOfWork():
         self.exhausted = True
 
 
+class UnitOfWorkFactory():
+    def __init__(self, session: AsyncSession) -> None:
+        self.session: AsyncSession = session
+    
+    def create(self, mode: Literal["read_only", "read_write"]) -> UnitOfWork:
+        if not mode in ['read_only', 'read_write']:
+            raise ValueError(f'Invalid mode: {mode}')
+        
+        repository_container = repository_container_factory(session=self.session, repositories=RepositoryRegistry.get_map())
+        
+        resource_manager = ResourceManager(
+            repository_container=repository_container, 
+            resources_registry=ResourcesRegistry.get_map(), 
+            total_order=TotalOrderRegistry, 
+            read_only=mode == 'read_only')
+        
+        return UnitOfWork(self.session, resource_manager=resource_manager)

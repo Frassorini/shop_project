@@ -1,4 +1,4 @@
-from typing import Callable, Coroutine, Type, cast
+from typing import Awaitable, Callable, Coroutine, Type, cast
 from uuid import uuid4
 
 import pytest
@@ -45,10 +45,10 @@ def get_customers() -> list[Customer]:
 
 @pytest.mark.asyncio
 async def test_repository_generic_read(test_db: Database,
-                                       fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
+                                       fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
     async with test_db.create_session() as session:
         customers = get_customers()
-        await fill_database(test_db, {Customer: cast(list[BaseAggregate], get_customers())})
+        await fill_database({Customer: cast(list[BaseAggregate], get_customers())})
         repository = CustomerRepository(session)
 
         query = QueryPlanBuilder(mutating=False).load(Customer).no_lock().build()
@@ -58,11 +58,11 @@ async def test_repository_generic_read(test_db: Database,
 
 @pytest.mark.asyncio
 async def test_from_id(test_db: Database,
-                       fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
+                       fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
     uuid_id = uuid4()
     customer = Customer(entity_id=EntityId(uuid_id), name='user_1')
 
-    await fill_database(test_db, {Customer: cast(list[BaseAggregate], [customer])})
+    await fill_database({Customer: cast(list[BaseAggregate], [customer])})
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
@@ -78,10 +78,10 @@ async def test_from_id(test_db: Database,
 
 @pytest.mark.asyncio
 async def test_from_attribute(test_db: Database,
-                              fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
+                              fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
     customers = get_customers()
     customers_filtered = [customer for customer in customers if customer.name in ['user_1', 'user_2']]
-    await fill_database(test_db, {Customer: cast(list[BaseAggregate], customers)})
+    await fill_database({Customer: cast(list[BaseAggregate], customers)})
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
@@ -101,9 +101,9 @@ async def test_from_attribute(test_db: Database,
 # TODO: сравнение числовых значений
 @pytest.mark.asyncio
 async def xtest_greater_than(test_db: Database,
-                            fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
+                            fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
     customers = get_customers()
-    await fill_database(test_db, {Customer: cast(list[BaseAggregate], customers)})
+    await fill_database({Customer: cast(list[BaseAggregate], customers)})
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
         customers_filtered = [customer for customer in customers if customer.name > 'user_1']
@@ -122,9 +122,9 @@ async def xtest_greater_than(test_db: Database,
 
 @pytest.mark.asyncio
 async def test_repository_generic_create(test_db: Database,
-                                         fill_database: Callable[[Database, dict[Type[BaseAggregate], list[BaseAggregate]]], Coroutine[None, None, Database]]) -> None:
+                                         fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
     async with test_db.create_session() as session:
-        await fill_database(test_db, {Customer: cast(list[BaseAggregate], get_customers())})
+        await fill_database({Customer: cast(list[BaseAggregate], get_customers())})
         repository = CustomerRepository(session)
         uuid_id = uuid4()
 

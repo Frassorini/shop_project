@@ -23,10 +23,10 @@ def purchase_active_filled_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    di_container: Container,
+    domain_container: Container,
 ) -> Callable[[], PurchaseActivation]:
     def factory() -> PurchaseActivation:
-        purchase_activation_service = di_container.get(PurchaseActivationService)
+        purchase_activation_service = domain_container.get(PurchaseActivationService)
 
         purchase_draft = purchase_draft_factory()
         potatoes = potatoes_product_10()
@@ -47,10 +47,10 @@ def purchase_active_filled_container_factory(
     purchase_draft_factory: Callable[[], PurchaseDraft],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
-    di_container: Container,
+    domain_container: Container,
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        purchase_activation_service = di_container.get(PurchaseActivationService)
+        purchase_activation_service = domain_container.get(PurchaseActivationService)
         
         purchase_draft = purchase_draft_factory()
         potatoes = potatoes_product_10()
