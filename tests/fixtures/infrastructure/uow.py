@@ -89,3 +89,14 @@ def prepare_container(domain_object_factory: Callable[[Type[BaseAggregate]], Agg
 
         return domain_container
     return _inner
+
+
+@pytest_asyncio.fixture
+async def fill_database(uow_factory: UnitOfWorkFactory) -> Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]:
+    async def _fill_db(data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
+        uow = uow_factory.create('read_write')
+        async with uow:
+            for model_type, domain_objects in data.items():
+                uow.get_resorces().put_many(model_type, domain_objects)
+            await uow.commit()
+    return _fill_db

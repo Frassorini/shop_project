@@ -46,53 +46,46 @@ def test_db_docker() -> Callable[[], Any]:
             # await conn.commit()
 
         try:
+            # print("yield db before")
             yield db
 
         finally:
+            # print("yield db after")
             async with db.get_engine().begin() as conn:
                 await conn.run_sync(models.Base.metadata.drop_all)
+            await db.close()
     return fact
 
 
-@pytest.fixture(scope="session")
-def base_db_in_memory() -> Callable[[], Awaitable[sqlite3.Connection]]:
-    value: sqlite3.Connection | None = None
-    
-    async def fact() -> sqlite3.Connection:
-        nonlocal value
-        if value is not None:
-            return value
-        sqlite_conn = sqlite3.connect(":memory:", check_same_thread=False)
-        db = Database.from_sync_conn(sqlite_conn)
-        async with db.get_engine().begin() as conn:
-            await conn.run_sync(models.Base.metadata.create_all)
-        value = sqlite_conn
-        return sqlite_conn
+@pytest_asyncio.fixture(scope="session")
+async def base_db_in_memory() -> AsyncGenerator[sqlite3.Connection, None]:
+    sqlite_conn = sqlite3.connect(":memory:", check_same_thread=False)
+    db = Database.from_sync_conn(sqlite_conn)
+    async with db.get_engine().begin() as conn:
+        await conn.run_sync(models.Base.metadata.create_all)
+    value = sqlite_conn
+    try:
+        yield sqlite_conn
+    finally:
+        await db.close()
+        value.close()
 
-    return fact
 
 
 @pytest.fixture
-def test_db_in_memory(base_db_in_memory: Callable[[], Awaitable[sqlite3.Connection]]) -> Callable[[], Any]:
+def test_db_in_memory(base_db_in_memory: sqlite3.Connection) -> Callable[[], Any]:
     @asynccontextmanager
     async def fact() -> AsyncGenerator[Database, None]:
         clone_conn = sqlite3.connect(":memory:", check_same_thread=False)
         clone_conn.execute("PRAGMA foreign_keys = ON;")
-        base_db = await base_db_in_memory()
-        base_db.backup(clone_conn)
+        base_db_in_memory.backup(clone_conn)
         db = Database.from_sync_conn(clone_conn)
 
-        yield db
+        try: 
+            # print("yield db before")
+            yield db
+        finally:
+            await db.close()
+            # print("yield db after")
 
     return fact
-
-
-@pytest_asyncio.fixture
-async def fill_database(uow_factory: UnitOfWorkFactory) -> Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]:
-    async def _fill_db(data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
-        uow = uow_factory.create('read_write')
-        async with uow:
-            for model_type, domain_objects in data.items():
-                uow.get_resorces().put_many(model_type, domain_objects)
-            await uow.commit()
-    return _fill_db

@@ -18,6 +18,7 @@ class EscrowStateMachine(BaseStateMachine[EscrowState]):
     _transitions = {
         EscrowState.PENDING: [EscrowState.PAID, EscrowState.FINALIZED],
         EscrowState.PAID: [EscrowState.REFUNDING, EscrowState.FINALIZED],
+        EscrowState.REFUNDING: [EscrowState.FINALIZED],
         EscrowState.FINALIZED: [],
     }
 

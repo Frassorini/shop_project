@@ -22,3 +22,5 @@ async def async_container(test_db_factory: Callable[[], AbstractAsyncContextMana
     
     async with container() as ct:
         yield ct
+    
+    await container.close()
