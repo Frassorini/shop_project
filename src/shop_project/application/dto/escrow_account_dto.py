@@ -9,4 +9,3 @@ class EscrowAccountDTO(BaseDTO):
     entity_id: UUID
     state: str
     total_amount: Decimal
-    purchase_active_id: UUID | None

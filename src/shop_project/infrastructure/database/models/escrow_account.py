@@ -9,7 +9,6 @@ class EscrowAccount(Base):
     
     entity_id = Column(UUIDBinary(), nullable=False)
     total_amount = Column(Numeric(), nullable=False)
-    purchase_active_id = Column(UUIDBinary(), nullable=True)
     state = Column(String(50), nullable=False)
 
     __table_args__ = (

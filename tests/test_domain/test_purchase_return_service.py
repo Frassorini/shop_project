@@ -24,6 +24,8 @@ def test_purchase_cancel_payment(purchase_active_filled_container_factory: Calla
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
     
+    escrow.cancel()
+    
     purchase_summary = purchase_return_service.payment_cancel(
         product_inventory=product_inventory,
         purchase_active=purchase, 
@@ -75,7 +77,10 @@ def test_purchase_unclaim(purchase_active_filled_container_factory: Callable[[],
     purchase: PurchaseActive = cast(PurchaseActive, container.aggregate)
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
+    
     escrow.mark_as_paid()
+    escrow.mark_as_ready_for_refund()
+    
     purchase_summary = purchase_return_service.unclaim(
         product_inventory=product_inventory,
         purchase_active=purchase, 

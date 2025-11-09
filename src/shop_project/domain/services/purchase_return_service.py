@@ -16,8 +16,8 @@ class PurchaseReturnService():
         if purchase_active.is_finalized():
             raise DomainException('Cannot cancel finalized purchase')
         
-        if not escrow_account.is_pending():
-            raise DomainException('Escrow account is not pending')
+        if not escrow_account.is_cancelled():
+            raise DomainException('Escrow account is not cancelled')
         
         escrow_account.finalize()
         
@@ -29,8 +29,8 @@ class PurchaseReturnService():
         if purchase_active.is_finalized():
             raise DomainException('Cannot unclaim finalized purchase')
         
-        if not escrow_account.is_paid():
-            raise DomainException('Escrow account is not pending')
+        if not escrow_account.is_ready_for_refund():
+            raise DomainException('Escrow account is not ready for refund')
         
         escrow_account.begin_refund()
         

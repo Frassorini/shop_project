@@ -29,7 +29,6 @@ class PurchaseActivationService():
         
         escrow_account = self._checkout_service.checkout(product_inventory, purchase_draft)
         purchase_active = self._purchase_reservation_service.reserve(product_inventory, purchase_draft, escrow_account)
-        escrow_account.attach_to_purchase(purchase_active.entity_id)
         purchase_draft.finalize()
         
         return PurchaseActivation(purchase_active, escrow_account)
