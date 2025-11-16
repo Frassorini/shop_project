@@ -51,7 +51,10 @@ unit-tests:
 	ENV_FILE=$(ENV_FILE_TEST) poetry run pytest -v -s -m "not integration" 
 
 integration-tests:
-	ENV_FILE=$(ENV_FILE_TEST) poetry run pytest -v -s -m "not integration or integration" --real-db
+	ENV_FILE=$(ENV_FILE_TEST) poetry run pytest -v -s -m "integration" --real-db
+
+test-real-db:
+	ENV_FILE=$(ENV_FILE_TEST) poetry run pytest -v -s --real-db
 
 ci: 
 	$(MAKE) test-up

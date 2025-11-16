@@ -9,7 +9,7 @@ from shop_project.infrastructure.unit_of_work import UnitOfWorkFactory
 
 
 
-class InfrastructureProvider(Provider):
+class DatabaseProvider(Provider):
     scope = Scope.APP
     
     def __init__(self, database_ctx: Callable[[], AbstractAsyncContextManager[Database]], *, scope: BaseScope | None = None, component: Component | None = None):

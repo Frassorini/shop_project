@@ -6,11 +6,16 @@ def pytest_addoption(parser: pytest.Parser):
         "--real-db", action="store_true", default=False,
         help="Run tests using real database instead of in-memory DB",
     )
+    parser.addoption(
+        "--real-broker", action="store_true", default=False,
+        help="Run tests using real broker instead of in-memory broker",
+    )
 
 
 pytest_plugins = [
     "tests.fixtures.infrastructure.uow",
     "tests.fixtures.infrastructure.database",
+    "tests.fixtures.infrastructure.broker",
     "tests.fixtures.infrastructure.repository",
     "tests.fixtures.infrastructure.dependency_injection",
     

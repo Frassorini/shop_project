@@ -10,6 +10,19 @@ services:
     volumes:
       - test-mysql-data:/var/lib/mysql
     restart: unless-stopped
+  rabbitmq:
+    container_name: test-rabbit
+    image: rabbitmq:3-management
+    hostname: test-rabbit
+    ports:
+      - "5672:5672"       # AMQP порт
+      - "15672:15672"     # Веб-интерфейс
+    env_file:
+      - ../environment/.env.test
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
 
 volumes:
   test-mysql-data:
+  rabbitmq-data:

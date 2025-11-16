@@ -31,7 +31,7 @@
       "label": "Run Integration Tests",
       "type": "shell",
       "command": "bash",
-      "args": ["-ic", "make integration-tests"],
+      "args": ["-ic", "make test-real-db"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"

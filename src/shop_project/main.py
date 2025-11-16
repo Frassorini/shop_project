@@ -7,8 +7,8 @@ from fastapi import FastAPI
 from dishka.async_container import AsyncContainer
 
 from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.dependency_injection.infrastructure.container import InfrastructureProvider
-from shop_project.infrastructure.dependency_injection.domain.container import DomainProvider
+from shop_project.infrastructure.dependency_injection.infrastructure.database_container import DatabaseProvider
+from shop_project.infrastructure.dependency_injection.domain.domain_container import DomainProvider
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +30,7 @@ async def database_ctx() -> AsyncGenerator[Database, None]:
 
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
-    container: AsyncContainer = make_async_container(DomainProvider(), InfrastructureProvider(database_ctx))
+    container: AsyncContainer = make_async_container(DomainProvider(), DatabaseProvider(database_ctx))
 
     setup_dishka(container, app)
     return app
