@@ -13,7 +13,7 @@ from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
 from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from shop_project.infrastructure.exceptions import UnitOfWorkException, ResourcesException
 
@@ -46,7 +46,7 @@ async def test_count_products(product_factory: Callable[..., Product],
     query = CountProductsQuery(lock="NO_LOCK")
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=False).add_prebuilt(query)
+        QueryBuilder(mutating=False).add_prebuilt(query)
         )
     
     async with uow:

@@ -1,7 +1,7 @@
-from typing import Literal
+from typing import Literal, Self
 from sqlalchemy.ext.asyncio import AsyncSession
 from shop_project.domain.base_aggregate import BaseAggregate
-from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceManager
@@ -12,21 +12,25 @@ from shop_project.infrastructure.registries.repository_registry import Repositor
 from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
 from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
+from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
+from shop_project.application.interfaces.interface_unit_of_work import IUnitOfWork, IUnitOfWorkFactory
 
-class UnitOfWork():
+class UnitOfWork(IUnitOfWork):
     def __init__(self, session: AsyncSession, *, 
                  resource_manager: ResourceManager) -> None:
         self.session: AsyncSession = session
         self.resource_manager: ResourceManager = resource_manager
         self.read_only: bool = resource_manager.read_only
-        self._query_plan: QueryPlanBuilder | None = None
+        self._query_plan: QueryBuilder | None = None
         
         self.exhausted = False
     
-    def set_query_plan(self, query_plan: QueryPlanBuilder) -> None:
-        self._query_plan = query_plan
+    def set_query_plan(self, query_plan: IQueryBuilder) -> None:
+        if not isinstance(query_plan, QueryBuilder):
+            raise NotImplementedError
+        self._query_plan = query_plan 
     
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         if self.exhausted:
             raise UnitOfWorkException('UnitOfWork is exhausted')
         
@@ -66,7 +70,7 @@ class UnitOfWork():
         self.exhausted = True
 
 
-class UnitOfWorkFactory():
+class UnitOfWorkFactory(IUnitOfWorkFactory):
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
     

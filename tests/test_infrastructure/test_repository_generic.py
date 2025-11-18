@@ -16,7 +16,7 @@ from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWor
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
-from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 from shop_project.infrastructure.query.query_plan import (
     LockQueryPlan,
@@ -51,7 +51,7 @@ async def test_repository_generic_read(test_db: Database,
         await fill_database({Customer: cast(list[BaseAggregate], get_customers())})
         repository = CustomerRepository(session)
 
-        query = QueryPlanBuilder(mutating=False).load(Customer).no_lock().build()
+        query = QueryBuilder(mutating=False).load(Customer).no_lock().build()
         result = await repository.load(query.queries[0])
         assert len(result) == 4
 
@@ -66,7 +66,7 @@ async def test_from_id(test_db: Database,
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
-        query = (QueryPlanBuilder(mutating=False)
+        query = (QueryBuilder(mutating=False)
                  .load(Customer)
                  .from_id([uuid_id])
                  .no_lock()
@@ -86,7 +86,7 @@ async def test_from_attribute(test_db: Database,
         repository = CustomerRepository(session)
 
         query = (
-            QueryPlanBuilder(mutating=False)
+            QueryBuilder(mutating=False)
             .load(Customer)
             .from_attribute("name", ["user_1", "user_2"])
             .no_lock()
@@ -109,7 +109,7 @@ async def xtest_greater_than(test_db: Database,
         customers_filtered = [customer for customer in customers if customer.name > 'user_1']
 
         query = (
-            QueryPlanBuilder(mutating=False)
+            QueryBuilder(mutating=False)
             .load(Customer)
             .greater_than("name", 'user_1')
             .no_lock()
@@ -134,6 +134,6 @@ async def test_repository_generic_create(test_db: Database,
         resources.take_snapshot()
         await repository.save(resources.get_resource_changes()[Customer])
 
-        query = QueryPlanBuilder(mutating=False).load(Customer).from_id([uuid_id]).no_lock().build()
+        query = QueryBuilder(mutating=False).load(Customer).from_id([uuid_id]).no_lock().build()
         result = await repository.load(query.queries[0])
     assert result

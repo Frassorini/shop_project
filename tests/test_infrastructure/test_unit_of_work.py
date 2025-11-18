@@ -20,7 +20,7 @@ from shop_project.domain.services.purchase_claim_service import PurchaseClaimSer
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
 
 from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from shop_project.infrastructure.exceptions import UnitOfWorkException, ResourcesException
 from tests.helpers import AggregateContainer
@@ -35,7 +35,7 @@ async def test_customer(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
@@ -55,7 +55,7 @@ async def test_customer(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
@@ -83,7 +83,7 @@ async def test_purchase_draft(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True)
+        QueryBuilder(mutating=True)
         .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         .load(Product).from_previous().for_update()
         )
@@ -119,7 +119,7 @@ async def test_uow_purchase_claim(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True)
+        QueryBuilder(mutating=True)
         .load(PurchaseActive).from_id([purchase_active_container.aggregate.entity_id.value]).for_update()
         .load(EscrowAccount).from_previous().for_update()
         .load(Product).from_previous(0).for_update()
@@ -172,7 +172,7 @@ async def test_product(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
@@ -203,7 +203,7 @@ async def test_shipment(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(Shipment).from_id([shipment_container.aggregate.entity_id.value]).for_update()
+        QueryBuilder(mutating=True).load(Shipment).from_id([shipment_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:
@@ -242,7 +242,7 @@ async def test_enter_uow_twice(uow_factory: UnitOfWorkFactory,
     uow: UnitOfWork = uow_factory.create('read_write')
     
     uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         )
     
     async with uow:

@@ -13,7 +13,7 @@ def pytest_addoption(parser: pytest.Parser):
 
 
 pytest_plugins = [
-    "tests.fixtures.infrastructure.uow",
+    "tests.fixtures.infrastructure.unit_of_work",
     "tests.fixtures.infrastructure.database",
     "tests.fixtures.infrastructure.broker",
     "tests.fixtures.infrastructure.repository",

@@ -18,7 +18,7 @@ class BrokerProvider(Provider):
         self.broker_ctx = database_ctx
 
     @provide(scope=Scope.APP)
-    async def provide_broker(self) -> AsyncGenerator[BrokerContainer, None]:
+    async def broker(self) -> AsyncGenerator[BrokerContainer, None]:
         ctx = self.broker_ctx()
         res = await ctx.__aenter__()  # вручную войти
         try:

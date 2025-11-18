@@ -16,6 +16,8 @@ from shop_project.infrastructure.query.p_value_provider import PValueProvider
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
 from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
 
+from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
+
 
 @dataclass
 class QueryData:
@@ -30,7 +32,7 @@ class QueryData:
 
 # lock == True  -> Все запросы должны быть FOR UPDATE/FOR SHARE
 # lock == False -> Все запросы должны быть без блокирования
-class QueryPlanBuilder:
+class QueryBuilder(IQueryBuilder):
     def __init__(self, mutating: bool) -> None:
         self.domain_reference_registry: Type[DomainReferenceRegistry] = DomainReferenceRegistry
         self.query_plan: QueryPlan

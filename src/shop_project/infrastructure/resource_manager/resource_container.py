@@ -20,6 +20,8 @@ from shop_project.infrastructure.resource_manager.resource_snapshot import Resou
 
 from shop_project.infrastructure.exceptions import ResourcesException
 
+from shop_project.application.interfaces.interface_resource_container import IResourceContainer
+
 
 T = TypeVar('T', bound=BaseAggregate)
 
@@ -71,7 +73,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         
         return result
         
-class ResourceContainer(ResourceSnapshotSentinelMixin):
+class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
     def __init__(self, resources_registry: list[Type[BaseAggregate]]):
         self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
             resource: [] for resource in resources_registry
@@ -106,6 +108,14 @@ class ResourceContainer(ResourceSnapshotSentinelMixin):
             raise RuntimeError(f"Found more than one {model_type} with id {entity_id}")
 
         return result[0]
+    
+    def get_by_ids(self, model_type: Type[T], entity_ids: list[EntityId]) -> list[T]:
+        result: list[T] = self.get_by_attribute(model_type, "entity_id", entity_ids)
+
+        if not result:
+            raise ResourcesException(f"Could not find any {model_type} with ids {entity_ids}")
+
+        return result
     
     def get_all(self, model_type: Type[T]) -> Sequence[T]:
         return self._get_resource_by_type(model_type).copy()

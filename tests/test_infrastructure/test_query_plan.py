@@ -8,7 +8,7 @@ from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWor
 from shop_project.infrastructure.query.queries.prebuilt_queries import CountProductsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
-from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
 from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
 from shop_project.domain.product import Product
@@ -18,12 +18,12 @@ from shop_project.shared.entity_id import EntityId
 
 def test_empty_source():
     with pytest.raises(QueryPlanException):
-        QueryPlanBuilder(mutating=False).load(PurchaseDraft).build()
+        QueryBuilder(mutating=False).load(PurchaseDraft).build()
 
 
 def test_empty():
     with pytest.raises(QueryPlanException):
-        QueryPlanBuilder(mutating=False).build()
+        QueryBuilder(mutating=False).build()
 
 
 def test_load_from_attribute():
@@ -32,7 +32,7 @@ def test_load_from_attribute():
                       QueryLock.NO_LOCK)
     
     query_built: QueryPlan = (
-        QueryPlanBuilder(mutating=False)
+        QueryBuilder(mutating=False)
         .load(PurchaseDraft)
         .from_attribute("entity_id", ['1'])
         .no_lock()
@@ -51,7 +51,7 @@ def test_load_from_id():
                       QueryLock.NO_LOCK)
     
     query_built: QueryPlan = (
-        QueryPlanBuilder(mutating=False)
+        QueryBuilder(mutating=False)
         .load(PurchaseDraft)
         .from_id([uuid_id])
         .no_lock()
@@ -76,7 +76,7 @@ def test_load_from_previous(purchase_draft_factory: Callable[[], PurchaseDraft])
                                  ),
                                  QueryLock.NO_LOCK)
 
-    query_builder = QueryPlanBuilder(mutating=False).load(Product)
+    query_builder = QueryBuilder(mutating=False).load(Product)
     query_builder.query_plan.queries.append(query)
     query_built: QueryPlan = query_builder.from_previous().no_lock().build()
 
@@ -89,15 +89,15 @@ def test_lock_violation():
     uuid_id = uuid4()
     
     with pytest.raises(QueryPlanException):
-        QueryPlanBuilder(mutating=True).load(PurchaseDraft).from_id([uuid_id]).no_lock().build()
+        QueryBuilder(mutating=True).load(PurchaseDraft).from_id([uuid_id]).no_lock().build()
 
     with pytest.raises(QueryPlanException):
-        QueryPlanBuilder(mutating=False).load(PurchaseDraft).from_id([uuid_id]).for_update().build()
+        QueryBuilder(mutating=False).load(PurchaseDraft).from_id([uuid_id]).for_update().build()
 
 
 def test_correct_locking_load_order():
     plan: QueryPlan = (
-        QueryPlanBuilder(mutating=True)
+        QueryBuilder(mutating=True)
         .load(Customer).from_id([uuid4()]).for_share()
         .load(PurchaseDraft).from_previous().for_share()
         .load(Product).from_previous(1).for_update()
@@ -108,7 +108,7 @@ def test_correct_locking_load_order():
 def xtest_wrong_locking_load_order():
     with pytest.raises(QueryPlanException):
         plan: QueryPlan = (
-            QueryPlanBuilder(mutating=True)
+            QueryBuilder(mutating=True)
             .load(PurchaseDraft).from_id([uuid4()]).for_share()
             .load(Customer).from_previous().for_share()
             .load(Product).from_previous().for_update()
@@ -117,5 +117,5 @@ def xtest_wrong_locking_load_order():
 
 
 def test_prebuilt_query():
-    query = QueryPlanBuilder(mutating=False).add_prebuilt(CountProductsQuery(lock="NO_LOCK")).build()
+    query = QueryBuilder(mutating=False).add_prebuilt(CountProductsQuery(lock="NO_LOCK")).build()
     assert len(query.queries) == 1

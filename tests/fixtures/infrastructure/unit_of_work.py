@@ -10,7 +10,7 @@ from shop_project.domain.base_aggregate import BaseAggregate
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 
 from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.query.query_builder import QueryPlanBuilder
+from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory
 from shop_project.infrastructure.resource_manager.resource_manager import ResourceManager
@@ -36,14 +36,14 @@ def uow_delete_and_check(uow_check: Callable[[Type[BaseAggregate], BaseAggregate
         domain_object: BaseAggregate) -> None:
         uow = uow_factory.create('read_write')
         uow.set_query_plan(
-            QueryPlanBuilder(mutating=False)
+            QueryBuilder(mutating=False)
             .load(model_type)
             .from_id([domain_object.entity_id.value])
             .no_lock()
         )
         
         uow.set_query_plan(
-        QueryPlanBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.value]).for_update()
+        QueryBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.value]).for_update()
         )
     
         async with uow:
@@ -67,7 +67,7 @@ def uow_check(uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], 
         domain_object: BaseAggregate) -> UnitOfWork:
         uow = uow_factory.create('read_only')
         uow.set_query_plan(
-            QueryPlanBuilder(mutating=False)
+            QueryBuilder(mutating=False)
             .load(model_type)
             .from_id([domain_object.entity_id.value])
             .no_lock()

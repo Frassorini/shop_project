@@ -30,34 +30,34 @@ class DomainProvider(Provider):
         self,
         reservation_service: PurchaseReservationService,
         checkout_service: CheckoutService,
-    ) -> Iterable[PurchaseActivationService]:
-        yield PurchaseActivationService(reservation_service, checkout_service)
+    ) -> PurchaseActivationService:
+        return PurchaseActivationService(reservation_service, checkout_service)
 
     @provide
     def purchase_return_service(
         self,
         purchase_summary_service: PurchaseSummaryService,
-    ) -> Iterable[PurchaseReturnService]:
-        yield PurchaseReturnService(purchase_summary_service)
+    ) -> PurchaseReturnService:
+        return PurchaseReturnService(purchase_summary_service)
 
     @provide
     def purchase_claim_service(
         self,
         purchase_summary_service: PurchaseSummaryService,
-    ) -> Iterable[PurchaseClaimService]:
-        yield PurchaseClaimService(purchase_summary_service)
+    ) -> PurchaseClaimService:
+        return PurchaseClaimService(purchase_summary_service)
 
     @provide
     def shipment_receive_service(
         self,
         shipment_summary_service: ShipmentSummaryService,
-    ) -> Iterable[ShipmentReceiveService]:
-        yield ShipmentReceiveService(shipment_summary_service)
+    ) -> ShipmentReceiveService:
+        return ShipmentReceiveService(shipment_summary_service)
 
     @provide
     def shipment_cancel_service(
         self,
         shipment_summary_service: ShipmentSummaryService,
-    ) -> Iterable[ShipmentCancelService]:
-        yield ShipmentCancelService(shipment_summary_service)
+    ) -> ShipmentCancelService:
+        return ShipmentCancelService(shipment_summary_service)
 
