@@ -41,15 +41,13 @@ async def test_count_products(product_factory: Callable[..., Product],
     ]
     
     await fill_database({Product: cast(list[BaseAggregate], products)})
-    uow: UnitOfWork = uow_factory.create('read_only')
-    
+
     query = CountProductsQuery(lock="NO_LOCK")
     
-    uow.set_query_plan(
-        QueryBuilder(mutating=False).add_prebuilt(query)
-        )
-    
-    async with uow:
+    async with uow_factory.create(
+        QueryBuilder(mutating=False)
+        .add_prebuilt(query)
+    ) as uow:
         pass
     
     assert query.get_result()[0] == 4

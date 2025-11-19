@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, Awaitable, Callable, Coroutine, Literal, Type, TypeVar
+from typing import Any, AsyncContextManager, Awaitable, Callable, Coroutine, Literal, Type, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 import pytest
@@ -29,40 +29,35 @@ from tests.helpers import AggregateContainer
 @pytest.mark.asyncio
 async def test_customer(uow_factory: UnitOfWorkFactory,
                         prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                        uow_check: Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork],) -> None:
+                        uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],) -> None:
     model_type: Type[BaseAggregate] = Customer
     domain_container: AggregateContainer = await prepare_container(model_type)
-    uow: UnitOfWork = uow_factory.create('read_write')
     
-    uow.set_query_plan(
-        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
-        )
-    
-    async with uow:
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+    ) as uow:
         resources = uow.get_resorces()
         domain_obj: Customer = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         
         domain_obj.name = 'new name'
         
         snapshot_before = domain_obj.to_dict()
-        await uow.commit()
+        uow.mark_commit()
     
     async with uow_check(model_type, domain_container.aggregate) as uow2:
         resources = uow2.get_resorces()
         snapshot_after = resources.get_by_id(model_type, domain_container.aggregate.entity_id).to_dict()
         assert snapshot_before == snapshot_after
-
-    uow: UnitOfWork = uow_factory.create('read_write')
     
-    uow.set_query_plan(
-        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
-        )
-    
-    async with uow:
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+    ) as uow:
         resources = uow.get_resorces()
         domain_obj_from_db: BaseAggregate = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         resources.delete(model_type, domain_obj_from_db)
-        await uow.commit()
+        uow.mark_commit()
     
     
     async with uow_check(model_type, domain_container.aggregate) as uow2:
@@ -74,21 +69,18 @@ async def test_customer(uow_factory: UnitOfWorkFactory,
 @pytest.mark.asyncio
 async def test_purchase_draft(uow_factory: UnitOfWorkFactory,
                               prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                              uow_check: Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork],
+                              uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
                               uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],
                               product_container_factory: Callable[..., AggregateContainer]) -> None:
     
     model_type: Type[BaseAggregate] = PurchaseDraft
     domain_container: AggregateContainer = await prepare_container(model_type)
-    uow: UnitOfWork = uow_factory.create('read_write')
     
-    uow.set_query_plan(
+    async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
         .load(Product).from_previous().for_update()
-        )
-    
-    async with uow:
+    ) as uow:
         resources = uow.get_resorces()
         domain_obj: PurchaseDraft = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         product = product_container_factory(
@@ -98,7 +90,7 @@ async def test_purchase_draft(uow_factory: UnitOfWorkFactory,
         domain_obj.add_item(product.aggregate.entity_id, 1)
         
         snapshot_before = domain_obj.to_dict()
-        await uow.commit()
+        uow.mark_commit()
     
     async with uow_check(model_type, domain_container.aggregate) as uow2:
         resources = uow2.get_resorces()
@@ -111,21 +103,18 @@ async def test_purchase_draft(uow_factory: UnitOfWorkFactory,
 @pytest.mark.asyncio
 async def test_uow_purchase_claim(uow_factory: UnitOfWorkFactory,
                                   prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                                  uow_check: Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork],
+                                  uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
                                   uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],
                                   domain_container: Container,) -> None:
     
     purchase_active_container: AggregateContainer = await prepare_container(PurchaseActive)
-    uow: UnitOfWork = uow_factory.create('read_write')
     
-    uow.set_query_plan(
+    async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(PurchaseActive).from_id([purchase_active_container.aggregate.entity_id.value]).for_update()
         .load(EscrowAccount).from_previous().for_update()
         .load(Product).from_previous(0).for_update()
-        )
-    
-    async with uow:
+    ) as uow:
         resources = uow.get_resorces()
         purchase_claim_service = domain_container.get(PurchaseClaimService)
         purchase_active: PurchaseActive = resources.get_by_id(PurchaseActive, purchase_active_container.aggregate.entity_id)
@@ -138,7 +127,7 @@ async def test_uow_purchase_claim(uow_factory: UnitOfWorkFactory,
         purchase_active_snapshot_before = purchase_active.to_dict()
         escrow_account_snapshot_before = escrow_account.to_dict()
         purchase_summary_snapshot_before = purchase_summary.to_dict()
-        await uow.commit()
+        uow.mark_commit()
     
     async with uow_check(PurchaseActive, purchase_active) as uow2:
         resources = uow2.get_resorces()
@@ -164,25 +153,23 @@ async def test_uow_purchase_claim(uow_factory: UnitOfWorkFactory,
 @pytest.mark.asyncio
 async def test_product(uow_factory: UnitOfWorkFactory,
                        prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                       uow_check: Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork],
+                       uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
                        uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],) -> None:
     
     model_type: Type[BaseAggregate] = Product
     domain_container: AggregateContainer = await prepare_container(model_type)
-    uow: UnitOfWork = uow_factory.create('read_write')
-    
-    uow.set_query_plan(
-        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
-        )
-    
-    async with uow:
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
+    ) as uow:
         resources = uow.get_resorces()
         domain_obj: Product = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         
         domain_obj.price = domain_obj.price + 1
         
         snapshot_before = domain_obj.to_dict()
-        await uow.commit()
+        uow.mark_commit()
     
     async with uow_check(model_type, domain_container.aggregate) as uow2:
         resources = uow2.get_resorces()
@@ -195,18 +182,16 @@ async def test_product(uow_factory: UnitOfWorkFactory,
 @pytest.mark.asyncio
 async def test_shipment(uow_factory: UnitOfWorkFactory,
                         prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                        uow_check: Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork],
+                        uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
                         uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],
                         domain_container: Container,) -> None:
     
     shipment_container: AggregateContainer = await prepare_container(Shipment)
-    uow: UnitOfWork = uow_factory.create('read_write')
     
-    uow.set_query_plan(
-        QueryBuilder(mutating=True).load(Shipment).from_id([shipment_container.aggregate.entity_id.value]).for_update()
-        )
-    
-    async with uow:
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(Shipment).from_id([shipment_container.aggregate.entity_id.value]).for_update()
+    ) as uow:
         resources = uow.get_resorces()
         shipment_cancel_service = domain_container.get(ShipmentCancelService)
         shipment: Shipment = resources.get_by_id(Shipment, shipment_container.aggregate.entity_id)
@@ -216,7 +201,7 @@ async def test_shipment(uow_factory: UnitOfWorkFactory,
         
         shipment_snapshot_before = shipment.to_dict()
         shipment_summary_snapshot_before = shipment_summary.to_dict()
-        await uow.commit()
+        uow.mark_commit()
     
     async with uow_check(Shipment, shipment_container.aggregate) as uow2:
         resources = uow2.get_resorces()
@@ -230,24 +215,3 @@ async def test_shipment(uow_factory: UnitOfWorkFactory,
     
     await uow_delete_and_check(Shipment, shipment_container.aggregate)
     await uow_delete_and_check(ShipmentSummary, shipment_summary)
-
-
-@pytest.mark.asyncio
-async def test_enter_uow_twice(uow_factory: UnitOfWorkFactory,
-                               prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]]) -> None:
-    
-    model_type: Type[BaseAggregate] = Customer
-    domain_container: AggregateContainer = await prepare_container(model_type)
-
-    uow: UnitOfWork = uow_factory.create('read_write')
-    
-    uow.set_query_plan(
-        QueryBuilder(mutating=True).load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
-        )
-    
-    async with uow:
-        uow.get_resorces()
-    
-    with pytest.raises(UnitOfWorkException):
-        async with uow:
-            pass

@@ -1,5 +1,6 @@
+from contextlib import asynccontextmanager
 from decimal import Decimal
-from typing import Any, Awaitable, Callable, Coroutine, Literal, Type, TypeVar
+from typing import Any, AsyncContextManager, AsyncGenerator, AsyncIterator, Awaitable, Callable, Coroutine, Literal, Type, TypeVar
 from dishka.async_container import AsyncContainer
 import pytest
 import pytest_asyncio
@@ -30,27 +31,17 @@ async def uow_factory(async_container: AsyncContainer)-> UnitOfWorkFactory:
 
 
 @pytest.fixture
-def uow_delete_and_check(uow_check: Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork], uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]]:
-    async def _inner(
-        model_type: Type[BaseAggregate], 
-        domain_object: BaseAggregate) -> None:
-        uow = uow_factory.create('read_write')
-        uow.set_query_plan(
-            QueryBuilder(mutating=False)
-            .load(model_type)
-            .from_id([domain_object.entity_id.value])
-            .no_lock()
-        )
-        
-        uow.set_query_plan(
-        QueryBuilder(mutating=True).load(model_type).from_id([domain_object.entity_id.value]).for_update()
-        )
-    
-        async with uow:
+def uow_delete_and_check(uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]], uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]]:
+    async def _inner(model_type: Type[BaseAggregate], 
+                     domain_object: BaseAggregate) -> None:
+        async with uow_factory.create(
+            QueryBuilder(mutating=True)
+            .load(model_type).from_id([domain_object.entity_id.value]).for_update()
+        ) as uow:
             resources = uow.get_resorces()
             purchase_summary_from_db: BaseAggregate = resources.get_by_id(model_type, domain_object.entity_id)
             resources.delete(model_type, purchase_summary_from_db)
-            await uow.commit()
+            uow.mark_commit()
 
         async with uow_check(model_type, domain_object) as uow2:
             resources = uow2.get_resorces()
@@ -61,18 +52,18 @@ def uow_delete_and_check(uow_check: Callable[[Type[BaseAggregate], BaseAggregate
 
 
 @pytest.fixture
-def uow_check(uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], BaseAggregate], UnitOfWork]:
-    def _inner(
+def uow_check(uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]]:
+    @asynccontextmanager
+    async def _inner(
         model_type: Type[BaseAggregate], 
-        domain_object: BaseAggregate) -> UnitOfWork:
-        uow = uow_factory.create('read_only')
-        uow.set_query_plan(
+        domain_object: BaseAggregate) -> AsyncIterator[UnitOfWork]:
+        async with uow_factory.create(
             QueryBuilder(mutating=False)
             .load(model_type)
             .from_id([domain_object.entity_id.value])
             .no_lock()
-        )
-        return uow
+        ) as uow:
+            yield uow
     return _inner
 
 
@@ -94,9 +85,8 @@ def prepare_container(domain_object_factory: Callable[[Type[BaseAggregate]], Agg
 @pytest_asyncio.fixture
 async def fill_database(uow_factory: UnitOfWorkFactory) -> Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]:
     async def _fill_db(data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
-        uow = uow_factory.create('read_write')
-        async with uow:
+        async with uow_factory.create(QueryBuilder(mutating=True)) as uow:
             for model_type, domain_objects in data.items():
                 uow.get_resorces().put_many(model_type, domain_objects)
-            await uow.commit()
+            uow.mark_commit()
     return _fill_db

@@ -1,5 +1,6 @@
+from contextlib import asynccontextmanager
 import sqlite3
-from typing import Self
+from typing import AsyncGenerator, Self
 
 from sqlalchemy import StaticPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
@@ -61,6 +62,15 @@ class Database:
             echo=False,
         )
         return cls.from_engine(engine)
+
+    @asynccontextmanager
+    async def session(self) -> AsyncGenerator[AsyncSession, None]:
+        """Асинхронный контекстный менеджер для работы с сессией"""
+        session_instance = self._session_factory()
+        try:
+            yield session_instance
+        finally:
+            await session_instance.close()
 
     def get_engine(self) -> AsyncEngine:
         return self._engine

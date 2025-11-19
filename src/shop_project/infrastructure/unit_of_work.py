@@ -1,6 +1,11 @@
-from typing import Literal, Self
+from shop_project.infrastructure.query.query_plan import QueryPlan
+
+
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator, AsyncIterator, Callable, Literal, Self
 from sqlalchemy.ext.asyncio import AsyncSession
 from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory
 from shop_project.infrastructure.resource_manager.resource_container import ResourceContainer
@@ -15,75 +20,63 @@ from shop_project.infrastructure.registries.total_order_registry import TotalOrd
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
 from shop_project.application.interfaces.interface_unit_of_work import IUnitOfWork, IUnitOfWorkFactory
 
+
 class UnitOfWork(IUnitOfWork):
-    def __init__(self, session: AsyncSession, *, 
-                 resource_manager: ResourceManager) -> None:
-        self.session: AsyncSession = session
+    def __init__(self, resource_manager: ResourceManager) -> None:
         self.resource_manager: ResourceManager = resource_manager
-        self.read_only: bool = resource_manager.read_only
-        self._query_plan: QueryBuilder | None = None
-        
-        self.exhausted = False
-    
-    def set_query_plan(self, query_plan: IQueryBuilder) -> None:
-        if not isinstance(query_plan, QueryBuilder):
-            raise NotImplementedError
-        self._query_plan = query_plan 
-    
-    async def __aenter__(self) -> Self:
-        if self.exhausted:
-            raise UnitOfWorkException('UnitOfWork is exhausted')
-        
-        if not self.read_only:
-            self.session.begin()
-        
-        if self._query_plan:
-            await self.resource_manager.load(self._query_plan.build())
-        
-        self.resource_manager.resource_container.take_snapshot()
-        
-        return self
-    
+        self._commit_requested: bool = False
+
     def get_resorces(self) -> ResourceContainer:
         return self.resource_manager.resource_container
     
     def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
         return self.resource_manager.get_unique_id(model_type)
     
-    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Exception | None) -> None:
-        if exc_type is not None and not self.exhausted:
-            if not self.read_only:
-                await self.rollback()
-
-        self.exhausted = True
+    def mark_commit(self) -> None:
+        self._commit_requested = True
     
-    async def commit(self):
-        if self.read_only:
-            raise UnitOfWorkException('Cannot commit read only UnitOfWork')
-        
-        await self.resource_manager.save()
-        await self.session.commit()
-        self.exhausted = True
-    
-    async def rollback(self):
-        await self.session.rollback()
-        self.exhausted = True
+    @property
+    def commit_requested(self) -> bool:
+        return self._commit_requested
 
 
 class UnitOfWorkFactory(IUnitOfWorkFactory):
-    def __init__(self, session: AsyncSession) -> None:
-        self.session: AsyncSession = session
+    def __init__(self, database: Database) -> None:
+        self.database: Database = database
     
-    def create(self, mode: Literal["read_only", "read_write"]) -> UnitOfWork:
-        if not mode in ['read_only', 'read_write']:
-            raise ValueError(f'Invalid mode: {mode}')
+    @asynccontextmanager
+    async def create(self, query_plan_builder: IQueryBuilder | None = None) -> AsyncIterator[UnitOfWork]:
+        if query_plan_builder is None:
+            query_plan_builder = QueryBuilder(mutating=False)
+        if not isinstance(query_plan_builder, QueryBuilder):
+            raise NotImplementedError
+        query_plan: QueryPlan = query_plan_builder.build()
+
+        async with self.database.session() as session:
+            try:
+                repository_container = repository_container_factory(session=session, repositories=RepositoryRegistry.get_map())
+
+                resource_manager = ResourceManager(
+                    repository_container=repository_container, 
+                    resources_registry=ResourcesRegistry.get_map(), 
+                    total_order=TotalOrderRegistry, 
+                    read_only=query_plan.read_only)
+
+                await resource_manager.load(query_plan)
+                resource_manager.resource_container.take_snapshot()
+                
+                unit_of_work = UnitOfWork(resource_manager=resource_manager)
+
+                yield unit_of_work
+                
+                if unit_of_work.commit_requested:
+                    if not query_plan.read_only:
+                        await resource_manager.save()
+                        await session.commit()
+                    else:
+                        raise UnitOfWorkException("Cannot commit in non-mutating mode")
+            except Exception as e:
+                await session.rollback()
+                raise
+            
         
-        repository_container = repository_container_factory(session=self.session, repositories=RepositoryRegistry.get_map())
-        
-        resource_manager = ResourceManager(
-            repository_container=repository_container, 
-            resources_registry=ResourcesRegistry.get_map(), 
-            total_order=TotalOrderRegistry, 
-            read_only=mode == 'read_only')
-        
-        return UnitOfWork(self.session, resource_manager=resource_manager)

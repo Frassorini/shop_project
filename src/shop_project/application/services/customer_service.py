@@ -18,18 +18,11 @@ class CustomerService:
         self._query_builder_type: Type[IQueryBuilder] = query_builder_type
 
     async def read_by_id(self, ids: list[UUID]) -> list[CustomerSchemaDefault]:
-        unit_of_work = self._unit_of_work_factory.create('read_only')
-
-        unit_of_work.set_query_plan(
-        self._query_builder_type(mutating=False)
-        .load(Customer)
-        .from_id(ids)
-        .no_lock()
-        )
-
         entity_ids = [EntityId(id) for id in ids]
-
-        async with unit_of_work as uow:
+        async with self._unit_of_work_factory.create(
+            self._query_builder_type(mutating=False)
+            .load(Customer).from_id(ids).no_lock()
+        ) as uow:
             resources = uow.get_resorces()
             res: list[Customer] = resources.get_by_ids(Customer, entity_ids)
 

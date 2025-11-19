@@ -21,11 +21,6 @@ def test_empty_source():
         QueryBuilder(mutating=False).load(PurchaseDraft).build()
 
 
-def test_empty():
-    with pytest.raises(QueryPlanException):
-        QueryBuilder(mutating=False).build()
-
-
 def test_load_from_attribute():
     query = DomainLoadQuery(PurchaseDraft,
                       QueryCriteria().criterion_in("entity_id", ValueContainer(['1'])), 

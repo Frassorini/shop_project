@@ -39,8 +39,8 @@ class DatabaseProvider(Provider):
                 await session.close()
     
     @provide(scope=Scope.REQUEST)
-    async def unit_of_work(self, session: AsyncSession) -> UnitOfWorkFactory:
-        return UnitOfWorkFactory(session)
+    async def unit_of_work_factory(self, database: Database) -> UnitOfWorkFactory:
+        return UnitOfWorkFactory(database)
         
     @provide(scope=Scope.APP)
     async def query_builder_type(self) -> Type[QueryBuilder]:
