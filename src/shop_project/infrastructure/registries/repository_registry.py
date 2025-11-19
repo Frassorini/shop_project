@@ -1,26 +1,39 @@
 from typing import Any, Mapping, Type
 
-from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.entities.customer import Customer
-from shop_project.domain.entities.purchase_draft import PurchaseDraft
-from shop_project.domain.entities.purchase_active import PurchaseActive
-from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
-
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.infrastructure.repositories.mock_repository import MockRepository
-from shop_project.infrastructure.repositories.customer_repository import CustomerRepository
-from shop_project.infrastructure.repositories.purchase_draft_repository import PurchaseDraftRepository
-from shop_project.infrastructure.repositories.purchase_active_repository import PurchaseActiveRepository
-from shop_project.infrastructure.repositories.purchase_summary_repository import PurchaseSummaryRepository
-from shop_project.infrastructure.repositories.escrow_account_repository import EscrowAccountRepository
-from shop_project.infrastructure.repositories.product_repository import ProductRepository
-from shop_project.infrastructure.repositories.shipment_repository import ShipmentRepository
-from shop_project.infrastructure.repositories.shipment_summary_repository import ShipmentSummaryRepository
-
+from shop_project.infrastructure.repositories.customer_repository import (
+    CustomerRepository,
+)
+from shop_project.infrastructure.repositories.escrow_account_repository import (
+    EscrowAccountRepository,
+)
+from shop_project.infrastructure.repositories.product_repository import (
+    ProductRepository,
+)
+from shop_project.infrastructure.repositories.purchase_active_repository import (
+    PurchaseActiveRepository,
+)
+from shop_project.infrastructure.repositories.purchase_draft_repository import (
+    PurchaseDraftRepository,
+)
+from shop_project.infrastructure.repositories.purchase_summary_repository import (
+    PurchaseSummaryRepository,
+)
+from shop_project.infrastructure.repositories.shipment_repository import (
+    ShipmentRepository,
+)
+from shop_project.infrastructure.repositories.shipment_summary_repository import (
+    ShipmentSummaryRepository,
+)
 
 _REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
     Customer: CustomerRepository,
@@ -30,7 +43,7 @@ _REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
     EscrowAccount: EscrowAccountRepository,
     Product: ProductRepository,
     Shipment: ShipmentRepository,
-    ShipmentSummary: ShipmentSummaryRepository
+    ShipmentSummary: ShipmentSummaryRepository,
 }
 
 

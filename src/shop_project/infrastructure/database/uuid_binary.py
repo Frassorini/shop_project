@@ -1,5 +1,7 @@
-from sqlalchemy.types import TypeDecorator, BINARY
-from uuid import UUID, uuid4
+from uuid import UUID
+
+from sqlalchemy.types import BINARY, TypeDecorator
+
 
 class UUIDBinary(TypeDecorator[UUID]):
     """
@@ -7,6 +9,7 @@ class UUIDBinary(TypeDecorator[UUID]):
     - В Python всегда uuid.UUID
     - В MySQL хранится как BINARY(16)
     """
+
     impl = BINARY(16)
     cache_ok = True
 

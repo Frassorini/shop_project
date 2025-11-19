@@ -1,21 +1,20 @@
-from typing import Any, Type
-from sqlalchemy import tuple_
-from sqlalchemy.orm.session import Session
-from sqlalchemy.sql import select, delete, insert, update
+from typing import Any
+
+from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.shipment_summary_dto import ShipmentSummaryDTO
-from shop_project.infrastructure.query.base_query import BaseQuery
-from shop_project.infrastructure.query.composed_query import ComposedQuery
-from shop_project.infrastructure.query.custom_query import CustomQuery
-from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
-from shop_project.infrastructure.database.models.shipment_summary import ShipmentSummary as ShipmentSummaryORM, ShipmentSummaryItem as ShipmentSummaryItemORM
-from shop_project.shared.entity_id import EntityId
+from shop_project.infrastructure.database.models.shipment_summary import (
+    ShipmentSummary as ShipmentSummaryORM,
+    ShipmentSummaryItem as ShipmentSummaryItemORM,
+)
+from shop_project.infrastructure.repositories.base_repository import BaseRepository
+
 
 class ShipmentSummaryRepository(BaseRepository[ShipmentSummary]):
     model_type = ShipmentSummary
     dto_type = ShipmentSummaryDTO
-    
+
     async def create(self, items: list[ShipmentSummary]) -> None:
         if not items:
             return
@@ -42,7 +41,9 @@ class ShipmentSummaryRepository(BaseRepository[ShipmentSummary]):
 
         shipment_fields = [f for f in shipment_snapshots[0].keys() if f != "items"]
         update_shipment_values = {
-            field: self._build_bulk_update_case(field, shipment_snapshots, ShipmentSummaryORM, ["entity_id"])
+            field: self._build_bulk_update_case(
+                field, shipment_snapshots, ShipmentSummaryORM, ["entity_id"]
+            )
             for field in shipment_fields
         }
         await self.session.execute(
@@ -73,11 +74,12 @@ class ShipmentSummaryRepository(BaseRepository[ShipmentSummary]):
         # --- Удаляем сначала shipment_items ---
         ids = [item.entity_id.value for item in items]
         await self.session.execute(
-            delete(ShipmentSummaryItemORM).where(ShipmentSummaryItemORM.shipment_summary_id.in_(ids))
+            delete(ShipmentSummaryItemORM).where(
+                ShipmentSummaryItemORM.shipment_summary_id.in_(ids)
+            )
         )
 
         # --- Затем SupplierOrders ---
         await self.session.execute(
             delete(ShipmentSummaryORM).where(ShipmentSummaryORM.entity_id.in_(ids))
         )
-    

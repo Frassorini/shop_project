@@ -1,20 +1,15 @@
-from typing import Any, Type
-from sqlalchemy.orm.session import Session
-from sqlalchemy.sql import select, delete, insert, update
+from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.customer_dto import CustomerDTO
-from shop_project.infrastructure.query.base_query import BaseQuery
-from shop_project.infrastructure.query.composed_query import ComposedQuery
-from shop_project.infrastructure.query.custom_query import CustomQuery
-from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.domain.entities.customer import Customer
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
-from shop_project.shared.entity_id import EntityId
+from shop_project.infrastructure.repositories.base_repository import BaseRepository
+
 
 class CustomerRepository(BaseRepository[Customer]):
     model_type = Customer
     dto_type = CustomerDTO
-    
+
     async def create(self, items: list[Customer]) -> None:
         """Создает список Customers одним запросом через bulk_insert."""
         if not items:
@@ -32,7 +27,12 @@ class CustomerRepository(BaseRepository[Customer]):
         ids = [snap["entity_id"] for snap in snapshots]
         fields = snapshots[0].keys()
 
-        update_values = {field: self._build_bulk_update_case(field, snapshots, CustomerORM, ["entity_id"]) for field in fields}
+        update_values = {
+            field: self._build_bulk_update_case(
+                field, snapshots, CustomerORM, ["entity_id"]
+            )
+            for field in fields
+        }
 
         stmt = (
             update(CustomerORM)
@@ -45,7 +45,8 @@ class CustomerRepository(BaseRepository[Customer]):
         """Удаляет список Customers одним запросом через bulk_delete."""
         if not items:
             return
-        
+
         ids = [item.entity_id.value for item in items]
-        await self.session.execute(delete(CustomerORM).where(CustomerORM.entity_id.in_(ids)))
-    
+        await self.session.execute(
+            delete(CustomerORM).where(CustomerORM.entity_id.in_(ids))
+        )

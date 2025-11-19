@@ -1,15 +1,14 @@
 from abc import ABC
 from enum import Enum
-from typing import Any, Literal, Self, Type
+from typing import Any, Type
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.query.query_criteria import QueryCriteria
 
 
 class QueryLock(Enum):
-    SHARED = 'SHARED'
-    EXCLUSIVE = 'EXCLUSIVE'
-    NO_LOCK = 'NO_LOCK'
+    SHARED = "SHARED"
+    EXCLUSIVE = "EXCLUSIVE"
+    NO_LOCK = "NO_LOCK"
 
 
 class BaseQuery(ABC):
@@ -18,6 +17,6 @@ class BaseQuery(ABC):
 
     def load(self, result: Any) -> None:
         raise NotImplementedError
-        
+
     def get_result(self) -> Any:
         raise NotImplementedError

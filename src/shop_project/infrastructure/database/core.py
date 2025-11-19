@@ -1,39 +1,36 @@
-from contextlib import asynccontextmanager
 import sqlite3
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Self
 
 from sqlalchemy import StaticPool
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
 from sqlalchemy.engine import URL
-import aiosqlite
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from shop_project.infrastructure.env_loader import get_env
 
 
 class Database:
     def __init__(self, db_url: str, echo: bool = False) -> None:
-        self._engine = create_async_engine(
-            db_url,
-            echo=echo,
-            future=True
-        )
+        self._engine = create_async_engine(db_url, echo=echo, future=True)
         self._session_factory = async_sessionmaker(
-            bind=self._engine,
-            expire_on_commit=False,
-            class_=AsyncSession
+            bind=self._engine, expire_on_commit=False, class_=AsyncSession
         )
-    
+
     @classmethod
     def from_engine(cls, engine: AsyncEngine) -> Self:
         obj = cls.__new__(cls)
         obj._engine = engine
         obj._session_factory = async_sessionmaker(
-            bind=engine, 
-            expire_on_commit=False, 
-            class_=AsyncSession)
-        
+            bind=engine, expire_on_commit=False, class_=AsyncSession
+        )
+
         return obj
-    
+
     @classmethod
     def from_env(cls) -> Self:
         obj = cls.__new__(cls)
@@ -47,7 +44,7 @@ class Database:
         )
         obj.__init__(url.render_as_string(hide_password=False))
         return obj
-    
+
     @classmethod
     def from_sync_conn(cls, conn: sqlite3.Connection) -> Self:
         """Создает AsyncEngine поверх существующего sqlite3 соединения"""
@@ -77,6 +74,6 @@ class Database:
 
     def create_session(self) -> AsyncSession:
         return self._session_factory()
-    
+
     async def close(self) -> None:
         await self._engine.dispose()

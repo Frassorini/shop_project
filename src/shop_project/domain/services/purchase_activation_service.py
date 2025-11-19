@@ -1,13 +1,15 @@
 from dataclasses import dataclass
+
 from shop_project.domain.entities.escrow_account import EscrowAccount
-from shop_project.domain.entities.purchase_active import PurchaseActive, PurchaseActiveItem
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
-from shop_project.domain.entities.purchase_summary import PurchaseSummary, PurchaseSummaryItem, PurchaseSummaryReason
+from shop_project.domain.exceptions import DomainException
 from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.checkout_service import CheckoutService
-from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
-from shop_project.shared.entity_id import EntityId
+from shop_project.domain.services.purchase_reservation_service import (
+    PurchaseReservationService,
+)
+
 
 @dataclass(frozen=True)
 class PurchaseActivation:
@@ -15,19 +17,29 @@ class PurchaseActivation:
     escrow_account: EscrowAccount
 
 
-class PurchaseActivationService():
-    def __init__(self, 
-                 purchase_reservation_service: PurchaseReservationService, 
-                 checkout_service: CheckoutService) -> None:
-        self._purchase_reservation_service: PurchaseReservationService = purchase_reservation_service
+class PurchaseActivationService:
+    def __init__(
+        self,
+        purchase_reservation_service: PurchaseReservationService,
+        checkout_service: CheckoutService,
+    ) -> None:
+        self._purchase_reservation_service: PurchaseReservationService = (
+            purchase_reservation_service
+        )
         self._checkout_service: CheckoutService = checkout_service
 
-    def activate(self, product_inventory: ProductInventory, purchase_draft: PurchaseDraft) -> PurchaseActivation:
+    def activate(
+        self, product_inventory: ProductInventory, purchase_draft: PurchaseDraft
+    ) -> PurchaseActivation:
         if purchase_draft.is_finalized():
-            raise DomainException('Cannot activate finalized draft')
-        
-        escrow_account = self._checkout_service.checkout(product_inventory, purchase_draft)
-        purchase_active = self._purchase_reservation_service.reserve(product_inventory, purchase_draft, escrow_account)
+            raise DomainException("Cannot activate finalized draft")
+
+        escrow_account = self._checkout_service.checkout(
+            product_inventory, purchase_draft
+        )
+        purchase_active = self._purchase_reservation_service.reserve(
+            product_inventory, purchase_draft, escrow_account
+        )
         purchase_draft.finalize()
-        
+
         return PurchaseActivation(purchase_active, escrow_account)

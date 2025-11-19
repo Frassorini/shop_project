@@ -1,21 +1,20 @@
-from typing import Any, Type
-from sqlalchemy import tuple_
-from sqlalchemy.orm.session import Session
-from sqlalchemy.sql import select, delete, insert, update
+from typing import Any
+
+from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
-from shop_project.infrastructure.query.base_query import BaseQuery
-from shop_project.infrastructure.query.composed_query import ComposedQuery
-from shop_project.infrastructure.query.custom_query import CustomQuery
-from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.domain.entities.purchase_active import PurchaseActive
-from shop_project.infrastructure.database.models.purchase_active import PurchaseActive as PurchaseActiveORM, PurchaseActiveItem as PurchaseActiveItemORM
-from shop_project.shared.entity_id import EntityId
+from shop_project.infrastructure.database.models.purchase_active import (
+    PurchaseActive as PurchaseActiveORM,
+    PurchaseActiveItem as PurchaseActiveItemORM,
+)
+from shop_project.infrastructure.repositories.base_repository import BaseRepository
+
 
 class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
     model_type = PurchaseActive
     dto_type = PurchaseActiveDTO
-    
+
     async def create(self, items: list[PurchaseActive]) -> None:
         """Создает список PurchaseActives и их order_items одним bulk-запросом."""
         if not items:
@@ -46,7 +45,9 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
 
         order_fields = [f for f in order_snapshots[0].keys() if f != "items"]
         update_order_values = {
-            field: self._build_bulk_update_case(field, order_snapshots, PurchaseActiveORM, ["entity_id"])
+            field: self._build_bulk_update_case(
+                field, order_snapshots, PurchaseActiveORM, ["entity_id"]
+            )
             for field in order_fields
         }
         await self.session.execute(
@@ -78,11 +79,12 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
         # --- Удаляем сначала order_items ---
         ids = [item.entity_id.value for item in items]
         await self.session.execute(
-            delete(PurchaseActiveItemORM).where(PurchaseActiveItemORM.purchase_active_id.in_(ids))
+            delete(PurchaseActiveItemORM).where(
+                PurchaseActiveItemORM.purchase_active_id.in_(ids)
+            )
         )
 
         # --- Затем PurchaseActives ---
         await self.session.execute(
             delete(PurchaseActiveORM).where(PurchaseActiveORM.entity_id.in_(ids))
         )
-    

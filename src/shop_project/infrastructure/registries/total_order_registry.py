@@ -1,16 +1,14 @@
-from dataclasses import dataclass
-from typing import Any, Callable, Generic, Type, TypeVar
+from typing import Any, Type
 
-from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.entities.customer import Customer
-from shop_project.domain.entities.purchase_draft import PurchaseDraft
-from shop_project.domain.entities.purchase_active import PurchaseActive
-from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
-
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 _REGISTRY: dict[Type[PersistableEntity], int] = {
     Customer: 0,
@@ -48,7 +46,9 @@ class TotalOrderRegistry:
         Подходит для операций сохранения, удаления, отката и очистки.
         """
         mapping = cls._get_map()
-        return [a for a, _ in sorted(mapping.items(), key=lambda kv: kv[1], reverse=True)]
+        return [
+            a for a, _ in sorted(mapping.items(), key=lambda kv: kv[1], reverse=True)
+        ]
 
     @classmethod
     def _get_map(cls) -> dict[Type[Any], int]:

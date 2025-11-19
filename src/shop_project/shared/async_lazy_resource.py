@@ -1,10 +1,14 @@
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Awaitable, Callable, Optional, Self, TypeVar, Generic
+from typing import Awaitable, Callable, Generic, Optional, Self, TypeVar
 
 T = TypeVar("T")
 
+
 class AsyncLazyResource(Generic[T]):
-    def __init__(self, factory: Callable[[], Awaitable[T]], disposer: Optional[Callable[[T], Awaitable[None]]] = None):
+    def __init__(
+        self,
+        factory: Callable[[], Awaitable[T]],
+        disposer: Optional[Callable[[T], Awaitable[None]]] = None,
+    ):
         self._factory = factory
         self._disposer = disposer
         self._instance: Optional[T] = None
@@ -19,8 +23,10 @@ class AsyncLazyResource(Generic[T]):
             await self._disposer(self._instance)
         self._instance = None
 
-    async def __aenter__(self)  -> Self:
+    async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Optional[type], exc: Optional[object], tb: Optional[object]) -> None:
+    async def __aexit__(
+        self, exc_type: Optional[type], exc: Optional[object], tb: Optional[object]
+    ) -> None:
         await self.dispose()

@@ -1,20 +1,17 @@
-from contextlib import AbstractAsyncContextManager
-from typing import AsyncGenerator, Callable, Type
+from typing import Type
 
-from dishka import BaseScope, Component, Provider, Scope, provide, alias # type: ignore
-from sqlalchemy.ext.asyncio import AsyncSession
+from dishka import Provider, Scope, provide  # type: ignore
 
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
-from shop_project.application.interfaces.interface_unit_of_work import IUnitOfWorkFactory
-from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.unit_of_work import UnitOfWorkFactory
-
-from shop_project.infrastructure.query.query_builder import QueryBuilder
+from shop_project.application.interfaces.interface_unit_of_work import (
+    IUnitOfWorkFactory,
+)
 from shop_project.application.services.customer_service import CustomerService
+
 
 class ApplicationServiceProvider(Provider):
     scope = Scope.REQUEST
-    
+
     @provide
     async def customer_service(
         self,

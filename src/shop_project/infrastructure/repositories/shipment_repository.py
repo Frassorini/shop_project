@@ -1,21 +1,20 @@
-from typing import Any, Type
-from sqlalchemy import tuple_
-from sqlalchemy.orm.session import Session
-from sqlalchemy.sql import select, delete, insert, update
+from typing import Any
+
+from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.shipment_dto import ShipmentDTO
-from shop_project.infrastructure.query.base_query import BaseQuery
-from shop_project.infrastructure.query.composed_query import ComposedQuery
-from shop_project.infrastructure.query.custom_query import CustomQuery
-from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.domain.entities.shipment import Shipment
-from shop_project.infrastructure.database.models.shipment import Shipment as ShipmentORM, ShipmentItem as ShipmentItemORM
-from shop_project.shared.entity_id import EntityId
+from shop_project.infrastructure.database.models.shipment import (
+    Shipment as ShipmentORM,
+    ShipmentItem as ShipmentItemORM,
+)
+from shop_project.infrastructure.repositories.base_repository import BaseRepository
+
 
 class ShipmentRepository(BaseRepository[Shipment]):
     model_type = Shipment
     dto_type = ShipmentDTO
-    
+
     async def create(self, items: list[Shipment]) -> None:
         if not items:
             return
@@ -42,7 +41,9 @@ class ShipmentRepository(BaseRepository[Shipment]):
 
         shipment_fields = [f for f in shipment_snapshots[0].keys() if f != "items"]
         update_shipment_values = {
-            field: self._build_bulk_update_case(field, shipment_snapshots, ShipmentORM, ["entity_id"])
+            field: self._build_bulk_update_case(
+                field, shipment_snapshots, ShipmentORM, ["entity_id"]
+            )
             for field in shipment_fields
         }
         await self.session.execute(
@@ -80,4 +81,3 @@ class ShipmentRepository(BaseRepository[Shipment]):
         await self.session.execute(
             delete(ShipmentORM).where(ShipmentORM.entity_id.in_(ids))
         )
-    

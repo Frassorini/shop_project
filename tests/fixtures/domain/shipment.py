@@ -1,14 +1,14 @@
-from datetime import datetime, timezone
 from typing import Callable
 
 import pytest
-
 from dishka.container import Container
 
-from shop_project.domain.services.shipment_activation_service import ShipmentActivationService, ShipmentRequest
 from shop_project.domain.entities.product import Product
-from shop_project.shared.entity_id import EntityId
 from shop_project.domain.entities.shipment import Shipment
+from shop_project.domain.services.shipment_activation_service import (
+    ShipmentActivationService,
+    ShipmentRequest,
+)
 from tests.fixtures.domain.purchase_active import ProductInventory
 from tests.helpers import AggregateContainer
 
@@ -26,12 +26,15 @@ def shipment_factory(
         sausages = sausages_product_10()
         request.add_item(potatoes.entity_id, 10)
         request.add_item(sausages.entity_id, 10)
-        
+
         product_inventory = ProductInventory(stock=[potatoes, sausages])
-        
-        shipment: Shipment = shipment_activation_service.activate(product_inventory, request)
-        
+
+        shipment: Shipment = shipment_activation_service.activate(
+            product_inventory, request
+        )
+
         return shipment
+
     return factory
 
 
@@ -43,20 +46,23 @@ def shipment_conatiner_factory(
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
         shipment_activation_service = domain_container.get(ShipmentActivationService)
-        
+
         request: ShipmentRequest = ShipmentRequest()
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
         request.add_item(potatoes.entity_id, 10)
         request.add_item(sausages.entity_id, 10)
-        
+
         product_inventory = ProductInventory(stock=[potatoes, sausages])
-        
-        shipment: Shipment = shipment_activation_service.activate(product_inventory, request)
-        
+
+        shipment: Shipment = shipment_activation_service.activate(
+            product_inventory, request
+        )
+
         container: AggregateContainer = AggregateContainer(
-            aggregate=shipment, 
-            dependencies={Product: [potatoes, sausages]})
-        
+            aggregate=shipment, dependencies={Product: [potatoes, sausages]}
+        )
+
         return container
+
     return factory

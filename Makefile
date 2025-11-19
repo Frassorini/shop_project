@@ -1,4 +1,4 @@
-.PHONY: help, dev-up, test-up, prod-up, dev-down, test-down, prod-down, all-down, test, unit-tests, integration-tests, ci
+.PHONY: help, dev-up, test-up, prod-up, dev-down, test-down, prod-down, all-down, test, unit-tests, integration-tests, format, ci
 
 ENV_FILE_TEST := environment/.env.test
 ENV_FILE_DEV := environment/.env.dev
@@ -19,6 +19,7 @@ help:
 	@echo   make test               - Run all tests (unit + integration)
 	@echo   make unit-tests         - Run unit tests only
 	@echo   make integration-tests  - Run integration tests only
+	@echo   make format             - Run pre-commit hooks
 	@echo   make ci            		- Start infrastructure and run tests
 
 dev-up:
@@ -55,6 +56,9 @@ integration-tests:
 
 test-real-db:
 	ENV_FILE=$(ENV_FILE_TEST) poetry run pytest -v -s --real-db
+
+format:
+	poetry run pre-commit run --all-files
 
 ci: 
 	$(MAKE) test-up

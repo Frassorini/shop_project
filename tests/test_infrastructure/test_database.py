@@ -1,9 +1,7 @@
-from typing import AsyncGenerator, Awaitable, Callable, Generator
 import sqlite3
 from sqlite3.dbapi2 import IntegrityError
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 
 from shop_project.infrastructure.database.core import Database
@@ -21,7 +19,7 @@ async def test_database(test_db: Database) -> None:
 async def test_foreign_key_delete_violation(base_db_in_memory: sqlite3.Connection):
     # Создаём клон in-memory базы
     clone_conn = sqlite3.connect(":memory:", check_same_thread=False)
-    
+
     base_db_in_memory.backup(clone_conn)
 
     # Включаем проверки внешних ключей
@@ -29,13 +27,15 @@ async def test_foreign_key_delete_violation(base_db_in_memory: sqlite3.Connectio
 
     # Создаём таблицы с FK
     clone_conn.execute("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
-    clone_conn.execute("""
+    clone_conn.execute(
+        """
         CREATE TABLE child(
             id INTEGER PRIMARY KEY,
             parent_id INTEGER,
             FOREIGN KEY(parent_id) REFERENCES parent(id)
         )
-    """)
+    """
+    )
     clone_conn.commit()
 
     # Вставляем корректные данные
@@ -57,10 +57,10 @@ async def test_clone_isolation(base_db_in_memory: sqlite3.Connection):
     base_db_in_memory.backup(clone_conn_1)
     clone_conn_2 = sqlite3.connect(":memory:", check_same_thread=False)
     base_db_in_memory.backup(clone_conn_2)
-    
+
     clone_conn_1.execute("CREATE TABLE test_table (id INTEGER PRIMARY KEY)")
     clone_conn_1.commit()
-    
+
     cur_clone_1 = clone_conn_1.cursor()
     cur_clone_1.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'"

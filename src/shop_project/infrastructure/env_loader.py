@@ -1,19 +1,25 @@
 import os
-from typing import TypeVar, Callable, Optional
+from typing import Optional, TypeVar
+
 from dotenv import load_dotenv
 
 T = TypeVar("T")
 
+
 class MissingEnvFileError(Exception):
     """Исключение для случая, если ENV_FILE не задан или файл не найден."""
+
     def __init__(self, path: Optional[str]):
-        msg = f"ENV_FILE is not set" if path is None else f"ENV_FILE not found: {path}"
+        msg = "ENV_FILE is not set" if path is None else f"ENV_FILE not found: {path}"
         super().__init__(msg)
+
 
 class MissingEnvError(Exception):
     """Исключение для отсутствующих переменных окружения."""
+
     def __init__(self, var_name: str):
         super().__init__(f"Missing required environment variable: {var_name}")
+
 
 def get_env(
     name: str,
@@ -29,12 +35,13 @@ def get_env(
     value = os.getenv(name)
 
     if value is None:
-        if default is not None: 
+        if default is not None:
             return default
         else:
             raise MissingEnvError(name)
-    
+
     return value
+
 
 # --- Автоматическая загрузка .env при импорте модуля ---
 

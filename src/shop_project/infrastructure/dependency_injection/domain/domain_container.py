@@ -1,16 +1,21 @@
 # shop_project/containers/domain_container.py
-from typing import Iterable
-from dishka import make_container, Provider, provide, Scope # type: ignore
+from dishka import Provider, Scope, provide  # type: ignore
 
 from shop_project.domain.services.checkout_service import CheckoutService
-from shop_project.domain.services.purchase_activation_service import PurchaseActivationService
-from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
+from shop_project.domain.services.purchase_activation_service import (
+    PurchaseActivationService,
+)
+from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
+from shop_project.domain.services.purchase_reservation_service import (
+    PurchaseReservationService,
+)
 from shop_project.domain.services.purchase_return_service import PurchaseReturnService
 from shop_project.domain.services.purchase_summary_service import PurchaseSummaryService
-from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
-from shop_project.domain.services.shipment_activation_service import ShipmentActivationService
-from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
+from shop_project.domain.services.shipment_activation_service import (
+    ShipmentActivationService,
+)
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
+from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
 from shop_project.domain.services.shipment_summary_service import ShipmentSummaryService
 
 
@@ -60,4 +65,3 @@ class DomainProvider(Provider):
         shipment_summary_service: ShipmentSummaryService,
     ) -> ShipmentCancelService:
         return ShipmentCancelService(shipment_summary_service)
-

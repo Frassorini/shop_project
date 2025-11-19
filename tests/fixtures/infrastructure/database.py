@@ -1,32 +1,28 @@
-import asyncio
-from contextlib import AbstractAsyncContextManager, asynccontextmanager
 import sqlite3
-from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Generator, Literal, Type
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from typing import Any, AsyncGenerator, Callable
 
-from dishka import AsyncContainer
 import pytest
 import pytest_asyncio
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import close_all_sessions
+from dishka import AsyncContainer
 
-from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database import models
-from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
+from shop_project.infrastructure.database.core import Database
 
 
 @pytest_asyncio.fixture
-async def test_db(async_container: AsyncContainer,
-                  ) -> AsyncGenerator[Database, None]:
+async def test_db(
+    async_container: AsyncContainer,
+) -> AsyncGenerator[Database, None]:
     yield await async_container.get(Database)
 
 
 @pytest.fixture
-def test_db_factory(request: pytest.FixtureRequest,
-                    test_db_in_memory: Callable[[], AbstractAsyncContextManager[Database, None]],
-                    test_db_docker: Callable[[], AbstractAsyncContextManager[Database, None]]
-                  ) -> Callable[[], AbstractAsyncContextManager[Database, None]]:
+def test_db_factory(
+    request: pytest.FixtureRequest,
+    test_db_in_memory: Callable[[], AbstractAsyncContextManager[Database, None]],
+    test_db_docker: Callable[[], AbstractAsyncContextManager[Database, None]],
+) -> Callable[[], AbstractAsyncContextManager[Database, None]]:
     if request.config.getoption("--real-db"):
         return test_db_docker
     else:
@@ -53,6 +49,7 @@ def test_db_docker() -> Callable[[], Any]:
             async with db.get_engine().begin() as conn:
                 await conn.run_sync(models.Base.metadata.drop_all)
             await db.close()
+
     return fact
 
 
@@ -70,7 +67,6 @@ async def base_db_in_memory() -> AsyncGenerator[sqlite3.Connection, None]:
         value.close()
 
 
-
 @pytest.fixture
 def test_db_in_memory(base_db_in_memory: sqlite3.Connection) -> Callable[[], Any]:
     @asynccontextmanager
@@ -80,7 +76,7 @@ def test_db_in_memory(base_db_in_memory: sqlite3.Connection) -> Callable[[], Any
         base_db_in_memory.backup(clone_conn)
         db = Database.from_sync_conn(clone_conn)
 
-        try: 
+        try:
             # print("yield db before")
             yield db
         finally:
