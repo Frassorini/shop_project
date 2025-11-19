@@ -8,14 +8,14 @@ from sqlalchemy.sql import delete, insert, select, update
 
 from shop_project.application.dto.mapper import to_dto
 from shop_project.domain import customer
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.product import Product
 from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
+from shop_project.infrastructure.query.composed_query import ComposedQuery, QueryLock
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 from shop_project.infrastructure.query.query_plan import (
@@ -45,10 +45,10 @@ def get_customers() -> list[Customer]:
 
 @pytest.mark.asyncio
 async def test_repository_generic_read(test_db: Database,
-                                       fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
+                                       fill_database: Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]) -> None:
     async with test_db.create_session() as session:
         customers = get_customers()
-        await fill_database({Customer: cast(list[BaseAggregate], get_customers())})
+        await fill_database({Customer: cast(list[PersistableEntity], get_customers())})
         repository = CustomerRepository(session)
 
         query = QueryBuilder(mutating=False).load(Customer).no_lock().build()
@@ -58,11 +58,11 @@ async def test_repository_generic_read(test_db: Database,
 
 @pytest.mark.asyncio
 async def test_from_id(test_db: Database,
-                       fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
+                       fill_database: Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]) -> None:
     uuid_id = uuid4()
     customer = Customer(entity_id=EntityId(uuid_id), name='user_1')
 
-    await fill_database({Customer: cast(list[BaseAggregate], [customer])})
+    await fill_database({Customer: cast(list[PersistableEntity], [customer])})
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
@@ -78,10 +78,10 @@ async def test_from_id(test_db: Database,
 
 @pytest.mark.asyncio
 async def test_from_attribute(test_db: Database,
-                              fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
+                              fill_database: Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]) -> None:
     customers = get_customers()
     customers_filtered = [customer for customer in customers if customer.name in ['user_1', 'user_2']]
-    await fill_database({Customer: cast(list[BaseAggregate], customers)})
+    await fill_database({Customer: cast(list[PersistableEntity], customers)})
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
 
@@ -101,9 +101,9 @@ async def test_from_attribute(test_db: Database,
 # TODO: сравнение числовых значений
 @pytest.mark.asyncio
 async def xtest_greater_than(test_db: Database,
-                            fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
+                            fill_database: Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]) -> None:
     customers = get_customers()
-    await fill_database({Customer: cast(list[BaseAggregate], customers)})
+    await fill_database({Customer: cast(list[PersistableEntity], customers)})
     async with test_db.create_session() as session:
         repository = CustomerRepository(session)
         customers_filtered = [customer for customer in customers if customer.name > 'user_1']
@@ -122,9 +122,9 @@ async def xtest_greater_than(test_db: Database,
 
 @pytest.mark.asyncio
 async def test_repository_generic_create(test_db: Database,
-                                         fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]) -> None:
+                                         fill_database: Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]) -> None:
     async with test_db.create_session() as session:
-        await fill_database({Customer: cast(list[BaseAggregate], get_customers())})
+        await fill_database({Customer: cast(list[PersistableEntity], get_customers())})
         repository = CustomerRepository(session)
         uuid_id = uuid4()
 

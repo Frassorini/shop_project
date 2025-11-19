@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Type, TypeVar
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
@@ -12,7 +12,7 @@ from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
 
-_REGISTRY: dict[Type[BaseAggregate], int] = {
+_REGISTRY: dict[Type[PersistableEntity], int] = {
     Customer: 0,
     PurchaseDraft: 1,
     PurchaseActive: 2,
@@ -28,12 +28,12 @@ class TotalOrderRegistry:
     """Регистр агрегатов с фиксированным топологическим порядком зависимостей."""
 
     @classmethod
-    def get_priority(cls, aggregate_type: Type[BaseAggregate]) -> int:
+    def get_priority(cls, aggregate_type: Type[PersistableEntity]) -> int:
         """Возвращает числовой приоритет агрегата (меньше = раньше в порядке)."""
         return cls._get_map()[aggregate_type]
 
     @classmethod
-    def forward(cls) -> list[Type[BaseAggregate]]:
+    def forward(cls) -> list[Type[PersistableEntity]]:
         """
         Возвращает список агрегатов в порядке от независимых к зависимым.
         Подходит для операций загрузки, инициализации и валидации.
@@ -42,7 +42,7 @@ class TotalOrderRegistry:
         return [a for a, _ in sorted(mapping.items(), key=lambda kv: kv[1])]
 
     @classmethod
-    def backward(cls) -> list[Type[BaseAggregate]]:
+    def backward(cls) -> list[Type[PersistableEntity]]:
         """
         Возвращает список агрегатов в порядке от зависимых к независимым.
         Подходит для операций сохранения, удаления, отката и очистки.

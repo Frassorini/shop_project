@@ -11,7 +11,7 @@ from shop_project.domain.purchase_active import PurchaseActive
 from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.shared.entity_id import EntityId
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 
 from tests.helpers import AggregateContainer
 
@@ -22,8 +22,8 @@ def domain_object_factory(customer_andrew: Callable[[], Customer],
                           shipment_conatiner_factory: Callable[[], AggregateContainer],
                           purchase_draft_container_factory: Callable[[], AggregateContainer],
                           product_container_factory: Callable[..., AggregateContainer]
-                          ) -> Callable[[Type[BaseAggregate]], AggregateContainer]:
-    def factory(model_type: Type[BaseAggregate]) -> AggregateContainer:
+                          ) -> Callable[[Type[PersistableEntity]], AggregateContainer]:
+    def factory(model_type: Type[PersistableEntity]) -> AggregateContainer:
         if model_type is Customer:
             return AggregateContainer(customer_andrew(), dependencies={})
         elif model_type is PurchaseActive:

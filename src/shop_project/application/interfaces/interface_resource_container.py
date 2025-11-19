@@ -2,14 +2,14 @@ from typing import Any, Protocol, Sequence, Type, TypeVar
 
 from shop_project.shared.entity_id import EntityId
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 
 
-T = TypeVar('T', bound=BaseAggregate)
+T = TypeVar('T', bound=PersistableEntity)
 
 
 class IResourceContainer(Protocol):
-    def __init__(self, resources_registry: list[Type[BaseAggregate]]) -> None:
+    def __init__(self, resources_registry: list[Type[PersistableEntity]]) -> None:
         ...
     
     def _get_resource_by_type(self, resource_type: Type[T]) -> list[T]:
@@ -29,14 +29,14 @@ class IResourceContainer(Protocol):
     def get_all(self, model_type: Type[T]) -> Sequence[T]:
         ...
     
-    def put(self, model_type: Type[BaseAggregate], item: BaseAggregate) -> None:
+    def put(self, model_type: Type[PersistableEntity], item: PersistableEntity) -> None:
         ...
         
-    def put_many(self, model_type: Type[BaseAggregate], items: list[BaseAggregate]) -> None:
+    def put_many(self, model_type: Type[PersistableEntity], items: list[PersistableEntity]) -> None:
         ...
     
-    def delete(self, model_type: Type[BaseAggregate], item: BaseAggregate) -> None:
+    def delete(self, model_type: Type[PersistableEntity], item: PersistableEntity) -> None:
         ...
     
-    def delete_many(self, model_type: Type[BaseAggregate], items: Sequence[BaseAggregate]) -> None:
+    def delete_many(self, model_type: Type[PersistableEntity], items: Sequence[PersistableEntity]) -> None:
         ...

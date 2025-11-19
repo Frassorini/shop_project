@@ -1,27 +1,27 @@
 from typing import Literal, Type
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
-from shop_project.infrastructure.query.base_load_query import BaseLoadQuery, QueryLock
+from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
 
-class PrebuiltLoadQuery(BaseLoadQuery):
+class CustomQuery(BaseQuery):
     return_type: Literal["DOMAIN", "SCALARS"]
     def __init__(
         self,
         lock: Literal["NO_LOCK", "EXCLUSIVE", "SHARED"],
     ) -> None:
         self.lock: QueryLock = QueryLock(lock)
-        self._result: list[BaseAggregate] = []
+        self._result: list[PersistableEntity] = []
         self._is_loaded: bool = False
 
-    def load(self, result: list[BaseAggregate]) -> None:
+    def load(self, result: list[PersistableEntity]) -> None:
         if self._is_loaded:
             raise RuntimeError("Query is already loaded")
         
         self._result = result
         self._is_loaded = True
         
-    def get_result(self) -> list[BaseAggregate]:
+    def get_result(self) -> list[PersistableEntity]:
         if not self._is_loaded:
             raise RuntimeError("Query is not loaded")
         

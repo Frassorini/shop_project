@@ -4,7 +4,7 @@ from shop_project.infrastructure.query.query_plan import QueryPlan
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, AsyncIterator, Callable, Literal, Self
 from sqlalchemy.ext.asyncio import AsyncSession
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory
@@ -29,7 +29,7 @@ class UnitOfWork(IUnitOfWork):
     def get_resorces(self) -> ResourceContainer:
         return self.resource_manager.resource_container
     
-    def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
+    def get_unique_id(self, model_type: type[PersistableEntity]) -> EntityId:
         return self.resource_manager.get_unique_id(model_type)
     
     def mark_commit(self) -> None:

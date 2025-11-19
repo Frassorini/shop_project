@@ -3,16 +3,16 @@ from dataclasses import dataclass
 from typing import Any, Literal, Self, Type, TypeVar
 
 from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import QueryPlanException
-from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
-from shop_project.infrastructure.registries.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
+from shop_project.infrastructure.registries.load_resolution_registry import LoadResolutionDescriptor, DomainReferenceRegistry
 from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
 from shop_project.infrastructure.query.value_container import ValueContainer
-from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
+from shop_project.infrastructure.query.base_query import BaseQuery
+from shop_project.infrastructure.query.composed_query import ComposedQuery, QueryLock
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 
@@ -28,13 +28,13 @@ def _ensure_not_none(value: T | None, fail_message: str) -> T:
 
 class QueryPlan(ABC):
     read_only: bool
-    queries: list[BaseLoadQuery]
+    queries: list[BaseQuery]
     
     @abstractmethod
-    def _validate_query(self, query: BaseLoadQuery) -> None:
+    def _validate_query(self, query: BaseQuery) -> None:
         ...
     
-    def add_query(self, model_type: Type[BaseAggregate] | None, 
+    def add_query(self, model_type: Type[PersistableEntity] | None, 
                   criteria: QueryCriteria | None, 
                   lock: QueryLock | None) -> None:
         
@@ -42,16 +42,16 @@ class QueryPlan(ABC):
         criteria = _ensure_not_none(criteria, "criteria not specified")
         lock = _ensure_not_none(lock, "lock not specified")
         
-        query = DomainLoadQuery(model_type, criteria, lock)
+        query = ComposedQuery(model_type, criteria, lock)
         
         self._validate_query(query)
         
         self.queries.append(query)
     
-    def add_prebuilt(self, prebuilt_query: PrebuiltLoadQuery) -> None:
+    def add_prebuilt(self, prebuilt_query: CustomQuery) -> None:
         self.queries.append(prebuilt_query)
     
-    def get_previous_query(self, query_index: int | None = None) -> BaseLoadQuery:
+    def get_previous_query(self, query_index: int | None = None) -> BaseQuery:
         if query_index is None:
             query_index = len(self.queries) - 1
         
@@ -65,7 +65,7 @@ class QueryPlan(ABC):
         ...
     
     @abstractmethod
-    def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
+    def validate_changes(self, resource_changes_snapshot: dict[Type[PersistableEntity], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         ...
 
 
@@ -73,16 +73,16 @@ class NoLockQueryPlan(QueryPlan):
     read_only = True
     
     def __init__(self) -> None:
-        self.queries: list[BaseLoadQuery] = []
+        self.queries: list[BaseQuery] = []
 
-    def _validate_query(self, query: BaseLoadQuery) -> None:
+    def _validate_query(self, query: BaseQuery) -> None:
         if not query.lock == QueryLock.NO_LOCK:
             raise QueryPlanException("Only no lock queries are allowed in no lock query plan")
     
     def validate_build(self):
         pass
     
-    def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
+    def validate_changes(self, resource_changes_snapshot: dict[Type[PersistableEntity], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         for model_type, model_changes in resource_changes_snapshot.items():
             is_changed = model_changes['CREATED'] or model_changes['UPDATED'] or model_changes['DELETED']
             
@@ -94,14 +94,14 @@ class LockQueryPlan(QueryPlan):
     read_only = False
     
     def __init__(self) -> None:
-        self.queries: list[BaseLoadQuery] = []
+        self.queries: list[BaseQuery] = []
     
-    def _validate_query(self, query: BaseLoadQuery) -> None:
+    def _validate_query(self, query: BaseQuery) -> None:
         if not query.lock == QueryLock.EXCLUSIVE and not query.lock == QueryLock.SHARED:
             raise QueryPlanException("Only locking queries are allowed in locking query plan")
     
-    def _build_map(self) -> dict[Type[Any], BaseLoadQuery]:
-        result: dict[Type[Any], BaseLoadQuery] = {}
+    def _build_map(self) -> dict[Type[Any], BaseQuery]:
+        result: dict[Type[Any], BaseQuery] = {}
         
         for query in self.queries:
             result[query.model_type] = query
@@ -128,7 +128,7 @@ class LockQueryPlan(QueryPlan):
             if previous_priority >= current_priority:
                 raise QueryPlanException("locking order violation")
     
-    def validate_changes(self, resource_changes_snapshot: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
+    def validate_changes(self, resource_changes_snapshot: dict[Type[PersistableEntity], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]) -> None:
         query_map = self._build_map()
         
         for model_type, model_changes in resource_changes_snapshot.items():

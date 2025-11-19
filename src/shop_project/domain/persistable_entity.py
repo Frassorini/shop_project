@@ -3,5 +3,5 @@ from shop_project.shared.identity_mixin import IdentityMixin
 from shop_project.shared.p_snapshotable import PSnapshotable
 
 
-class BaseAggregate(PSnapshotable, IdentityMixin, ABC):
+class PersistableEntity(PSnapshotable, IdentityMixin, ABC):
     pass

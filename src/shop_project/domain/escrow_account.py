@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Any, Self
 from enum import Enum
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.shared.entity_id import EntityId
 from shop_project.domain.exceptions import DomainException
 from shop_project.shared.base_state_machine import BaseStateMachine
@@ -27,7 +27,7 @@ class EscrowStateMachine(BaseStateMachine[EscrowState]):
     }
 
 
-class EscrowAccount(BaseAggregate):
+class EscrowAccount(PersistableEntity):
     def __init__(self, entity_id: EntityId, total_amount: Decimal) -> None:
         if total_amount <= 0:
             raise DomainException("Total amount must be positive")

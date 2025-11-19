@@ -1,6 +1,6 @@
 from typing import Any, Mapping, Type
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
@@ -22,7 +22,7 @@ from shop_project.infrastructure.repositories.shipment_repository import Shipmen
 from shop_project.infrastructure.repositories.shipment_summary_repository import ShipmentSummaryRepository
 
 
-_REGISTRY: Mapping[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
+_REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
     Customer: CustomerRepository,
     PurchaseDraft: PurchaseDraftRepository,
     PurchaseActive: PurchaseActiveRepository,
@@ -36,5 +36,5 @@ _REGISTRY: Mapping[Type[BaseAggregate], Type[BaseRepository[Any]]] = {
 
 class RepositoryRegistry:
     @classmethod
-    def get_map(cls) -> Mapping[Type[BaseAggregate], Type[BaseRepository[Any]]]:
+    def get_map(cls) -> Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]]:
         return _REGISTRY

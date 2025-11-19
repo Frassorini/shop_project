@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Mapping, Self, Sequence, cast
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.stock_item import StockItem
 from shop_project.shared.entity_id import EntityId
 from shop_project.shared.identity_mixin import IdentityMixin
@@ -37,7 +37,7 @@ class ShipmentSummaryReason(Enum):
     CANCELLED = 'CANCELLED'
 
 
-class ShipmentSummary(BaseAggregate):
+class ShipmentSummary(PersistableEntity):
     def __init__(self, entity_id: EntityId, 
                  reason: ShipmentSummaryReason,
                  items: list[ShipmentSummaryItem]) -> None:

@@ -1,13 +1,13 @@
 from typing import Any, Callable, Type
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.infrastructure.resource_manager.resource_snapshot import EntitySnapshot, EntitySnapshotSet, ResourceSnapshot
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.application.dto.mapper import to_dto
 
 
-def get_resource_snapshot(resources: dict[Type[BaseAggregate], list[BaseAggregate]]) -> ResourceSnapshot:
-        snapshot_set_vector: dict[Type[BaseAggregate], EntitySnapshotSet] = {}
+def get_resource_snapshot(resources: dict[Type[PersistableEntity], list[PersistableEntity]]) -> ResourceSnapshot:
+        snapshot_set_vector: dict[Type[PersistableEntity], EntitySnapshotSet] = {}
         for resource_type in resources:
             snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(to_dto(item)) for item in resources[resource_type]])
         

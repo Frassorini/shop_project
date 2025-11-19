@@ -1,18 +1,18 @@
 from dataclasses import dataclass, field
 from typing import Generic, Type, TypeVar
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 
 
-T = TypeVar("T", bound="BaseAggregate")
+T = TypeVar("T", bound="PersistableEntity")
 
 
 class AggregateDependencies:
-    def __init__(self, items: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
-        self.dependencies: dict[Type[BaseAggregate], list[BaseAggregate]] = items
+    def __init__(self, items: dict[Type[PersistableEntity], list[PersistableEntity]]) -> None:
+        self.dependencies: dict[Type[PersistableEntity], list[PersistableEntity]] = items
 
     def __getitem__(self, agg_type: Type[T]) -> list[T]:
-        if not issubclass(agg_type, BaseAggregate):
-            raise TypeError(f"Expected subclass of BaseAggregate, got {agg_type!r}")
+        if not issubclass(agg_type, PersistableEntity):
+            raise TypeError(f"Expected subclass of PersistableEntity, got {agg_type!r}")
 
         if agg_type not in self.dependencies:
             raise KeyError(f"No dependencies found for {agg_type.__name__}")
@@ -27,6 +27,6 @@ class AggregateDependencies:
 
 
 class AggregateContainer:
-    def __init__(self, aggregate: BaseAggregate, dependencies: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
+    def __init__(self, aggregate: PersistableEntity, dependencies: dict[Type[PersistableEntity], list[PersistableEntity]]) -> None:
         self.aggregate = aggregate
         self.dependencies = AggregateDependencies(dependencies)

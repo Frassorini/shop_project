@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Self
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
 from shop_project.shared.identity_mixin import IdentityMixin
@@ -34,7 +34,7 @@ class PurchaseDraftStateMachine(BaseStateMachine[PurchaseDraftState]):
     }
 
 
-class PurchaseDraft(BaseAggregate):
+class PurchaseDraft(PersistableEntity):
     def __init__(self, entity_id: EntityId, customer_id: EntityId) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id

@@ -1,7 +1,7 @@
 from typing import Any, Protocol, Self, Type
 from uuid import UUID
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 
 
 class IQueryBuilder(Protocol):
@@ -12,10 +12,10 @@ class IQueryBuilder(Protocol):
         ...
     
     # TODO interface for prebuilt queries  
-    # def add_prebuilt(self, prebuilt_query: PrebuiltLoadQuery) -> Self:
+    # def add_prebuilt(self, prebuilt_query: CustomQuery) -> Self:
     #     ...
     
-    def load(self, entity_type: Type[BaseAggregate]) -> Self:
+    def load(self, entity_type: Type[PersistableEntity]) -> Self:
         ...
     
     def and_(self) -> Self:

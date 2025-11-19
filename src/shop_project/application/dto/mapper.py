@@ -12,7 +12,7 @@ from shop_project.application.dto.product_dto import ProductDTO
 from shop_project.application.dto.shipment_dto import ShipmentDTO
 from shop_project.application.dto.shipment_summary_dto import ShipmentSummaryDTO
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
@@ -48,7 +48,7 @@ def to_dto(domain_object: Shipment) -> ShipmentDTO:
 def to_dto(domain_object: ShipmentSummary) -> ShipmentSummaryDTO:
     return ShipmentSummaryDTO.model_validate(domain_object.to_dict())
 @overload
-def to_dto(domain_object: BaseAggregate) -> BaseDTO:
+def to_dto(domain_object: PersistableEntity) -> BaseDTO:
     raise NotImplementedError
 
 @dispatch
@@ -81,7 +81,7 @@ def to_domain(dto_object: ShipmentDTO) -> Shipment:
 def to_domain(dto_object: ShipmentSummaryDTO) -> ShipmentSummary:
     return ShipmentSummary.from_dict(dto_object.model_dump())
 @overload
-def to_domain(dto_object: BaseDTO) -> BaseAggregate:
+def to_domain(dto_object: BaseDTO) -> PersistableEntity:
     raise NotImplementedError
 
 @dispatch

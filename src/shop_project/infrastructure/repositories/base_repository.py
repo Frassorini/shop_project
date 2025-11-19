@@ -10,17 +10,17 @@ from sqlalchemy import bindparam
 from shop_project import domain
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.mapper import to_domain, to_dto
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 
-from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
-from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
-from shop_project.infrastructure.query.queries.load_query_translator import translate
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
+from shop_project.infrastructure.query.base_query import BaseQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
+from shop_project.infrastructure.query.queries.sqlalchemy_query_compiler import compile_query
+from shop_project.infrastructure.query.composed_query import ComposedQuery
 from shop_project.infrastructure.query.query_criteria import QueryCriteriaOperator, QueryCriterion, QueryCriteria, QueryCriterionOperator
 from shop_project.shared.entity_id import EntityId
 
 
-T = TypeVar('T', bound=BaseAggregate)
+T = TypeVar('T', bound=PersistableEntity)
 
 
 class BaseRepository(Generic[T], ABC):    
@@ -39,13 +39,13 @@ class BaseRepository(Generic[T], ABC):
     async def delete(self, items: list[T]) -> None:
         ...
 
-    async def load(self, query: BaseLoadQuery) -> list[T]:
-        result = await self.session.execute(translate(query))
+    async def load(self, query: BaseQuery) -> list[T]:
+        result = await self.session.execute(compile_query(query))
         result = result.scalars().unique().all()
         return [self.model_type.from_dict(self.dto_type.model_validate(item).model_dump()) for item in result]
     
-    async def load_scalars(self, query: BaseLoadQuery) -> Any:
-        result = await self.session.execute(translate(query))
+    async def load_scalars(self, query: BaseQuery) -> Any:
+        result = await self.session.execute(compile_query(query))
         return result.scalars().unique().all()
 
     async def save(self, difference_snapshot: dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]) -> None:

@@ -1,13 +1,13 @@
 from decimal import Decimal
 from typing import Any
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.shared.identity_mixin import IdentityMixin
 from shop_project.domain.exceptions import NegativeAmountException
 from shop_project.shared.entity_id import EntityId
 from shop_project.shared.p_snapshotable import PSnapshotable
 
 
-class Product(BaseAggregate):
+class Product(PersistableEntity):
     def __init__(self, entity_id: EntityId, name: str, amount: int, price: Decimal) -> None:
         super().__init__()
         self._entity_id: EntityId = entity_id

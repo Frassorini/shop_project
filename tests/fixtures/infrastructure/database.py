@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import close_all_sessions
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database import models
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory

@@ -24,7 +24,7 @@ from shop_project.infrastructure.database.models.product import Product as Produ
 from shop_project.infrastructure.database.models.shipment import Shipment as ShipmentORM, ShipmentItem as ShipmentItemORM
 from shop_project.infrastructure.database.models.shipment_summary import ShipmentSummary as ShipmentSummaryORM, ShipmentSummaryItem as ShipmentSummaryItemORM
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
@@ -34,10 +34,10 @@ from shop_project.domain.product import Product
 from shop_project.domain.shipment import Shipment
 from shop_project.domain.shipment_summary import ShipmentSummary
 
-from shop_project.infrastructure.query.base_load_query import BaseLoadQuery, QueryLock
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
-from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
-from shop_project.infrastructure.query.queries.prebuilt_queries import (
+from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
+from shop_project.infrastructure.query.composed_query import ComposedQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
+from shop_project.infrastructure.registries.custom_queries_registry import (
     CountProductsQuery,
     BiggestPurchaseActivesQuery,
 )
@@ -51,7 +51,7 @@ def _apply_lock(query: Any, lock: QueryLock, of: list[Any]):
 
 
 @overload
-def _translate_domain(model_type: Type[Customer], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[Customer], query: ComposedQuery) -> Any:
     base_query = (
         select(CustomerORM)
         .where(query.criteria.to_sqlalchemy(CustomerORM))
@@ -59,7 +59,7 @@ def _translate_domain(model_type: Type[Customer], query: DomainLoadQuery) -> Any
     return _apply_lock(base_query, query.lock, [CustomerORM])
 
 @overload
-def _translate_domain(model_type: Type[PurchaseDraft], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[PurchaseDraft], query: ComposedQuery) -> Any:
     item_alias = aliased(PurchaseDraftItemORM, name="cart_item")
     
     base_query = (
@@ -71,7 +71,7 @@ def _translate_domain(model_type: Type[PurchaseDraft], query: DomainLoadQuery) -
     return _apply_lock(base_query, query.lock, [PurchaseDraftORM, item_alias])
 
 @overload
-def _translate_domain(model_type: Type[PurchaseActive], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[PurchaseActive], query: ComposedQuery) -> Any:
     item_alias = aliased(PurchaseActiveItemORM, name="customer_order_item")
     
     base_query = (
@@ -83,7 +83,7 @@ def _translate_domain(model_type: Type[PurchaseActive], query: DomainLoadQuery) 
     return _apply_lock(base_query, query.lock, [PurchaseActiveORM, item_alias])
 
 @overload
-def _translate_domain(model_type: Type[PurchaseSummary], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[PurchaseSummary], query: ComposedQuery) -> Any:
     item_alias = aliased(PurchaseSummaryItemORM, name="purchase_summary_item")
     
     base_query = (
@@ -95,7 +95,7 @@ def _translate_domain(model_type: Type[PurchaseSummary], query: DomainLoadQuery)
     return _apply_lock(base_query, query.lock, [PurchaseSummaryORM, item_alias])
 
 @overload
-def _translate_domain(model_type: Type[EscrowAccount], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[EscrowAccount], query: ComposedQuery) -> Any:
     base_query = (
         select(EscrowAccountORM)
         .where(query.criteria.to_sqlalchemy(EscrowAccountORM))
@@ -104,7 +104,7 @@ def _translate_domain(model_type: Type[EscrowAccount], query: DomainLoadQuery) -
 
 
 @overload
-def _translate_domain(model_type: Type[Product], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[Product], query: ComposedQuery) -> Any:
     base_query = (
         select(ProductORM)
         .where(query.criteria.to_sqlalchemy(ProductORM))
@@ -112,7 +112,7 @@ def _translate_domain(model_type: Type[Product], query: DomainLoadQuery) -> Any:
     return _apply_lock(base_query, query.lock, [ProductORM])
 
 @overload
-def _translate_domain(model_type: Type[Shipment], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[Shipment], query: ComposedQuery) -> Any:
     item_alias = aliased(ShipmentItemORM, name="supplier_order_item")
     
     base_query = (
@@ -124,7 +124,7 @@ def _translate_domain(model_type: Type[Shipment], query: DomainLoadQuery) -> Any
     return _apply_lock(base_query, query.lock, [ShipmentORM, item_alias])
 
 @overload
-def _translate_domain(model_type: Type[ShipmentSummary], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[ShipmentSummary], query: ComposedQuery) -> Any:
     item_alias = aliased(ShipmentSummaryItemORM, name="shipment_summary_item")
     
     base_query = (
@@ -136,37 +136,37 @@ def _translate_domain(model_type: Type[ShipmentSummary], query: DomainLoadQuery)
     return _apply_lock(base_query, query.lock, [ShipmentSummaryORM, item_alias])
 
 @dispatch
-def _translate_domain(model_type: Type[BaseAggregate], query: DomainLoadQuery) -> Any:
+def _compile_composed_query(model_type: Type[PersistableEntity], query: ComposedQuery) -> Any:
     pass
 
 
 @overload
-def _translate_prebuilt(query: BiggestPurchaseActivesQuery) -> Any:
+def _compile_custom_query(query: BiggestPurchaseActivesQuery) -> Any:
     pass
 
 @overload
-def _translate_prebuilt(query: CountProductsQuery) -> Any:
+def _compile_custom_query(query: CountProductsQuery) -> Any:
     return (
         select(func.count()).select_from(ProductORM)
     )
 
 @dispatch
-def _translate_prebuilt(query: PrebuiltLoadQuery) -> Any:
+def _compile_custom_query(query: CustomQuery) -> Any:
     pass
 
 
 @overload
-def translate(query: DomainLoadQuery) -> Any:
-    return _translate_domain(query.model_type, query) # type: ignore
+def compile_query(query: ComposedQuery) -> Any:
+    return _compile_composed_query(query.model_type, query) # type: ignore
 
 @overload
-def translate(query: PrebuiltLoadQuery) -> Any:
-    return _translate_prebuilt(query) # type: ignore
+def compile_query(query: CustomQuery) -> Any:
+    return _compile_custom_query(query) # type: ignore
 
 @overload
-def translate(query: BaseLoadQuery) -> Any:
+def compile_query(query: BaseQuery) -> Any:
     pass
 
 @dispatch
-def translate(query: BaseLoadQuery) -> Any:
+def compile_query(query: BaseQuery) -> Any:
     pass

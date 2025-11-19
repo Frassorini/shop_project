@@ -6,7 +6,7 @@ from shop_project.shared.entity_id import EntityId
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.mapper import to_dto
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
@@ -23,16 +23,16 @@ from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.application.interfaces.interface_resource_container import IResourceContainer
 
 
-T = TypeVar('T', bound=BaseAggregate)
+T = TypeVar('T', bound=PersistableEntity)
 
 
 class ResourceSnapshotSentinelMixin(ABC):
-    resources: dict[Type[BaseAggregate], list[BaseAggregate]]
+    resources: dict[Type[PersistableEntity], list[PersistableEntity]]
     _resource_snapshot_previous: ResourceSnapshot | None
     _resource_snapshot_current: ResourceSnapshot | None
     
     def _get_resource_snapshot(self) -> ResourceSnapshot:
-        snapshot_set_vector: dict[Type[BaseAggregate], EntitySnapshotSet] = {}
+        snapshot_set_vector: dict[Type[PersistableEntity], EntitySnapshotSet] = {}
         for resource_type in self.resources:
             snapshot_set_vector[resource_type] = EntitySnapshotSet([EntitySnapshot(to_dto(item)) for item in self.resources[resource_type]])
         
@@ -45,7 +45,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         self._resource_snapshot_previous = self._resource_snapshot_current
         self._resource_snapshot_current = self._get_resource_snapshot()
     
-    def get_resource_changes(self) -> dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]:
+    def get_resource_changes(self) -> dict[Type[PersistableEntity], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]]:
         if self._resource_snapshot_current is None or self._resource_snapshot_previous is None:
             raise RuntimeError("Snapshots are not taken yet")
         
@@ -54,7 +54,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         current_snapshot_side_intersection: ResourceSnapshot = self._resource_snapshot_current.intersect_identity(self._resource_snapshot_previous)
         updated_snapshot: ResourceSnapshot = current_snapshot_side_intersection.difference_content(self._resource_snapshot_previous)
         
-        result: dict[Type[BaseAggregate], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]] = {}
+        result: dict[Type[PersistableEntity], dict[Literal['CREATED', 'UPDATED', 'DELETED'], list[BaseDTO]]] = {}
         for item_type in self.resources.keys():
             result[item_type] = {
                 'CREATED': [],
@@ -74,8 +74,8 @@ class ResourceSnapshotSentinelMixin(ABC):
         return result
         
 class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
-    def __init__(self, resources_registry: list[Type[BaseAggregate]]):
-        self.resources: dict[Type[BaseAggregate], list[BaseAggregate]] = { 
+    def __init__(self, resources_registry: list[Type[PersistableEntity]]):
+        self.resources: dict[Type[PersistableEntity], list[PersistableEntity]] = { 
             resource: [] for resource in resources_registry
         }
         self._resource_snapshot_previous: ResourceSnapshot | None = None
@@ -120,15 +120,15 @@ class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
     def get_all(self, model_type: Type[T]) -> Sequence[T]:
         return self._get_resource_by_type(model_type).copy()
     
-    def put(self, model_type: Type[BaseAggregate], item: BaseAggregate) -> None:
+    def put(self, model_type: Type[PersistableEntity], item: PersistableEntity) -> None:
         self._get_resource_by_type(model_type).append(item)
         
-    def put_many(self, model_type: Type[BaseAggregate], items: list[BaseAggregate]) -> None:
+    def put_many(self, model_type: Type[PersistableEntity], items: list[PersistableEntity]) -> None:
         self._get_resource_by_type(model_type).extend(items)
     
-    def delete(self, model_type: Type[BaseAggregate], item: BaseAggregate) -> None:
+    def delete(self, model_type: Type[PersistableEntity], item: PersistableEntity) -> None:
         self._get_resource_by_type(model_type).remove(item)
     
-    def delete_many(self, model_type: Type[BaseAggregate], items: Sequence[BaseAggregate]) -> None:
+    def delete_many(self, model_type: Type[PersistableEntity], items: Sequence[PersistableEntity]) -> None:
         for item in items:
             self.delete(model_type, item)

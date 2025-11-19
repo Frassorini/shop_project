@@ -11,17 +11,17 @@ import pytest
 
 from shop_project.application.services.customer_service import CustomerService
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 
 from tests.helpers import AggregateContainer
 
 
 @pytest.mark.asyncio
-async def test_customer(prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
+async def test_customer(prepare_container: Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]],
                         async_container: AsyncContainer
                         ) -> None:
-    model_type: Type[BaseAggregate] = Customer
+    model_type: Type[PersistableEntity] = Customer
     domain_container: AggregateContainer = await prepare_container(model_type)
     aggregate: Customer = cast(Customer, domain_container.aggregate)
 

@@ -5,12 +5,12 @@ import pytest
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWorkException
-from shop_project.infrastructure.query.queries.prebuilt_queries import CountProductsQuery
+from shop_project.infrastructure.registries.custom_queries_registry import CountProductsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
+from shop_project.infrastructure.query.composed_query import ComposedQuery, QueryLock
 from shop_project.domain.product import Product
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 from shop_project.shared.entity_id import EntityId
@@ -22,7 +22,7 @@ def test_empty_source():
 
 
 def test_load_from_attribute():
-    query = DomainLoadQuery(PurchaseDraft,
+    query = ComposedQuery(PurchaseDraft,
                       QueryCriteria().criterion_in("entity_id", ValueContainer(['1'])), 
                       QueryLock.NO_LOCK)
     
@@ -33,7 +33,7 @@ def test_load_from_attribute():
         .no_lock()
         .build())
     
-    assert isinstance(query_built.queries[0], DomainLoadQuery) and query_built.queries[0]
+    assert isinstance(query_built.queries[0], ComposedQuery) and query_built.queries[0]
     assert query_built.queries[0].criteria.criteria[0].value_provider.get() == query.criteria.criteria[0].value_provider.get()
     assert query_built.queries[0].model_type == query.model_type
 
@@ -41,7 +41,7 @@ def test_load_from_attribute():
 def test_load_from_id():
     uuid_id = uuid4()
     
-    query = DomainLoadQuery(PurchaseDraft, 
+    query = ComposedQuery(PurchaseDraft, 
                       QueryCriteria().criterion_in("entity_id", ValueContainer([uuid_id])), 
                       QueryLock.NO_LOCK)
     
@@ -52,7 +52,7 @@ def test_load_from_id():
         .no_lock()
         .build())
     
-    assert isinstance(query_built.queries[0], DomainLoadQuery) and query_built.queries[0]
+    assert isinstance(query_built.queries[0], ComposedQuery) and query_built.queries[0]
     assert query_built.queries[0].criteria.criteria[0].value_provider.get() == query.criteria.criteria[0].value_provider.get()
     assert query_built.queries[0].model_type == query.model_type
 
@@ -60,11 +60,11 @@ def test_load_from_id():
 def test_load_from_previous(purchase_draft_factory: Callable[[], PurchaseDraft]):
     purchase_active = purchase_draft_factory()
     
-    query = DomainLoadQuery(PurchaseDraft, 
+    query = ComposedQuery(PurchaseDraft, 
                       QueryCriteria().criterion_in("entity_id", ValueContainer([purchase_active.entity_id.value])), 
                       QueryLock.NO_LOCK)
     query.load([purchase_active])
-    query_product = DomainLoadQuery(Product, 
+    query_product = ComposedQuery(Product, 
                                  QueryCriteria().criterion_in("entity_id", 
                                  ValueExtractor(query,
                                                     lambda x: [item.product_id for item in x.get_items()])
@@ -75,7 +75,7 @@ def test_load_from_previous(purchase_draft_factory: Callable[[], PurchaseDraft])
     query_builder.query_plan.queries.append(query)
     query_built: QueryPlan = query_builder.from_previous().no_lock().build()
 
-    assert isinstance(query_built.queries[1], DomainLoadQuery) and query_built.queries[0]
+    assert isinstance(query_built.queries[1], ComposedQuery) and query_built.queries[0]
     assert query_built.queries[1].criteria.criteria[0].value_provider.get() == query_product.criteria.criteria[0].value_provider.get()
     assert query_built.queries[1].model_type == query_product.model_type
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Self
 from enum import Enum
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.stock_item import StockItem
 from shop_project.shared.identity_mixin import IdentityMixin
 from shop_project.domain.exceptions import DomainException
@@ -47,7 +47,7 @@ class PurchaseActiveStateMachine(BaseStateMachine[PurchaseActiveState]):
     }
 
 
-class PurchaseActive(BaseAggregate):
+class PurchaseActive(PersistableEntity):
     def __init__(self, entity_id: EntityId, customer_id: EntityId, escrow_account_id: EntityId, items: list[PurchaseActiveItem]) -> None:
         self._entity_id: EntityId = entity_id
         

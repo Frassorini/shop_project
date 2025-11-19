@@ -3,18 +3,18 @@ from dataclasses import dataclass
 from typing import Any, Literal, Self, Type, TypeVar
 from uuid import UUID
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import QueryPlanException
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_criteria import QueryCriteria, QueryCriterion
-from shop_project.infrastructure.registries.domain_reference_registry import DomainReferenceDescriptor, DomainReferenceRegistry
+from shop_project.infrastructure.registries.load_resolution_registry import LoadResolutionDescriptor, DomainReferenceRegistry
 from shop_project.infrastructure.registries.total_order_registry import TotalOrderRegistry
 
 from shop_project.infrastructure.query.value_container import ValueContainer
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery, QueryLock
+from shop_project.infrastructure.query.composed_query import ComposedQuery, QueryLock
 from shop_project.infrastructure.query.p_value_provider import PValueProvider
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
-from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
 
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
 
@@ -52,12 +52,12 @@ class QueryBuilder(IQueryBuilder):
         
         self._current_query_data = QueryData(None, QueryCriteria(), None)
         
-    def add_prebuilt(self, prebuilt_query: PrebuiltLoadQuery) -> Self:
+    def add_prebuilt(self, prebuilt_query: CustomQuery) -> Self:
         self.query_plan.add_prebuilt(prebuilt_query)
         
         return self
     
-    def load(self, entity_type: Type[BaseAggregate]) -> Self:
+    def load(self, entity_type: Type[PersistableEntity]) -> Self:
         if not self._first_query:
             self._build_query()
         else:
@@ -115,7 +115,7 @@ class QueryBuilder(IQueryBuilder):
         
         previous_query = self.query_plan.get_previous_query(query_index)
         
-        reference_descriptor: DomainReferenceDescriptor[BaseAggregate] = (
+        reference_descriptor: LoadResolutionDescriptor[PersistableEntity] = (
             self.domain_reference_registry.get_reference_descriptor(
                 previous_query.model_type, self._current_query_data.model_type
                 )

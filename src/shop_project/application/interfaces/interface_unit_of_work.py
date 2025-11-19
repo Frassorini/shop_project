@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncContextManager, AsyncGenerator, Literal, Protocol, Self
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.shared.entity_id import EntityId
 
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
@@ -12,7 +12,7 @@ class IUnitOfWork(Protocol):
     def get_resorces(self) -> IResourceContainer:
         ...
     
-    def get_unique_id(self, model_type: type[BaseAggregate]) -> EntityId:
+    def get_unique_id(self, model_type: type[PersistableEntity]) -> EntityId:
         ...
     
     def mark_commit(self) -> None:

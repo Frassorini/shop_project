@@ -3,9 +3,9 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select, delete, insert, update
 
 from shop_project.application.dto.customer_dto import CustomerDTO
-from shop_project.infrastructure.query.base_load_query import BaseLoadQuery
-from shop_project.infrastructure.query.domain_load_query import DomainLoadQuery
-from shop_project.infrastructure.query.prebuilt_load_query import PrebuiltLoadQuery
+from shop_project.infrastructure.query.base_query import BaseQuery
+from shop_project.infrastructure.query.composed_query import ComposedQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.domain.customer import Customer
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM

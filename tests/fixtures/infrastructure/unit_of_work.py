@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 
@@ -31,15 +31,15 @@ async def uow_factory(async_container: AsyncContainer)-> UnitOfWorkFactory:
 
 
 @pytest.fixture
-def uow_delete_and_check(uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]], uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]]:
-    async def _inner(model_type: Type[BaseAggregate], 
-                     domain_object: BaseAggregate) -> None:
+def uow_delete_and_check(uow_check: Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]], uow_factory: UnitOfWorkFactory) -> Callable[[Type[PersistableEntity], PersistableEntity], Awaitable[None]]:
+    async def _inner(model_type: Type[PersistableEntity], 
+                     domain_object: PersistableEntity) -> None:
         async with uow_factory.create(
             QueryBuilder(mutating=True)
             .load(model_type).from_id([domain_object.entity_id.value]).for_update()
         ) as uow:
             resources = uow.get_resorces()
-            purchase_summary_from_db: BaseAggregate = resources.get_by_id(model_type, domain_object.entity_id)
+            purchase_summary_from_db: PersistableEntity = resources.get_by_id(model_type, domain_object.entity_id)
             resources.delete(model_type, purchase_summary_from_db)
             uow.mark_commit()
 
@@ -52,11 +52,11 @@ def uow_delete_and_check(uow_check: Callable[[Type[BaseAggregate], BaseAggregate
 
 
 @pytest.fixture
-def uow_check(uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]]:
+def uow_check(uow_factory: UnitOfWorkFactory) -> Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]]:
     @asynccontextmanager
     async def _inner(
-        model_type: Type[BaseAggregate], 
-        domain_object: BaseAggregate) -> AsyncIterator[UnitOfWork]:
+        model_type: Type[PersistableEntity], 
+        domain_object: PersistableEntity) -> AsyncIterator[UnitOfWork]:
         async with uow_factory.create(
             QueryBuilder(mutating=False)
             .load(model_type)
@@ -68,10 +68,10 @@ def uow_check(uow_factory: UnitOfWorkFactory) -> Callable[[Type[BaseAggregate], 
 
 
 @pytest.fixture
-def prepare_container(domain_object_factory: Callable[[Type[BaseAggregate]], AggregateContainer], 
-                            fill_database: Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]
-                            ) -> Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]]:
-    async def _inner(model_type: Type[BaseAggregate]) -> AggregateContainer:
+def prepare_container(domain_object_factory: Callable[[Type[PersistableEntity]], AggregateContainer], 
+                            fill_database: Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]
+                            ) -> Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]]:
+    async def _inner(model_type: Type[PersistableEntity]) -> AggregateContainer:
         domain_container = domain_object_factory(model_type)
         to_fill = domain_container.dependencies.dependencies.copy()
 
@@ -83,8 +83,8 @@ def prepare_container(domain_object_factory: Callable[[Type[BaseAggregate]], Agg
 
 
 @pytest_asyncio.fixture
-async def fill_database(uow_factory: UnitOfWorkFactory) -> Callable[[dict[Type[BaseAggregate], list[BaseAggregate]]], Awaitable[None]]:
-    async def _fill_db(data: dict[Type[BaseAggregate], list[BaseAggregate]]) -> None:
+async def fill_database(uow_factory: UnitOfWorkFactory) -> Callable[[dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]]:
+    async def _fill_db(data: dict[Type[PersistableEntity], list[PersistableEntity]]) -> None:
         async with uow_factory.create(QueryBuilder(mutating=True)) as uow:
             for model_type, domain_objects in data.items():
                 uow.get_resorces().put_many(model_type, domain_objects)

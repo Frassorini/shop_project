@@ -6,7 +6,7 @@ import pytest
 
 from dishka.container import Container
 
-from shop_project.domain.base_aggregate import BaseAggregate
+from shop_project.domain.persistable_entity import PersistableEntity
 from shop_project.domain.customer import Customer
 from shop_project.domain.purchase_draft import PurchaseDraft
 from shop_project.domain.purchase_active import PurchaseActive
@@ -28,9 +28,9 @@ from tests.helpers import AggregateContainer
 
 @pytest.mark.asyncio
 async def test_customer(uow_factory: UnitOfWorkFactory,
-                        prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                        uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],) -> None:
-    model_type: Type[BaseAggregate] = Customer
+                        prepare_container: Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]],
+                        uow_check: Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]],) -> None:
+    model_type: Type[PersistableEntity] = Customer
     domain_container: AggregateContainer = await prepare_container(model_type)
     
     async with uow_factory.create(
@@ -55,7 +55,7 @@ async def test_customer(uow_factory: UnitOfWorkFactory,
         .load(model_type).from_id([domain_container.aggregate.entity_id.value]).for_update()
     ) as uow:
         resources = uow.get_resorces()
-        domain_obj_from_db: BaseAggregate = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         resources.delete(model_type, domain_obj_from_db)
         uow.mark_commit()
     
@@ -68,12 +68,12 @@ async def test_customer(uow_factory: UnitOfWorkFactory,
 
 @pytest.mark.asyncio
 async def test_purchase_draft(uow_factory: UnitOfWorkFactory,
-                              prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                              uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
-                              uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],
+                              prepare_container: Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]],
+                              uow_check: Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]],
+                              uow_delete_and_check: Callable[[Type[PersistableEntity], PersistableEntity], Awaitable[None]],
                               product_container_factory: Callable[..., AggregateContainer]) -> None:
     
-    model_type: Type[BaseAggregate] = PurchaseDraft
+    model_type: Type[PersistableEntity] = PurchaseDraft
     domain_container: AggregateContainer = await prepare_container(model_type)
     
     async with uow_factory.create(
@@ -102,9 +102,9 @@ async def test_purchase_draft(uow_factory: UnitOfWorkFactory,
 
 @pytest.mark.asyncio
 async def test_uow_purchase_claim(uow_factory: UnitOfWorkFactory,
-                                  prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                                  uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
-                                  uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],
+                                  prepare_container: Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]],
+                                  uow_check: Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]],
+                                  uow_delete_and_check: Callable[[Type[PersistableEntity], PersistableEntity], Awaitable[None]],
                                   domain_container: Container,) -> None:
     
     purchase_active_container: AggregateContainer = await prepare_container(PurchaseActive)
@@ -152,11 +152,11 @@ async def test_uow_purchase_claim(uow_factory: UnitOfWorkFactory,
 
 @pytest.mark.asyncio
 async def test_product(uow_factory: UnitOfWorkFactory,
-                       prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                       uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
-                       uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],) -> None:
+                       prepare_container: Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]],
+                       uow_check: Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]],
+                       uow_delete_and_check: Callable[[Type[PersistableEntity], PersistableEntity], Awaitable[None]],) -> None:
     
-    model_type: Type[BaseAggregate] = Product
+    model_type: Type[PersistableEntity] = Product
     domain_container: AggregateContainer = await prepare_container(model_type)
 
     async with uow_factory.create(
@@ -181,9 +181,9 @@ async def test_product(uow_factory: UnitOfWorkFactory,
 
 @pytest.mark.asyncio
 async def test_shipment(uow_factory: UnitOfWorkFactory,
-                        prepare_container: Callable[[Type[BaseAggregate]], Coroutine[None, None, AggregateContainer]],
-                        uow_check: Callable[[Type[BaseAggregate], BaseAggregate], AsyncContextManager[UnitOfWork]],
-                        uow_delete_and_check: Callable[[Type[BaseAggregate], BaseAggregate], Awaitable[None]],
+                        prepare_container: Callable[[Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]],
+                        uow_check: Callable[[Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]],
+                        uow_delete_and_check: Callable[[Type[PersistableEntity], PersistableEntity], Awaitable[None]],
                         domain_container: Container,) -> None:
     
     shipment_container: AggregateContainer = await prepare_container(Shipment)
