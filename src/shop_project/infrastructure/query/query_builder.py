@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Literal, Self, Type, TypeVar
 from uuid import UUID
 
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import QueryPlanException
 from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_criteria import QueryCriteria, QueryCriterion

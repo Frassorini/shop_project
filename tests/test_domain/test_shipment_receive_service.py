@@ -4,11 +4,11 @@ import pytest
 from dishka.container import Container
 
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.product_inventory import ProductInventory
+from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
-from shop_project.domain.shipment_summary import ShipmentSummary, ShipmentSummaryReason
-from shop_project.domain.product import Product
-from shop_project.domain.shipment import Shipment, ShipmentItem
+from shop_project.domain.entities.shipment_summary import ShipmentSummary, ShipmentSummaryReason
+from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.shipment import Shipment, ShipmentItem
 from shop_project.shared.entity_id import EntityId
 from tests.helpers import AggregateContainer
 

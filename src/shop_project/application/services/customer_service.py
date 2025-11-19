@@ -5,7 +5,7 @@ from shop_project.application.interfaces.interface_resource_container import IRe
 from shop_project.application.interfaces.interface_unit_of_work import IUnitOfWork, IUnitOfWorkFactory
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
 
-from shop_project.domain.customer import Customer
+from shop_project.domain.entities.customer import Customer
 from shop_project.shared.entity_id import EntityId
 
 from shop_project.application.dto.mapper import to_dto

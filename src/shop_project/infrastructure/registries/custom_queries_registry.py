@@ -1,8 +1,8 @@
 from typing import Literal
 
 
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.product import Product
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.product import Product
 from shop_project.infrastructure.query.custom_query import CustomQuery
 
 

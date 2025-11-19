@@ -7,7 +7,7 @@ from shop_project.infrastructure.query.base_query import BaseQuery
 from shop_project.infrastructure.query.composed_query import ComposedQuery
 from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.domain.customer import Customer
+from shop_project.domain.entities.customer import Customer
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.shared.entity_id import EntityId
 

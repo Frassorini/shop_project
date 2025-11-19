@@ -1,7 +1,7 @@
-from shop_project.domain.shipment import Shipment
-from shop_project.domain.shipment_summary import ShipmentSummary, ShipmentSummaryItem, ShipmentSummaryReason
+from shop_project.domain.entities.shipment import Shipment
+from shop_project.domain.entities.shipment_summary import ShipmentSummary, ShipmentSummaryItem, ShipmentSummaryReason
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.shared.entity_id import EntityId
 
 

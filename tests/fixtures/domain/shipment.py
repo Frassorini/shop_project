@@ -6,9 +6,9 @@ import pytest
 from dishka.container import Container
 
 from shop_project.domain.services.shipment_activation_service import ShipmentActivationService, ShipmentRequest
-from shop_project.domain.product import Product
+from shop_project.domain.entities.product import Product
 from shop_project.shared.entity_id import EntityId
-from shop_project.domain.shipment import Shipment
+from shop_project.domain.entities.shipment import Shipment
 from tests.fixtures.domain.purchase_active import ProductInventory
 from tests.helpers import AggregateContainer
 

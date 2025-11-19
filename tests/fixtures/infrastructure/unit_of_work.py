@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 

@@ -2,7 +2,7 @@ from typing import Callable, Coroutine
 
 import pytest
 
-from shop_project.domain.customer import Customer
+from shop_project.domain.entities.customer import Customer
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
 from shop_project.infrastructure.repositories.base_repository import BaseRepository

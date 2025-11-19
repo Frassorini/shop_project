@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import Any
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.shared.identity_mixin import IdentityMixin
 from shop_project.domain.exceptions import NegativeAmountException
 from shop_project.shared.entity_id import EntityId

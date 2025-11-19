@@ -1,6 +1,6 @@
 from typing import Literal, Type
 
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
 

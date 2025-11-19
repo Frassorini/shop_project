@@ -11,8 +11,8 @@ import pytest
 
 from shop_project.application.services.customer_service import CustomerService
 
-from shop_project.domain.persistable_entity import PersistableEntity
-from shop_project.domain.customer import Customer
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.domain.entities.customer import Customer
 
 from tests.helpers import AggregateContainer
 

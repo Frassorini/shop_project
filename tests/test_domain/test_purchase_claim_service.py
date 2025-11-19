@@ -4,13 +4,13 @@ import pytest
 from dishka.container import Container
 
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.domain.purchase_summary import PurchaseSummaryReason
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_summary import PurchaseSummaryReason
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
-from shop_project.domain.product_inventory import ProductInventory
-from shop_project.domain.product import Product
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.escrow_account import EscrowAccount
+from shop_project.domain.helpers.product_inventory import ProductInventory
+from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.escrow_account import EscrowAccount
 from tests.helpers import AggregateContainer
 
 

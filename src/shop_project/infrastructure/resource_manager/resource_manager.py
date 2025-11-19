@@ -1,5 +1,5 @@
 from typing import Any, Literal, Type
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import UnitOfWorkException
 from shop_project.infrastructure.query.base_query import BaseQuery
 from shop_project.infrastructure.query.composed_query import ComposedQuery

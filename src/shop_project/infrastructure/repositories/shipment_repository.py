@@ -8,7 +8,7 @@ from shop_project.infrastructure.query.base_query import BaseQuery
 from shop_project.infrastructure.query.composed_query import ComposedQuery
 from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.domain.shipment import Shipment
+from shop_project.domain.entities.shipment import Shipment
 from shop_project.infrastructure.database.models.shipment import Shipment as ShipmentORM, ShipmentItem as ShipmentItemORM
 from shop_project.shared.entity_id import EntityId
 

@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 
-from shop_project.domain.customer import Customer
+from shop_project.domain.entities.customer import Customer
 from shop_project.shared.entity_id import EntityId
 
 

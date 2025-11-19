@@ -5,13 +5,13 @@ from plum import overload, dispatch
 
 import pytest
 
-from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.domain.customer import Customer
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.product import Product
-from shop_project.domain.shipment import Shipment
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.shipment import Shipment
 from shop_project.shared.entity_id import EntityId
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 from tests.helpers import AggregateContainer
 

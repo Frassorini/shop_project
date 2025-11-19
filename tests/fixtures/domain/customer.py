@@ -1,7 +1,7 @@
 from typing import Callable
 import pytest
 
-from shop_project.domain.customer import Customer
+from shop_project.domain.entities.customer import Customer
 from shop_project.shared.entity_id import EntityId
 
 

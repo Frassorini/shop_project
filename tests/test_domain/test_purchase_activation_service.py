@@ -4,11 +4,11 @@ import pytest
 from dishka.container import Container
 
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.services.purchase_activation_service import PurchaseActivationService
-from shop_project.domain.product_inventory import ProductInventory
-from shop_project.domain.product import Product
-from shop_project.domain.purchase_active import PurchaseActive
+from shop_project.domain.helpers.product_inventory import ProductInventory
+from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.purchase_active import PurchaseActive
 
 
 def test_activate(purchase_draft_factory: Callable[[], PurchaseDraft],

@@ -1,7 +1,7 @@
 from typing import Any, Protocol, Self, Type
 from uuid import UUID
 
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
 class IQueryBuilder(Protocol):

@@ -7,11 +7,10 @@ from sqlalchemy.orm import Session, query
 from sqlalchemy.sql import delete, insert, select, update
 
 from shop_project.application.dto.mapper import to_dto
-from shop_project.domain import customer
-from shop_project.domain.persistable_entity import PersistableEntity
-from shop_project.domain.customer import Customer
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.product import Product
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.product import Product
 from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM

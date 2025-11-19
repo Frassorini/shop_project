@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Any, Self
 from enum import Enum
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.shared.entity_id import EntityId
 from shop_project.domain.exceptions import DomainException
 from shop_project.shared.base_state_machine import BaseStateMachine

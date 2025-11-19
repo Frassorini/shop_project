@@ -3,7 +3,7 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select, delete, insert, update
 
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
-from shop_project.domain.escrow_account import EscrowAccount
+from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.infrastructure.query.base_query import BaseQuery
 from shop_project.infrastructure.query.composed_query import ComposedQuery
 from shop_project.infrastructure.query.custom_query import CustomQuery

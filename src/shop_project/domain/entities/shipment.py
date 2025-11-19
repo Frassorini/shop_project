@@ -3,8 +3,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Mapping, Self, Sequence, cast
 
-from shop_project.domain.persistable_entity import PersistableEntity
-from shop_project.domain.stock_item import StockItem
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.entity_id import EntityId
 from shop_project.shared.identity_mixin import IdentityMixin
 from shop_project.domain.exceptions import DomainException

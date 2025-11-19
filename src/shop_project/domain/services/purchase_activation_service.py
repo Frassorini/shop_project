@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from shop_project.domain import purchase_active
-from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.purchase_active import PurchaseActive, PurchaseActiveItem
+from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.purchase_active import PurchaseActive, PurchaseActiveItem
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.domain.purchase_summary import PurchaseSummary, PurchaseSummaryItem, PurchaseSummaryReason
-from shop_project.domain.product_inventory import ProductInventory
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_summary import PurchaseSummary, PurchaseSummaryItem, PurchaseSummaryReason
+from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.checkout_service import CheckoutService
 from shop_project.domain.services.purchase_reservation_service import PurchaseReservationService
 from shop_project.shared.entity_id import EntityId

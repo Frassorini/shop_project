@@ -2,7 +2,7 @@ from typing import Any, Protocol, Sequence, Type, TypeVar
 
 from shop_project.shared.entity_id import EntityId
 
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
 T = TypeVar('T', bound=PersistableEntity)

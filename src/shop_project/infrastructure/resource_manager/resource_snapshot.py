@@ -1,6 +1,6 @@
 from typing import Any, Self, Type
 
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.application.dto.base_dto import BaseDTO
 
 

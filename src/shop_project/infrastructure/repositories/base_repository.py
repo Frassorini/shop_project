@@ -7,10 +7,9 @@ from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql import select, delete, insert, update, case, and_
 from sqlalchemy import bindparam
 
-from shop_project import domain
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.mapper import to_domain, to_dto
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 from shop_project.infrastructure.query.base_query import BaseQuery
 from shop_project.infrastructure.query.custom_query import CustomQuery

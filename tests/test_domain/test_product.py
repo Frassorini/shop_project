@@ -2,7 +2,7 @@ import copy
 from decimal import Decimal
 from typing import Callable
 from shop_project.shared.entity_id import EntityId
-from shop_project.domain.product import Product
+from shop_project.domain.entities.product import Product
 from shop_project.domain.exceptions import DomainException, NegativeAmountException
 import pytest
 

@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 from shop_project.shared.entity_id import EntityId
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.stock_item import StockItem
-from shop_project.domain.product import Product
+from shop_project.domain.interfaces.stock_item import StockItem
+from shop_project.domain.entities.product import Product
 
 
 class ProductInventory:

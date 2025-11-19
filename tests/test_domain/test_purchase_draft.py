@@ -2,8 +2,8 @@ from typing import Callable
 
 import pytest
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.product import Product
-from shop_project.domain.purchase_draft import PurchaseDraft, PurchaseDraftItem
+from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.purchase_draft import PurchaseDraft, PurchaseDraftItem
 
 
 

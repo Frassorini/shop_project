@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 
 from shop_project.shared.entity_id import EntityId
-from shop_project.domain.product import Product
+from shop_project.domain.entities.product import Product
 from tests.helpers import AggregateContainer
 
 

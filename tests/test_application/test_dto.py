@@ -4,9 +4,9 @@ from typing import Callable
 
 import pytest
 
-from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.application.dto.mapper import to_dto, to_domain
-from shop_project.domain.product import Product
+from shop_project.domain.entities.product import Product
 
 def test_to_dto(purchase_draft_factory: Callable[[], PurchaseDraft], potatoes_product_10: Callable[[], Product]) -> None:
     purchase_draft = purchase_draft_factory()

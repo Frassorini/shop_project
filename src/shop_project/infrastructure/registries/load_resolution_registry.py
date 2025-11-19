@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Type, TypeVar
 
-from shop_project.domain.customer import Customer
-from shop_project.domain.purchase_draft import PurchaseDraft
-from shop_project.domain.purchase_active import PurchaseActive
-from shop_project.domain.purchase_summary import PurchaseSummary
-from shop_project.domain.escrow_account import EscrowAccount
-from shop_project.domain.product import Product
-from shop_project.domain.shipment import Shipment
-from shop_project.domain.shipment_summary import ShipmentSummary
+from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_active import PurchaseActive
+from shop_project.domain.entities.purchase_summary import PurchaseSummary
+from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.shipment import Shipment
+from shop_project.domain.entities.shipment_summary import ShipmentSummary
 
 SourceType = TypeVar('SourceType')
 TargetType = TypeVar('TargetType')

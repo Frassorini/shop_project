@@ -4,7 +4,7 @@ from shop_project.infrastructure.query.query_plan import QueryPlan
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, AsyncIterator, Callable, Literal, Self
 from sqlalchemy.ext.asyncio import AsyncSession
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.repositories.repository_container import RepositoryContainer, repository_container_factory

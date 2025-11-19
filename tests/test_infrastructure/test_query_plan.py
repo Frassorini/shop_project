@@ -2,8 +2,8 @@ from typing import Callable
 from uuid import uuid4
 
 import pytest
-from shop_project.domain.customer import Customer
-from shop_project.domain.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.exceptions import QueryPlanException, UnitOfWorkException
 from shop_project.infrastructure.registries.custom_queries_registry import CountProductsQuery
 from shop_project.infrastructure.query.value_container import ValueContainer
@@ -11,7 +11,7 @@ from shop_project.infrastructure.query.value_extractor import ValueExtractor
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.query.query_plan import LockQueryPlan, NoLockQueryPlan, QueryPlan
 from shop_project.infrastructure.query.composed_query import ComposedQuery, QueryLock
-from shop_project.domain.product import Product
+from shop_project.domain.entities.product import Product
 from shop_project.infrastructure.query.query_criteria import QueryCriteria
 from shop_project.shared.entity_id import EntityId
 

@@ -2,10 +2,10 @@ from typing import Callable
 
 import pytest
 
-from shop_project.domain.product_inventory import ProductInventory
+from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.exceptions import DomainException
-from shop_project.domain.product import Product
-from shop_project.domain.stock_item import StockItem
+from shop_project.domain.entities.product import Product
+from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.entity_id import EntityId
 
 

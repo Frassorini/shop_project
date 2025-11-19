@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Generic, Type, TypeVar
-from shop_project.domain.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
 T = TypeVar("T", bound="PersistableEntity")
