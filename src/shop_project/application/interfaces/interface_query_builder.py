@@ -1,6 +1,7 @@
 from typing import Any, Protocol, Self, Type
 from uuid import UUID
 
+from shop_project.application.interfaces.interface_query_plan import IQueryPlan
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
@@ -34,3 +35,5 @@ class IQueryBuilder(Protocol):
     def no_lock(self) -> Self: ...
 
     def from_previous(self, query_index: int | None = None) -> Self: ...
+
+    def build(self) -> IQueryPlan: ...

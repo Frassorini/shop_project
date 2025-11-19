@@ -1,7 +1,7 @@
 from contextlib import AbstractAsyncContextManager
 from typing import AsyncGenerator, Callable
 
-from dishka import BaseScope, Component, Provider, Scope, provide  # type: ignore
+from dishka import BaseScope, Component, Provider, Scope, provide
 
 from shop_project.infrastructure.message_broker.broker_container import BrokerContainer
 

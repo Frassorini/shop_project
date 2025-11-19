@@ -35,7 +35,7 @@ async def test_count_products(
     query = CountProductsQuery(lock="NO_LOCK")
 
     async with uow_factory.create(
-        QueryBuilder(mutating=False).add_prebuilt(query)
+        QueryBuilder(mutating=False).add_prebuilt(query).build()
     ) as uow:
         pass
 

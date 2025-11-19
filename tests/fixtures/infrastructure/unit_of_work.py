@@ -39,6 +39,7 @@ def uow_delete_and_check(
             .load(model_type)
             .from_id([domain_object.entity_id.value])
             .for_update()
+            .build()
         ) as uow:
             resources = uow.get_resorces()
             purchase_summary_from_db: PersistableEntity = resources.get_by_id(
@@ -70,6 +71,7 @@ def uow_check(
             .load(model_type)
             .from_id([domain_object.entity_id.value])
             .no_lock()
+            .build()
         ) as uow:
             yield uow
 
@@ -104,7 +106,7 @@ async def fill_database(
     async def _fill_db(
         data: dict[Type[PersistableEntity], list[PersistableEntity]],
     ) -> None:
-        async with uow_factory.create(QueryBuilder(mutating=True)) as uow:
+        async with uow_factory.create(QueryBuilder(mutating=True).build()) as uow:
             for model_type, domain_objects in data.items():
                 uow.get_resorces().put_many(model_type, domain_objects)
             uow.mark_commit()

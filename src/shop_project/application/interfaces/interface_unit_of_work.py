@@ -1,6 +1,6 @@
 from typing import AsyncContextManager, Protocol
 
-from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
+from shop_project.application.interfaces.interface_query_plan import IQueryPlan
 from shop_project.application.interfaces.interface_resource_container import (
     IResourceContainer,
 )
@@ -20,6 +20,4 @@ class IUnitOfWork(Protocol):
 
 
 class IUnitOfWorkFactory(Protocol):
-    def create(
-        self, query_plan_builder: IQueryBuilder | None = None
-    ) -> AsyncContextManager[IUnitOfWork]: ...
+    def create(self, query_plan: IQueryPlan) -> AsyncContextManager[IUnitOfWork]: ...

@@ -1,7 +1,7 @@
 from contextlib import AbstractAsyncContextManager
 from typing import AsyncGenerator, Callable, Type
 
-from dishka import BaseScope, Component, Provider, Scope, alias, provide  # type: ignore
+from dishka import BaseScope, Component, Provider, Scope, alias, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder

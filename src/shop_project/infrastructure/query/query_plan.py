@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Literal, Type, TypeVar
 
 from shop_project.application.dto.base_dto import BaseDTO
+from shop_project.application.interfaces.interface_query_plan import IQueryPlan
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import QueryPlanException
 from shop_project.infrastructure.query.base_query import BaseQuery
@@ -21,7 +22,7 @@ def _ensure_not_none(value: T | None, fail_message: str) -> T:
     return value
 
 
-class QueryPlan(ABC):
+class QueryPlan(ABC, IQueryPlan):
     read_only: bool
     queries: list[BaseQuery]
 

@@ -29,6 +29,7 @@ class CustomerService:
             .load(Customer)
             .from_id(ids)
             .no_lock()
+            .build()
         ) as uow:
             resources = uow.get_resorces()
             res: list[Customer] = resources.get_by_ids(Customer, entity_ids)

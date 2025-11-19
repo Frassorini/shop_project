@@ -38,6 +38,7 @@ async def test_customer(
         .load(model_type)
         .from_id([domain_container.aggregate.entity_id.value])
         .for_update()
+        .build()
     ) as uow:
         resources = uow.get_resorces()
         domain_obj: Customer = resources.get_by_id(
@@ -61,6 +62,7 @@ async def test_customer(
         .load(model_type)
         .from_id([domain_container.aggregate.entity_id.value])
         .for_update()
+        .build()
     ) as uow:
         resources = uow.get_resorces()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
@@ -101,6 +103,7 @@ async def test_purchase_draft(
         .load(Product)
         .from_previous()
         .for_update()
+        .build()
     ) as uow:
         resources = uow.get_resorces()
         domain_obj: PurchaseDraft = resources.get_by_id(
@@ -153,6 +156,7 @@ async def test_uow_purchase_claim(
         .load(Product)
         .from_previous(0)
         .for_update()
+        .build()
     ) as uow:
         resources = uow.get_resorces()
         purchase_claim_service = domain_container.get(PurchaseClaimService)
@@ -220,6 +224,7 @@ async def test_product(
         .load(model_type)
         .from_id([domain_container.aggregate.entity_id.value])
         .for_update()
+        .build()
     ) as uow:
         resources = uow.get_resorces()
         domain_obj: Product = resources.get_by_id(
@@ -263,6 +268,7 @@ async def test_shipment(
         .load(Shipment)
         .from_id([shipment_container.aggregate.entity_id.value])
         .for_update()
+        .build()
     ) as uow:
         resources = uow.get_resorces()
         shipment_cancel_service = domain_container.get(ShipmentCancelService)

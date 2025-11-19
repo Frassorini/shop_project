@@ -2,7 +2,7 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import AsyncGenerator, Callable
 
 import pytest
-from dishka import (  # type: ignore
+from dishka import (
     BaseScope,
     Component,
     Provider,

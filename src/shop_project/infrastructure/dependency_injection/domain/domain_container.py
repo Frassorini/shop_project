@@ -1,5 +1,5 @@
 # shop_project/containers/domain_container.py
-from dishka import Provider, Scope, provide  # type: ignore
+from dishka import Provider, Scope, provide
 
 from shop_project.domain.services.checkout_service import CheckoutService
 from shop_project.domain.services.purchase_activation_service import (

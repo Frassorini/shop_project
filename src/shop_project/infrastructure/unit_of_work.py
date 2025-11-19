@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
+from shop_project.application.interfaces.interface_query_plan import IQueryPlan
 from shop_project.application.interfaces.interface_unit_of_work import (
     IUnitOfWork,
     IUnitOfWorkFactory,
@@ -55,13 +55,13 @@ class UnitOfWorkFactory(IUnitOfWorkFactory):
 
     @asynccontextmanager
     async def create(
-        self, query_plan_builder: IQueryBuilder | None = None
+        self, query_plan: IQueryPlan | None = None
     ) -> AsyncIterator[UnitOfWork]:
-        if query_plan_builder is None:
-            query_plan_builder = QueryBuilder(mutating=False)
-        if not isinstance(query_plan_builder, QueryBuilder):
-            raise NotImplementedError
-        query_plan: QueryPlan = query_plan_builder.build()
+        if query_plan is None:
+            query_plan = QueryBuilder(mutating=False).build()
+
+        if not isinstance(query_plan, QueryPlan):
+            raise ValueError("Invalid query plan")
 
         async with self.database.session() as session:
             try:

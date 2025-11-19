@@ -1,6 +1,6 @@
 from typing import Type
 
-from dishka import Provider, Scope, provide  # type: ignore
+from dishka import Provider, Scope, provide
 
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
 from shop_project.application.interfaces.interface_unit_of_work import (
