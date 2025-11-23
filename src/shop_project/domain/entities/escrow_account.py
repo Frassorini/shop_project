@@ -1,6 +1,6 @@
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Self
+from typing import Self
 from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
@@ -8,7 +8,7 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.shared.base_state_machine import BaseStateMachine
 
 
-class EscrowState(Enum):
+class EscrowAccountState(Enum):
     PENDING = "PENDING"
     PAID = "PAID"
     PAYMENT_CANCELLED = "CANCELLED"
@@ -17,73 +17,80 @@ class EscrowState(Enum):
     FINALIZED = "FINALIZED"
 
 
-class EscrowStateMachine(BaseStateMachine[EscrowState]):
+class EscrowAccountStateMachine(BaseStateMachine[EscrowAccountState]):
     _transitions = {
-        EscrowState.PENDING: [EscrowState.PAID, EscrowState.PAYMENT_CANCELLED],
-        EscrowState.PAID: [EscrowState.READY_FOR_REFUND, EscrowState.FINALIZED],
-        EscrowState.PAYMENT_CANCELLED: [EscrowState.FINALIZED],
-        EscrowState.READY_FOR_REFUND: [EscrowState.REFUNDING],
-        EscrowState.REFUNDING: [EscrowState.FINALIZED],
-        EscrowState.FINALIZED: [],
+        EscrowAccountState.PENDING: [
+            EscrowAccountState.PAID,
+            EscrowAccountState.PAYMENT_CANCELLED,
+        ],
+        EscrowAccountState.PAID: [
+            EscrowAccountState.READY_FOR_REFUND,
+            EscrowAccountState.FINALIZED,
+        ],
+        EscrowAccountState.PAYMENT_CANCELLED: [EscrowAccountState.FINALIZED],
+        EscrowAccountState.READY_FOR_REFUND: [EscrowAccountState.REFUNDING],
+        EscrowAccountState.REFUNDING: [EscrowAccountState.FINALIZED],
+        EscrowAccountState.FINALIZED: [],
     }
 
 
 class EscrowAccount(PersistableEntity):
+    entity_id: UUID
+    total_amount: Decimal
+    _state_machine: EscrowAccountStateMachine
+
     def __init__(self, entity_id: UUID, total_amount: Decimal) -> None:
         if total_amount <= 0:
             raise DomainException("Total amount must be positive")
         self.entity_id = entity_id
         self.total_amount: Decimal = total_amount
-        self._state_machine = EscrowStateMachine(EscrowState.PENDING)
-
-    @property
-    def state(self) -> EscrowState:
-        return self._state_machine.state
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entity_id": self.entity_id,
-            "total_amount": self.total_amount,
-            "state": self.state.value,
-        }
+        self._state_machine = EscrowAccountStateMachine(EscrowAccountState.PENDING)
 
     @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
+    def _load(
+        cls, entity_id: UUID, total_amount: Decimal, state: EscrowAccountState
+    ) -> Self:
         obj = cls.__new__(cls)
-        obj.entity_id = snapshot["entity_id"]
-        obj.total_amount = snapshot["total_amount"]
-        obj._state_machine = EscrowStateMachine(EscrowState(snapshot["state"]))
+
+        obj.entity_id = entity_id
+        obj.total_amount = total_amount
+        obj._state_machine = EscrowAccountStateMachine(state)
+
         return obj
 
+    @property
+    def state(self) -> EscrowAccountState:
+        return self._state_machine.state
+
     def mark_as_paid(self) -> None:
-        self._state_machine.try_transition_to(EscrowState.PAID)
+        self._state_machine.try_transition_to(EscrowAccountState.PAID)
 
     def cancel(self) -> None:
-        self._state_machine.try_transition_to(EscrowState.PAYMENT_CANCELLED)
+        self._state_machine.try_transition_to(EscrowAccountState.PAYMENT_CANCELLED)
 
     def mark_as_ready_for_refund(self) -> None:
-        self._state_machine.try_transition_to(EscrowState.READY_FOR_REFUND)
+        self._state_machine.try_transition_to(EscrowAccountState.READY_FOR_REFUND)
 
     def begin_refund(self) -> None:
-        self._state_machine.try_transition_to(EscrowState.REFUNDING)
+        self._state_machine.try_transition_to(EscrowAccountState.REFUNDING)
 
     def finalize(self) -> None:
-        self._state_machine.try_transition_to(EscrowState.FINALIZED)
+        self._state_machine.try_transition_to(EscrowAccountState.FINALIZED)
 
     def is_pending(self) -> bool:
-        return self.state == EscrowState.PENDING
+        return self.state == EscrowAccountState.PENDING
 
     def is_paid(self) -> bool:
-        return self.state == EscrowState.PAID
+        return self.state == EscrowAccountState.PAID
 
     def is_cancelled(self) -> bool:
-        return self.state == EscrowState.PAYMENT_CANCELLED
+        return self.state == EscrowAccountState.PAYMENT_CANCELLED
 
     def is_ready_for_refund(self) -> bool:
-        return self.state == EscrowState.READY_FOR_REFUND
+        return self.state == EscrowAccountState.READY_FOR_REFUND
 
     def is_refunding(self) -> bool:
-        return self.state == EscrowState.REFUNDING
+        return self.state == EscrowAccountState.REFUNDING
 
     def is_finalized(self) -> bool:
-        return self.state == EscrowState.FINALIZED
+        return self.state == EscrowAccountState.FINALIZED

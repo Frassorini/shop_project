@@ -9,30 +9,6 @@ from shop_project.domain.entities.product import Product
 from shop_project.domain.exceptions import DomainException, NegativeAmountException
 
 
-def test_snapshot(unique_id_factory: Callable[[], UUID]) -> None:
-    item = Product(
-        entity_id=unique_id_factory(), name="potatoes", amount=1, price=Decimal(1)
-    )
-    assert item.to_dict() == {
-        "entity_id": item.entity_id,
-        "name": "potatoes",
-        "amount": 1,
-        "price": Decimal(1),
-    }
-
-
-def test_from_snapshot(unique_id_factory: Callable[[], UUID]) -> None:
-    item = Product.from_dict(
-        {
-            "entity_id": unique_id_factory(),
-            "name": "potatoes",
-            "amount": 1,
-            "price": Decimal(1),
-        }
-    )
-    assert item.name == "potatoes"
-
-
 def test_product_amount(potatoes_product_1: Callable[[], Product]) -> None:
     potatoes = potatoes_product_1()
     assert potatoes.amount == 1

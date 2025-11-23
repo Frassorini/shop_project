@@ -1,5 +1,6 @@
 from sqlalchemy.sql import delete, insert, update
 
+from shop_project.application.dto.mapper import to_dto
 from shop_project.application.dto.product_dto import ProductDTO
 from shop_project.domain.entities.product import Product
 from shop_project.infrastructure.database.models.product import Product as ProductORM
@@ -15,7 +16,7 @@ class ProductRepository(BaseRepository[Product]):
         if not items:
             return
 
-        values = [item.to_dict() for item in items]
+        values = [to_dto(item).model_dump() for item in items]
         await self.session.execute(insert(ProductORM), values)
 
     async def update(self, items: list[Product]) -> None:
@@ -23,7 +24,7 @@ class ProductRepository(BaseRepository[Product]):
         if not items:
             return
 
-        snapshots = [item.to_dict() for item in items]
+        snapshots = [to_dto(item).model_dump() for item in items]
         ids = [snap["entity_id"] for snap in snapshots]
         fields = snapshots[0].keys()
 

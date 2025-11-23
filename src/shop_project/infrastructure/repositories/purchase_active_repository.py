@@ -2,6 +2,7 @@ from typing import Any
 
 from sqlalchemy.sql import delete, insert, update
 
+from shop_project.application.dto.mapper import to_dto
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.infrastructure.database.models.purchase_active import (
@@ -21,7 +22,7 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
             return
 
         # --- PurchaseActives ---
-        order_snapshots = [item.to_dict() for item in items]
+        order_snapshots = [to_dto(item).model_dump() for item in items]
         await self.session.execute(insert(PurchaseActiveORM), order_snapshots)
 
         # --- PurchaseActiveItems ---
@@ -40,7 +41,7 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
         if not items:
             return
 
-        order_snapshots = [item.to_dict() for item in items]
+        order_snapshots = [to_dto(item).model_dump() for item in items]
         order_ids = [snap["entity_id"] for snap in order_snapshots]
 
         order_fields = [f for f in order_snapshots[0].keys() if f != "items"]

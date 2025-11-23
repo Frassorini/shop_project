@@ -52,33 +52,3 @@ def test_cannot_add_duplicate_item(
     cart.add_item(product_id=product.entity_id, amount=2)
     with pytest.raises(DomainException):
         cart.add_item(product_id=product.entity_id, amount=3)
-
-
-def test_snapshot(
-    purchase_draft_factory: Callable[[], PurchaseDraft],
-    potatoes_product_10: Callable[[], Product],
-) -> None:
-    product: Product = potatoes_product_10()
-    cart: PurchaseDraft = purchase_draft_factory()
-
-    cart.add_item(product_id=product.entity_id, amount=2)
-
-    snapshot = cart.to_dict()
-
-    assert snapshot["items"][0] == {"product_id": product.entity_id, "amount": 2}
-
-
-def test_from_snapshot(
-    purchase_draft_factory: Callable[[], PurchaseDraft],
-    potatoes_product_10: Callable[[], Product],
-) -> None:
-    product: Product = potatoes_product_10()
-    cart: PurchaseDraft = purchase_draft_factory()
-
-    cart.add_item(product_id=product.entity_id, amount=2)
-
-    snapshot = cart.to_dict()
-
-    cart_from_snapshot: PurchaseDraft = PurchaseDraft.from_dict(snapshot)
-
-    assert cart_from_snapshot.get_items() == cart.get_items()

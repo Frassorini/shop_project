@@ -2,6 +2,7 @@ from typing import Any
 
 from sqlalchemy.sql import delete, insert, update
 
+from shop_project.application.dto.mapper import to_dto
 from shop_project.application.dto.shipment_dto import ShipmentDTO
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.infrastructure.database.models.shipment import (
@@ -19,7 +20,7 @@ class ShipmentRepository(BaseRepository[Shipment]):
         if not items:
             return
 
-        shipment_snapshots = [item.to_dict() for item in items]
+        shipment_snapshots = [to_dto(item).model_dump() for item in items]
         await self.session.execute(insert(ShipmentORM), shipment_snapshots)
 
         item_snapshots: list[dict[str, Any]] = []
@@ -36,7 +37,7 @@ class ShipmentRepository(BaseRepository[Shipment]):
         if not items:
             return
 
-        shipment_snapshots = [item.to_dict() for item in items]
+        shipment_snapshots = [to_dto(item).model_dump() for item in items]
         shipment_ids = [snap["entity_id"] for snap in shipment_snapshots]
 
         shipment_fields = [f for f in shipment_snapshots[0].keys() if f != "items"]

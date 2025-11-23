@@ -3,6 +3,7 @@ from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type
 import pytest
 from dishka.container import Container
 
+from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
@@ -47,14 +48,14 @@ async def test_customer(
 
         domain_obj.name = "new name"
 
-        snapshot_before = domain_obj.to_dict()
+        snapshot_before = to_dto(domain_obj)
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            model_type, domain_container.aggregate.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
         assert snapshot_before == snapshot_after
 
     async with uow_factory.create(
@@ -113,14 +114,14 @@ async def test_purchase_draft(
         resources.put(Product, product.aggregate)
         domain_obj.add_item(product.aggregate.entity_id, 1)
 
-        snapshot_before = domain_obj.to_dict()
+        snapshot_before = to_dto(domain_obj)
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            model_type, domain_container.aggregate.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
         assert snapshot_before == snapshot_after
 
     await uow_delete_and_check(model_type, domain_container.aggregate)
@@ -171,30 +172,30 @@ async def test_uow_purchase_claim(
         purchase_summary = purchase_claim_service.claim(purchase_active, escrow_account)
         resources.put(PurchaseSummary, purchase_summary)
 
-        purchase_active_snapshot_before = purchase_active.to_dict()
-        escrow_account_snapshot_before = escrow_account.to_dict()
-        purchase_summary_snapshot_before = purchase_summary.to_dict()
+        purchase_active_snapshot_before = to_dto(purchase_active)
+        escrow_account_snapshot_before = to_dto(escrow_account)
+        purchase_summary_snapshot_before = to_dto(purchase_summary)
         uow.mark_commit()
 
     async with uow_check(PurchaseActive, purchase_active) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            PurchaseActive, purchase_active.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(PurchaseActive, purchase_active.entity_id)
+        )
         assert purchase_active_snapshot_before == snapshot_after
 
     async with uow_check(EscrowAccount, escrow_account) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            EscrowAccount, escrow_account.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(EscrowAccount, escrow_account.entity_id)
+        )
         assert escrow_account_snapshot_before == snapshot_after
 
     async with uow_check(PurchaseSummary, purchase_summary) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            PurchaseSummary, purchase_summary.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(PurchaseSummary, purchase_summary.entity_id)
+        )
         assert purchase_summary_snapshot_before == snapshot_after
 
     await uow_delete_and_check(PurchaseActive, purchase_active)
@@ -233,14 +234,14 @@ async def test_product(
 
         domain_obj.price = domain_obj.price + 1
 
-        snapshot_before = domain_obj.to_dict()
+        snapshot_before = to_dto(domain_obj)
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            model_type, domain_container.aggregate.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
         assert snapshot_before == snapshot_after
 
     await uow_delete_and_check(model_type, domain_container.aggregate)
@@ -279,22 +280,22 @@ async def test_shipment(
         shipment_summary: ShipmentSummary = shipment_cancel_service.cancel(shipment)
         resources.put(ShipmentSummary, shipment_summary)
 
-        shipment_snapshot_before = shipment.to_dict()
-        shipment_summary_snapshot_before = shipment_summary.to_dict()
+        shipment_snapshot_before = to_dto(shipment)
+        shipment_summary_snapshot_before = to_dto(shipment_summary)
         uow.mark_commit()
 
     async with uow_check(Shipment, shipment_container.aggregate) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            Shipment, shipment_container.aggregate.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(Shipment, shipment_container.aggregate.entity_id)
+        )
         assert shipment_snapshot_before == snapshot_after
 
     async with uow_check(ShipmentSummary, shipment_summary) as uow2:
         resources = uow2.get_resorces()
-        snapshot_after = resources.get_by_id(
-            ShipmentSummary, shipment_summary.entity_id
-        ).to_dict()
+        snapshot_after = to_dto(
+            resources.get_by_id(ShipmentSummary, shipment_summary.entity_id)
+        )
         assert shipment_summary_snapshot_before == snapshot_after
 
     await uow_delete_and_check(Shipment, shipment_container.aggregate)

@@ -7,11 +7,10 @@ from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
-from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
-class ShipmentItem(StockItem, PSnapshotable):
+class ShipmentItem(StockItem):
     product_id: UUID
     amount: int
 
@@ -43,6 +42,10 @@ class ShipmentStateMachine(BaseStateMachine[ShipmentState]):
 
 
 class Shipment(PersistableEntity):
+    entity_id: UUID
+    _items: dict[UUID, ShipmentItem]
+    _state_machine: ShipmentStateMachine
+
     def __init__(self, entity_id: UUID, items: list[ShipmentItem]) -> None:
         self.entity_id: UUID = entity_id
         self._state_machine: ShipmentStateMachine = ShipmentStateMachine(
@@ -55,25 +58,21 @@ class Shipment(PersistableEntity):
             self._validate_item(item)
             self._items[item.product_id] = item
 
+    @classmethod
+    def _load(
+        cls, entity_id: UUID, items: list[ShipmentItem], state: ShipmentState
+    ) -> Self:
+        obj = cls.__new__(cls)
+
+        obj.entity_id = entity_id
+        obj._items = {item.product_id: item for item in items}
+        obj._state_machine = ShipmentStateMachine(state)
+
+        return obj
+
     @property
     def state(self) -> ShipmentState:
         return self._state_machine.state
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entity_id": self.entity_id,
-            "state": self.state.value,
-            "items": [item.to_dict() for item in self._items.values()],
-        }
-
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(
-            snapshot["entity_id"],
-            [ShipmentItem.from_dict(item) for item in snapshot["items"]],
-        )
-        obj._state_machine = ShipmentStateMachine(ShipmentState(snapshot["state"]))
-        return obj
 
     def _validate_item(self, item: ShipmentItem) -> None:
         if item.product_id in self._items:
@@ -81,6 +80,10 @@ class Shipment(PersistableEntity):
 
     def get_item(self, product_id: UUID) -> ShipmentItem:
         return self._items[product_id]
+
+    @property
+    def items(self) -> list[ShipmentItem]:
+        return list(self._items.values())
 
     def get_items(self) -> list[ShipmentItem]:
         return list(self._items.values())

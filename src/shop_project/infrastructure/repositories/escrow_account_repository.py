@@ -1,6 +1,7 @@
 from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
+from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.infrastructure.database.models.escrow_account import (
     EscrowAccount as EscrowAccountORM,
@@ -17,14 +18,14 @@ class EscrowAccountRepository(BaseRepository[EscrowAccount]):
         if not items:
             return
 
-        values = [item.to_dict() for item in items]
+        values = [to_dto(item).model_dump() for item in items]
         await self.session.execute(insert(EscrowAccountORM), values)
 
     async def update(self, items: list[EscrowAccount]) -> None:
         if not items:
             return
 
-        snapshots = [item.to_dict() for item in items]
+        snapshots = [to_dto(item).model_dump() for item in items]
         ids = [snap["entity_id"] for snap in snapshots]
         fields = snapshots[0].keys()
 

@@ -1,29 +1,15 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Self
+from typing import Self
 from uuid import UUID
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
-class PurchaseSummaryItem(PSnapshotable):
+class PurchaseSummaryItem:
     product_id: UUID
     amount: int
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "product_id": self.product_id,
-            "amount": self.amount,
-        }
-
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(
-            product_id=snapshot["product_id"],
-            amount=snapshot["amount"],
-        )
 
 
 class PurchaseSummaryReason(Enum):
@@ -33,6 +19,12 @@ class PurchaseSummaryReason(Enum):
 
 
 class PurchaseSummary(PersistableEntity):
+    entity_id: UUID
+    customer_id: UUID
+    escrow_account_id: UUID
+    reason: PurchaseSummaryReason
+    _items: dict[UUID, PurchaseSummaryItem]
+
     def __init__(
         self,
         entity_id: UUID,
@@ -53,28 +45,30 @@ class PurchaseSummary(PersistableEntity):
             self._items[item.product_id] = item
 
     @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(
-            snapshot["entity_id"],
-            snapshot["customer_id"],
-            snapshot["escrow_account_id"],
-            PurchaseSummaryReason(snapshot["reason"]),
-            [PurchaseSummaryItem.from_dict(item) for item in snapshot["items"]],
-        )
+    def _load(
+        cls,
+        entity_id: UUID,
+        customer_id: UUID,
+        escrow_account_id: UUID,
+        reason: PurchaseSummaryReason,
+        items: list[PurchaseSummaryItem],
+    ) -> Self:
+        obj = cls.__new__(cls)
+
+        obj.entity_id = entity_id
+        obj.customer_id = customer_id
+        obj.escrow_account_id = escrow_account_id
+        obj.reason = reason
+        obj._items = {item.product_id: item for item in items}
 
         return obj
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entity_id": self.entity_id,
-            "customer_id": self.customer_id,
-            "escrow_account_id": self.escrow_account_id,
-            "reason": self.reason.value,
-            "items": [item.to_dict() for item in self._items.values()],
-        }
-
     def get_item(self, product_id: UUID) -> PurchaseSummaryItem:
         return self._items[product_id]
+
+    @property
+    def items(self) -> list[PurchaseSummaryItem]:
+        return list(self._items.values())
 
     def get_items(self) -> list[PurchaseSummaryItem]:
         return list(self._items.values())

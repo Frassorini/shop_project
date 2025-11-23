@@ -1,35 +1,21 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Self
+from typing import Self
 from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
-from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
-class PurchaseActiveItem(StockItem, PSnapshotable):
+class PurchaseActiveItem(StockItem):
     product_id: UUID
     amount: int
 
     def __post_init__(self) -> None:
         self._validate()
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "product_id": self.product_id,
-            "amount": self.amount,
-        }
-
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(
-            product_id=snapshot["product_id"],
-            amount=snapshot["amount"],
-        )
 
     def _validate(self) -> None:
         if self.amount <= 0:
@@ -48,6 +34,13 @@ class PurchaseActiveStateMachine(BaseStateMachine[PurchaseActiveState]):
 
 
 class PurchaseActive(PersistableEntity):
+    entity_id: UUID
+    customer_id: UUID
+    escrow_account_id: UUID
+
+    _items: dict[UUID, PurchaseActiveItem]
+    _state_machine: PurchaseActiveStateMachine
+
     def __init__(
         self,
         entity_id: UUID,
@@ -68,31 +61,28 @@ class PurchaseActive(PersistableEntity):
             self._validate_item(item)
             self._items[item.product_id] = item
 
+    @classmethod
+    def _load(
+        cls,
+        entity_id: UUID,
+        customer_id: UUID,
+        escrow_account_id: UUID,
+        items: list[PurchaseActiveItem],
+        state: PurchaseActiveState,
+    ) -> Self:
+        obj = cls.__new__(cls)
+
+        obj.entity_id = entity_id
+        obj.customer_id = customer_id
+        obj.escrow_account_id = escrow_account_id
+        obj._items = {item.product_id: item for item in items}
+        obj._state_machine = PurchaseActiveStateMachine(state)
+
+        return obj
+
     @property
     def state(self) -> PurchaseActiveState:
         return self._state_machine.state
-
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(
-            snapshot["entity_id"],
-            snapshot["customer_id"],
-            snapshot["escrow_account_id"],
-            [PurchaseActiveItem.from_dict(item) for item in snapshot["items"]],
-        )
-        obj._state_machine = PurchaseActiveStateMachine(
-            PurchaseActiveState(snapshot["state"])
-        )
-        return obj
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entity_id": self.entity_id,
-            "customer_id": self.customer_id,
-            "escrow_account_id": self.escrow_account_id,
-            "state": self.state.value,
-            "items": [item.to_dict() for item in self._items.values()],
-        }
 
     def _validate_item(self, item: PurchaseActiveItem) -> None:
         if item.product_id in self._items:
@@ -100,6 +90,10 @@ class PurchaseActive(PersistableEntity):
 
     def get_item(self, product_id: UUID) -> PurchaseActiveItem:
         return self._items[product_id]
+
+    @property
+    def items(self) -> list[PurchaseActiveItem]:
+        return list(self._items.values())
 
     def get_items(self) -> list[PurchaseActiveItem]:
         return list(self._items.values())

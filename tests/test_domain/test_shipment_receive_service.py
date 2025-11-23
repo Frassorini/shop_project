@@ -2,6 +2,7 @@ from typing import Any, Callable, cast
 
 from dishka.container import Container
 
+from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import (
@@ -24,11 +25,11 @@ def test_receive(
     products: list[Product] = container.dependencies[Product]
     product_inventory = ProductInventory(products)
 
-    products_snapshot = [item.to_dict() for item in products]
+    products_snapshot = [to_dto(item).model_dump() for item in products]
     shipment_summary: ShipmentSummary = shipment_receive_service.receive(
         product_inventory, shipment
     )
-    products_snapshot_after = [item.to_dict() for item in products]
+    products_snapshot_after = [to_dto(item).model_dump() for item in products]
 
     difference = get_difference(products_snapshot, products_snapshot_after)
 

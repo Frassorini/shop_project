@@ -1,26 +1,18 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Self
+from typing import Self
 from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
-from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
-class PurchaseDraftItem(PSnapshotable, StockItem):
+class PurchaseDraftItem(StockItem):
     product_id: UUID
     amount: int
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"product_id": self.product_id, "amount": self.amount}
-
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(snapshot["product_id"], snapshot["amount"])
 
 
 class PurchaseDraftState(Enum):
@@ -35,6 +27,11 @@ class PurchaseDraftStateMachine(BaseStateMachine[PurchaseDraftState]):
 
 
 class PurchaseDraft(PersistableEntity):
+    entity_id: UUID
+    customer_id: UUID
+    _items: dict[UUID, PurchaseDraftItem]
+    _state_machine: PurchaseDraftStateMachine
+
     def __init__(self, entity_id: UUID, customer_id: UUID) -> None:
         super().__init__()
         self.entity_id: UUID = entity_id
@@ -42,33 +39,26 @@ class PurchaseDraft(PersistableEntity):
         self._items: dict[UUID, PurchaseDraftItem] = {}
         self._state_machine = PurchaseDraftStateMachine(PurchaseDraftState.ACTIVE)
 
-    @property
-    def state(self) -> PurchaseDraftState:
-        return self._state_machine.state
-
     @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(
-            snapshot["entity_id"],
-            snapshot["customer_id"],
-        )
-        obj._state_machine = PurchaseDraftStateMachine(
-            PurchaseDraftState(snapshot["state"])
-        )
-        items: list[PurchaseDraftItem] = [
-            PurchaseDraftItem.from_dict(item) for item in snapshot["items"]
-        ]
+    def _load(
+        cls,
+        entity_id: UUID,
+        customer_id: UUID,
+        items: list[PurchaseDraftItem],
+        state: PurchaseDraftState,
+    ) -> Self:
+        obj = cls.__new__(cls)
+
+        obj.entity_id = entity_id
+        obj.customer_id = customer_id
         obj._items = {item.product_id: item for item in items}
+        obj._state_machine = PurchaseDraftStateMachine(state)
 
         return obj
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entity_id": self.entity_id,
-            "customer_id": self.customer_id,
-            "state": self.state.value,
-            "items": [item.to_dict() for item in self._items.values()],
-        }
+    @property
+    def state(self) -> PurchaseDraftState:
+        return self._state_machine.state
 
     def _validate_item(self, product_id: UUID, amount: int) -> None:
         if product_id in self._items:
@@ -90,6 +80,10 @@ class PurchaseDraft(PersistableEntity):
 
     def get_item(self, product_id: UUID) -> PurchaseDraftItem:
         return self._items[product_id]
+
+    @property
+    def items(self) -> list[PurchaseDraftItem]:
+        return list(self._items.values())
 
     def get_items(self) -> list[PurchaseDraftItem]:
         return list(self._items.values())

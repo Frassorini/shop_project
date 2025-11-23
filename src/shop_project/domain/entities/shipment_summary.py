@@ -1,28 +1,17 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Self
+from typing import Self
 from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
-from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
-class ShipmentSummaryItem(StockItem, PSnapshotable):
+class ShipmentSummaryItem(StockItem):
     product_id: UUID
     amount: int
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "product_id": self.product_id,
-            "amount": self.amount,
-        }
-
-    @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(snapshot["product_id"], snapshot["amount"])
 
     def _validate(self) -> None:
         if self.amount <= 0:
@@ -35,6 +24,10 @@ class ShipmentSummaryReason(Enum):
 
 
 class ShipmentSummary(PersistableEntity):
+    entity_id: UUID
+    reason: ShipmentSummaryReason
+    _items: dict[UUID, ShipmentSummaryItem]
+
     def __init__(
         self,
         entity_id: UUID,
@@ -50,20 +43,19 @@ class ShipmentSummary(PersistableEntity):
             self._validate_item(item)
             self._items[item.product_id] = item
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entity_id": self.entity_id,
-            "reason": self.reason.value,
-            "items": [item.to_dict() for item in self._items.values()],
-        }
-
     @classmethod
-    def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        obj = cls(
-            snapshot["entity_id"],
-            ShipmentSummaryReason(snapshot["reason"]),
-            [ShipmentSummaryItem.from_dict(item) for item in snapshot["items"]],
-        )
+    def _load(
+        cls,
+        entity_id: UUID,
+        reason: ShipmentSummaryReason,
+        items: list[ShipmentSummaryItem],
+    ) -> Self:
+        obj = cls.__new__(cls)
+
+        obj.entity_id = entity_id
+        obj.reason = reason
+        obj._items = {item.product_id: item for item in items}
+
         return obj
 
     def _validate_item(self, item: ShipmentSummaryItem) -> None:
@@ -72,6 +64,10 @@ class ShipmentSummary(PersistableEntity):
 
     def get_item(self, product_id: UUID) -> ShipmentSummaryItem:
         return self._items[product_id]
+
+    @property
+    def items(self) -> list[ShipmentSummaryItem]:
+        return list(self._items.values())
 
     def get_items(self) -> list[ShipmentSummaryItem]:
         return list(self._items.values())

@@ -31,12 +31,11 @@ class BaseRepository(Generic[T], ABC):
     async def delete(self, items: list[T]) -> None: ...
 
     async def load(self, query: BaseQuery) -> list[T]:
-        result = await self.session.execute(compile_query(query))
-        result = result.scalars().unique().all()
-        return [
-            self.model_type.from_dict(self.dto_type.model_validate(item).model_dump())
-            for item in result
-        ]
+        result_raw = await self.session.execute(compile_query(query))
+        result_orm = result_raw.scalars().unique().all()
+        result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
+
+        return result  # type: ignore
 
     async def load_scalars(self, query: BaseQuery) -> Any:
         result = await self.session.execute(compile_query(query))
