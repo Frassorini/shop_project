@@ -77,7 +77,7 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
             return
 
         # --- Удаляем сначала order_items ---
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(PurchaseActiveItemORM).where(
                 PurchaseActiveItemORM.purchase_active_id.in_(ids)

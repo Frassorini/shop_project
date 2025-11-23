@@ -1,11 +1,11 @@
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Self
+from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.shared.base_state_machine import BaseStateMachine
-from shop_project.shared.entity_id import EntityId
 
 
 class EscrowState(Enum):
@@ -29,10 +29,10 @@ class EscrowStateMachine(BaseStateMachine[EscrowState]):
 
 
 class EscrowAccount(PersistableEntity):
-    def __init__(self, entity_id: EntityId, total_amount: Decimal) -> None:
+    def __init__(self, entity_id: UUID, total_amount: Decimal) -> None:
         if total_amount <= 0:
             raise DomainException("Total amount must be positive")
-        self._entity_id = entity_id
+        self.entity_id = entity_id
         self.total_amount: Decimal = total_amount
         self._state_machine = EscrowStateMachine(EscrowState.PENDING)
 
@@ -42,7 +42,7 @@ class EscrowAccount(PersistableEntity):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "entity_id": self.entity_id.value,
+            "entity_id": self.entity_id,
             "total_amount": self.total_amount,
             "state": self.state.value,
         }
@@ -50,7 +50,7 @@ class EscrowAccount(PersistableEntity):
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         obj = cls.__new__(cls)
-        obj._entity_id = EntityId(snapshot["entity_id"])
+        obj.entity_id = snapshot["entity_id"]
         obj.total_amount = snapshot["total_amount"]
         obj._state_machine = EscrowStateMachine(EscrowState(snapshot["state"]))
         return obj

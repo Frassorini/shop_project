@@ -10,7 +10,6 @@ from shop_project.infrastructure.registries.resources_registry import ResourcesR
 from shop_project.infrastructure.resource_manager.resource_manager import (
     ResourceContainer,
 )
-from shop_project.shared.entity_id import EntityId
 
 
 def test_get_by_id(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
@@ -65,7 +64,7 @@ def test_get_by_id_not_found(
     container.put(PurchaseDraft, purchase_draft_1)
 
     with pytest.raises(ResourcesException):
-        container.get_by_id(PurchaseDraft, EntityId(uuid4()))
+        container.get_by_id(PurchaseDraft, uuid4())
 
 
 def test_snapshot_create(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:

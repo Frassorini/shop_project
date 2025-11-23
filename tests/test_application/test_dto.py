@@ -15,9 +15,9 @@ def test_to_dto(
 
     dto = to_dto(purchase_draft)
 
-    assert dto.entity_id == purchase_draft.entity_id.value
+    assert dto.entity_id == purchase_draft.entity_id
     assert dto.state == purchase_draft.state.value
-    assert dto.items[0].product_id == purchase_draft.get_items()[0].product_id.value
+    assert dto.items[0].product_id == purchase_draft.get_items()[0].product_id
 
 
 def test_to_domain(

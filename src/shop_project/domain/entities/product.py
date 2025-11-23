@@ -1,17 +1,15 @@
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 from shop_project.domain.exceptions import NegativeAmountException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.shared.entity_id import EntityId
 
 
 class Product(PersistableEntity):
-    def __init__(
-        self, entity_id: EntityId, name: str, amount: int, price: Decimal
-    ) -> None:
+    def __init__(self, entity_id: UUID, name: str, amount: int, price: Decimal) -> None:
         super().__init__()
-        self._entity_id: EntityId = entity_id
+        self.entity_id: UUID = entity_id
         self.name: str = name
         if amount < 0:
             raise NegativeAmountException("amount field must be >= 0")
@@ -21,7 +19,7 @@ class Product(PersistableEntity):
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> "Product":
         return cls(
-            entity_id=EntityId(snapshot["entity_id"]),
+            entity_id=snapshot["entity_id"],
             name=snapshot["name"],
             amount=snapshot["amount"],
             price=snapshot["price"],
@@ -29,7 +27,7 @@ class Product(PersistableEntity):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "entity_id": self.entity_id.value,
+            "entity_id": self.entity_id,
             "name": self.name,
             "amount": self._amount,
             "price": self.price,

@@ -1,16 +1,16 @@
 from decimal import Decimal
 from typing import Callable
+from uuid import UUID
 
 import pytest
 
 from shop_project.domain.entities.product import Product
-from shop_project.shared.entity_id import EntityId
 from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
 def product_factory(
-    unique_id_factory: Callable[[], EntityId],
+    unique_id_factory: Callable[[], UUID],
 ) -> Callable[..., Product]:
 
     def fact(*, name: str, amount: int, price: Decimal) -> Product:
@@ -22,7 +22,7 @@ def product_factory(
 
 @pytest.fixture
 def product_container_factory(
-    unique_id_factory: Callable[[], EntityId],
+    unique_id_factory: Callable[[], UUID],
 ) -> Callable[..., AggregateContainer]:
 
     def fact(*, name: str, amount: int, price: Decimal) -> AggregateContainer:

@@ -1,10 +1,10 @@
 from decimal import Decimal
+from uuid import uuid4
 
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.helpers.product_inventory import ProductInventory
-from shop_project.shared.entity_id import EntityId
 
 
 class CheckoutService:
@@ -31,6 +31,6 @@ class CheckoutService:
         if total_price <= 0:
             raise DomainException("Total price must be > 0")
 
-        escrow_account = EscrowAccount(EntityId.get_random(), total_price)
+        escrow_account = EscrowAccount(uuid4(), total_price)
 
         return escrow_account

@@ -1,8 +1,7 @@
 from typing import Protocol
-
-from shop_project.shared.entity_id import EntityId
+from uuid import UUID
 
 
 class StockItem(Protocol):
-    product_id: EntityId
+    product_id: UUID
     amount: int

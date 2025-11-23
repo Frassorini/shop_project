@@ -1,4 +1,5 @@
 from typing import Any, Type
+from uuid import UUID
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import UnitOfWorkException
@@ -18,7 +19,6 @@ from shop_project.infrastructure.repositories.repository_container import (
 from shop_project.infrastructure.resource_manager.resource_container import (
     ResourceContainer,
 )
-from shop_project.shared.entity_id import EntityId
 
 
 class ResourceManager:
@@ -79,5 +79,5 @@ class ResourceManager:
 
         await self.repository_container.save(sorted_diff)
 
-    def get_unique_id(self, model_type: type[PersistableEntity]) -> EntityId:
+    def get_unique_id(self, model_type: type[PersistableEntity]) -> UUID:
         return self.repository_container.get_unique_id(model_type)

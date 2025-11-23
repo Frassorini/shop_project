@@ -1,4 +1,5 @@
 from typing import Self, Type
+from uuid import UUID
 
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
@@ -6,7 +7,10 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 class EntitySnapshot:
     def __init__(self, snapshot: BaseDTO) -> None:
-        self.entity_id: str = snapshot.entity_id  # type: ignore
+        if not hasattr(snapshot, "entity_id"):
+            raise ValueError("Snapshot must have entity_id attribute")
+
+        self.entity_id: UUID = snapshot.entity_id  # type: ignore
         self.snapshot: BaseDTO = snapshot
 
     def compare_identity(self, other: Self) -> bool:

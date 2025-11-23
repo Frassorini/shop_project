@@ -77,7 +77,7 @@ class PurchaseSummaryRepository(BaseRepository[PurchaseSummary]):
             return
 
         # --- Удаляем сначала order_items ---
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(PurchaseSummaryItemORM).where(
                 PurchaseSummaryItemORM.purchase_summary_id.in_(ids)

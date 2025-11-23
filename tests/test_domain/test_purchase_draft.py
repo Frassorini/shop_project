@@ -65,7 +65,7 @@ def test_snapshot(
 
     snapshot = cart.to_dict()
 
-    assert snapshot["items"][0] == {"product_id": product.entity_id.value, "amount": 2}
+    assert snapshot["items"][0] == {"product_id": product.entity_id, "amount": 2}
 
 
 def test_from_snapshot(

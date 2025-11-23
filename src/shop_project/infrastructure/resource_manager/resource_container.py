@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Any, Literal, Sequence, Type, TypeVar, cast
+from uuid import UUID
 
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.mapper import to_dto
@@ -13,7 +14,6 @@ from shop_project.infrastructure.resource_manager.resource_snapshot import (
     EntitySnapshotSet,
     ResourceSnapshot,
 )
-from shop_project.shared.entity_id import EntityId
 
 T = TypeVar("T", bound=PersistableEntity)
 
@@ -120,7 +120,7 @@ class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
                 result.append(item)
         return result
 
-    def get_by_id(self, model_type: Type[T], entity_id: EntityId) -> T:
+    def get_by_id(self, model_type: Type[T], entity_id: UUID) -> T:
         result: list[T] = self.get_by_attribute(model_type, "entity_id", [entity_id])
 
         if not result:
@@ -131,7 +131,7 @@ class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
 
         return result[0]
 
-    def get_by_ids(self, model_type: Type[T], entity_ids: list[EntityId]) -> list[T]:
+    def get_by_ids(self, model_type: Type[T], entity_ids: list[UUID]) -> list[T]:
         result: list[T] = self.get_by_attribute(model_type, "entity_id", entity_ids)
 
         if not result:

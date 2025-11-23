@@ -1,7 +1,7 @@
 from typing import Any, Protocol, Sequence, Type, TypeVar
+from uuid import UUID
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.shared.entity_id import EntityId
 
 T = TypeVar("T", bound=PersistableEntity)
 
@@ -15,11 +15,9 @@ class IResourceContainer(Protocol):
         self, model_type: Type[T], attribute_name: str, values: list[Any]
     ) -> list[T]: ...
 
-    def get_by_id(self, model_type: Type[T], entity_id: EntityId) -> T: ...
+    def get_by_id(self, model_type: Type[T], entity_id: UUID) -> T: ...
 
-    def get_by_ids(
-        self, model_type: Type[T], entity_ids: list[EntityId]
-    ) -> list[T]: ...
+    def get_by_ids(self, model_type: Type[T], entity_ids: list[UUID]) -> list[T]: ...
 
     def get_all(self, model_type: Type[T]) -> Sequence[T]: ...
 

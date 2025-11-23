@@ -77,7 +77,7 @@ def test_load_from_previous(purchase_draft_factory: Callable[[], PurchaseDraft])
     query = ComposedQuery(
         PurchaseDraft,
         QueryCriteria().criterion_in(
-            "entity_id", ValueContainer([purchase_active.entity_id.value])
+            "entity_id", ValueContainer([purchase_active.entity_id])
         ),
         QueryLock.NO_LOCK,
     )

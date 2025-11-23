@@ -47,7 +47,7 @@ class EscrowAccountRepository(BaseRepository[EscrowAccount]):
         if not items:
             return
 
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(EscrowAccountORM).where(EscrowAccountORM.entity_id.in_(ids))
         )

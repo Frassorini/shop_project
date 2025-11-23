@@ -1,29 +1,29 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Self
+from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
-from shop_project.shared.entity_id import EntityId
 from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
 class ShipmentItem(StockItem, PSnapshotable):
-    product_id: EntityId
+    product_id: UUID
     amount: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "product_id": self.product_id.value,
+            "product_id": self.product_id,
             "amount": self.amount,
         }
 
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(EntityId(snapshot["product_id"]), snapshot["amount"])
+        return cls(snapshot["product_id"], snapshot["amount"])
 
     def _validate(self) -> None:
         if self.amount <= 0:
@@ -43,13 +43,13 @@ class ShipmentStateMachine(BaseStateMachine[ShipmentState]):
 
 
 class Shipment(PersistableEntity):
-    def __init__(self, entity_id: EntityId, items: list[ShipmentItem]) -> None:
-        self._entity_id: EntityId = entity_id
+    def __init__(self, entity_id: UUID, items: list[ShipmentItem]) -> None:
+        self.entity_id: UUID = entity_id
         self._state_machine: ShipmentStateMachine = ShipmentStateMachine(
             ShipmentState.ACTIVE
         )
 
-        self._items: dict[EntityId, ShipmentItem] = {}
+        self._items: dict[UUID, ShipmentItem] = {}
 
         for item in items:
             self._validate_item(item)
@@ -61,7 +61,7 @@ class Shipment(PersistableEntity):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "entity_id": self.entity_id.value,
+            "entity_id": self.entity_id,
             "state": self.state.value,
             "items": [item.to_dict() for item in self._items.values()],
         }
@@ -69,7 +69,7 @@ class Shipment(PersistableEntity):
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         obj = cls(
-            EntityId(snapshot["entity_id"]),
+            snapshot["entity_id"],
             [ShipmentItem.from_dict(item) for item in snapshot["items"]],
         )
         obj._state_machine = ShipmentStateMachine(ShipmentState(snapshot["state"]))
@@ -79,7 +79,7 @@ class Shipment(PersistableEntity):
         if item.product_id in self._items:
             raise DomainException("Item already added")
 
-    def get_item(self, product_id: EntityId) -> ShipmentItem:
+    def get_item(self, product_id: UUID) -> ShipmentItem:
         return self._items[product_id]
 
     def get_items(self) -> list[ShipmentItem]:

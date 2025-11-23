@@ -1,28 +1,28 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Self
+from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
-from shop_project.shared.entity_id import EntityId
 from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
 class ShipmentSummaryItem(StockItem, PSnapshotable):
-    product_id: EntityId
+    product_id: UUID
     amount: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "product_id": self.product_id.value,
+            "product_id": self.product_id,
             "amount": self.amount,
         }
 
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
-        return cls(EntityId(snapshot["product_id"]), snapshot["amount"])
+        return cls(snapshot["product_id"], snapshot["amount"])
 
     def _validate(self) -> None:
         if self.amount <= 0:
@@ -37,14 +37,14 @@ class ShipmentSummaryReason(Enum):
 class ShipmentSummary(PersistableEntity):
     def __init__(
         self,
-        entity_id: EntityId,
+        entity_id: UUID,
         reason: ShipmentSummaryReason,
         items: list[ShipmentSummaryItem],
     ) -> None:
-        self._entity_id: EntityId = entity_id
+        self.entity_id: UUID = entity_id
         self.reason = reason
 
-        self._items: dict[EntityId, ShipmentSummaryItem] = {}
+        self._items: dict[UUID, ShipmentSummaryItem] = {}
 
         for item in items:
             self._validate_item(item)
@@ -52,7 +52,7 @@ class ShipmentSummary(PersistableEntity):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "entity_id": self.entity_id.value,
+            "entity_id": self.entity_id,
             "reason": self.reason.value,
             "items": [item.to_dict() for item in self._items.values()],
         }
@@ -60,7 +60,7 @@ class ShipmentSummary(PersistableEntity):
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         obj = cls(
-            EntityId(snapshot["entity_id"]),
+            snapshot["entity_id"],
             ShipmentSummaryReason(snapshot["reason"]),
             [ShipmentSummaryItem.from_dict(item) for item in snapshot["items"]],
         )
@@ -70,7 +70,7 @@ class ShipmentSummary(PersistableEntity):
         if item.product_id in self._items:
             raise DomainException("Item already added")
 
-    def get_item(self, product_id: EntityId) -> ShipmentSummaryItem:
+    def get_item(self, product_id: UUID) -> ShipmentSummaryItem:
         return self._items[product_id]
 
     def get_items(self) -> list[ShipmentSummaryItem]:

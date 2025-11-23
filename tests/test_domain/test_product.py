@@ -1,30 +1,30 @@
 import copy
 from decimal import Decimal
 from typing import Callable
+from uuid import UUID
 
 import pytest
 
 from shop_project.domain.entities.product import Product
 from shop_project.domain.exceptions import DomainException, NegativeAmountException
-from shop_project.shared.entity_id import EntityId
 
 
-def test_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
+def test_snapshot(unique_id_factory: Callable[[], UUID]) -> None:
     item = Product(
         entity_id=unique_id_factory(), name="potatoes", amount=1, price=Decimal(1)
     )
     assert item.to_dict() == {
-        "entity_id": item.entity_id.value,
+        "entity_id": item.entity_id,
         "name": "potatoes",
         "amount": 1,
         "price": Decimal(1),
     }
 
 
-def test_from_snapshot(unique_id_factory: Callable[[], EntityId]) -> None:
+def test_from_snapshot(unique_id_factory: Callable[[], UUID]) -> None:
     item = Product.from_dict(
         {
-            "entity_id": unique_id_factory().value,
+            "entity_id": unique_id_factory(),
             "name": "potatoes",
             "amount": 1,
             "price": Decimal(1),
@@ -45,7 +45,7 @@ def test_product_add_amount(potatoes_product_1: Callable[[], Product]) -> None:
 
 
 def test_create_negative_amount_product(
-    unique_id_factory: Callable[[], EntityId],
+    unique_id_factory: Callable[[], UUID],
 ) -> None:
     with pytest.raises(NegativeAmountException):
         product = Product(

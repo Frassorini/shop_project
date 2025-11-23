@@ -77,7 +77,7 @@ class PurchaseDraftRepository(BaseRepository[PurchaseDraft]):
             return
 
         # --- Удаляем сначала order_items ---
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(PurchaseDraftItemORM).where(
                 PurchaseDraftItemORM.purchase_draft_id.in_(ids)

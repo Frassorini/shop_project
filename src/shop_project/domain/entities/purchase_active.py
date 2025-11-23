@@ -1,18 +1,18 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Self
+from uuid import UUID
 
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
-from shop_project.shared.entity_id import EntityId
 from shop_project.shared.p_snapshotable import PSnapshotable
 
 
 @dataclass(frozen=True)
 class PurchaseActiveItem(StockItem, PSnapshotable):
-    product_id: EntityId
+    product_id: UUID
     amount: int
 
     def __post_init__(self) -> None:
@@ -20,14 +20,14 @@ class PurchaseActiveItem(StockItem, PSnapshotable):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "product_id": self.product_id.value,
+            "product_id": self.product_id,
             "amount": self.amount,
         }
 
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         return cls(
-            product_id=EntityId(snapshot["product_id"]),
+            product_id=snapshot["product_id"],
             amount=snapshot["amount"],
         )
 
@@ -50,17 +50,17 @@ class PurchaseActiveStateMachine(BaseStateMachine[PurchaseActiveState]):
 class PurchaseActive(PersistableEntity):
     def __init__(
         self,
-        entity_id: EntityId,
-        customer_id: EntityId,
-        escrow_account_id: EntityId,
+        entity_id: UUID,
+        customer_id: UUID,
+        escrow_account_id: UUID,
         items: list[PurchaseActiveItem],
     ) -> None:
-        self._entity_id: EntityId = entity_id
+        self.entity_id: UUID = entity_id
 
-        self.customer_id: EntityId = customer_id
-        self.escrow_account_id: EntityId = escrow_account_id
+        self.customer_id: UUID = customer_id
+        self.escrow_account_id: UUID = escrow_account_id
 
-        self._items: dict[EntityId, PurchaseActiveItem] = {}
+        self._items: dict[UUID, PurchaseActiveItem] = {}
 
         self._state_machine = PurchaseActiveStateMachine(PurchaseActiveState.ACTIVE)
 
@@ -75,9 +75,9 @@ class PurchaseActive(PersistableEntity):
     @classmethod
     def from_dict(cls, snapshot: dict[str, Any]) -> Self:
         obj = cls(
-            EntityId(snapshot["entity_id"]),
-            EntityId(snapshot["customer_id"]),
-            EntityId(snapshot["escrow_account_id"]),
+            snapshot["entity_id"],
+            snapshot["customer_id"],
+            snapshot["escrow_account_id"],
             [PurchaseActiveItem.from_dict(item) for item in snapshot["items"]],
         )
         obj._state_machine = PurchaseActiveStateMachine(
@@ -87,9 +87,9 @@ class PurchaseActive(PersistableEntity):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "entity_id": self.entity_id.value,
-            "customer_id": self.customer_id.value,
-            "escrow_account_id": self.escrow_account_id.value,
+            "entity_id": self.entity_id,
+            "customer_id": self.customer_id,
+            "escrow_account_id": self.escrow_account_id,
             "state": self.state.value,
             "items": [item.to_dict() for item in self._items.values()],
         }
@@ -98,7 +98,7 @@ class PurchaseActive(PersistableEntity):
         if item.product_id in self._items:
             raise DomainException("Item already added")
 
-    def get_item(self, product_id: EntityId) -> PurchaseActiveItem:
+    def get_item(self, product_id: UUID) -> PurchaseActiveItem:
         return self._items[product_id]
 
     def get_items(self) -> list[PurchaseActiveItem]:

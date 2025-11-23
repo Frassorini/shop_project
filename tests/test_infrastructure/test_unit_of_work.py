@@ -36,7 +36,7 @@ async def test_customer(
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(model_type)
-        .from_id([domain_container.aggregate.entity_id.value])
+        .from_id([domain_container.aggregate.entity_id])
         .for_update()
         .build()
     ) as uow:
@@ -60,7 +60,7 @@ async def test_customer(
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(model_type)
-        .from_id([domain_container.aggregate.entity_id.value])
+        .from_id([domain_container.aggregate.entity_id])
         .for_update()
         .build()
     ) as uow:
@@ -98,7 +98,7 @@ async def test_purchase_draft(
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(model_type)
-        .from_id([domain_container.aggregate.entity_id.value])
+        .from_id([domain_container.aggregate.entity_id])
         .for_update()
         .load(Product)
         .from_previous()
@@ -148,7 +148,7 @@ async def test_uow_purchase_claim(
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(PurchaseActive)
-        .from_id([purchase_active_container.aggregate.entity_id.value])
+        .from_id([purchase_active_container.aggregate.entity_id])
         .for_update()
         .load(EscrowAccount)
         .from_previous()
@@ -222,7 +222,7 @@ async def test_product(
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(model_type)
-        .from_id([domain_container.aggregate.entity_id.value])
+        .from_id([domain_container.aggregate.entity_id])
         .for_update()
         .build()
     ) as uow:
@@ -266,7 +266,7 @@ async def test_shipment(
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(Shipment)
-        .from_id([shipment_container.aggregate.entity_id.value])
+        .from_id([shipment_container.aggregate.entity_id])
         .for_update()
         .build()
     ) as uow:

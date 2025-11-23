@@ -1,14 +1,14 @@
 from collections.abc import Sequence
+from uuid import UUID
 
 from shop_project.domain.entities.product import Product
 from shop_project.domain.exceptions import DomainException
 from shop_project.domain.interfaces.stock_item import StockItem
-from shop_project.shared.entity_id import EntityId
 
 
 class ProductInventory:
     def __init__(self, stock: Sequence[Product]) -> None:
-        self._stock: dict[EntityId, Product] = {item.entity_id: item for item in stock}
+        self._stock: dict[UUID, Product] = {item.entity_id: item for item in stock}
 
     def _ensure_stock_is_valid(self, items: Sequence[StockItem]) -> None:
         for order_item in items:
@@ -40,5 +40,5 @@ class ProductInventory:
     def check_stock_validity(self, items: Sequence[StockItem]) -> None:
         self._ensure_stock_is_valid(items)
 
-    def get_item(self, product_id: EntityId) -> Product:
+    def get_item(self, product_id: UUID) -> Product:
         return self._stock[product_id]

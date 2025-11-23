@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import (
     ShipmentSummary,
@@ -5,7 +7,6 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummaryReason,
 )
 from shop_project.domain.exceptions import DomainException
-from shop_project.shared.entity_id import EntityId
 
 
 class ShipmentSummaryService:
@@ -35,7 +36,7 @@ class ShipmentSummaryService:
             )
 
         shipment_summary = ShipmentSummary(
-            entity_id=EntityId.get_random(), reason=reason, items=shipment_summary_items
+            entity_id=uuid4(), reason=reason, items=shipment_summary_items
         )
 
         shipment.finalize()

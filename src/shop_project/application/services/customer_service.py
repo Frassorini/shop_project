@@ -10,7 +10,6 @@ from shop_project.application.schemas.customer_schema_default import (
     CustomerSchemaDefault,
 )
 from shop_project.domain.entities.customer import Customer
-from shop_project.shared.entity_id import EntityId
 
 
 class CustomerService:
@@ -23,7 +22,7 @@ class CustomerService:
         self._query_builder_type: Type[IQueryBuilder] = query_builder_type
 
     async def read_by_id(self, ids: list[UUID]) -> list[CustomerSchemaDefault]:
-        entity_ids = [EntityId(id) for id in ids]
+        entity_ids = [id_ for id_ in ids]
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
             .load(Customer)

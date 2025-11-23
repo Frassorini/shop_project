@@ -1,15 +1,13 @@
 from typing import Callable
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
-from shop_project.shared.entity_id import EntityId
-
 
 @pytest.fixture
-def unique_id_factory() -> Callable[[], EntityId]:
+def unique_id_factory() -> Callable[[], UUID]:
 
-    def fact() -> EntityId:
-        return EntityId(uuid4())
+    def fact() -> UUID:
+        return uuid4()
 
     return fact

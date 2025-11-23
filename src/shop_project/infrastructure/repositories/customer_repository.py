@@ -46,7 +46,7 @@ class CustomerRepository(BaseRepository[Customer]):
         if not items:
             return
 
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(CustomerORM).where(CustomerORM.entity_id.in_(ids))
         )

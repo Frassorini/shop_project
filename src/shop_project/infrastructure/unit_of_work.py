@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+from uuid import UUID
 
 from shop_project.application.interfaces.interface_query_plan import IQueryPlan
 from shop_project.application.interfaces.interface_unit_of_work import (
@@ -27,7 +28,6 @@ from shop_project.infrastructure.resource_manager.resource_container import (
 from shop_project.infrastructure.resource_manager.resource_manager import (
     ResourceManager,
 )
-from shop_project.shared.entity_id import EntityId
 
 
 class UnitOfWork(IUnitOfWork):
@@ -38,7 +38,7 @@ class UnitOfWork(IUnitOfWork):
     def get_resorces(self) -> ResourceContainer:
         return self.resource_manager.resource_container
 
-    def get_unique_id(self, model_type: type[PersistableEntity]) -> EntityId:
+    def get_unique_id(self, model_type: type[PersistableEntity]) -> UUID:
         return self.resource_manager.get_unique_id(model_type)
 
     def mark_commit(self) -> None:

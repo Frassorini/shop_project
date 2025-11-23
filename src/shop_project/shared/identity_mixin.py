@@ -1,22 +1,10 @@
 from abc import ABC
-from typing import Any, Protocol, override
-
-from shop_project.shared.entity_id import EntityId
-
-
-class PIdentity(Protocol):
-    @property
-    def entity_id(self) -> EntityId: ...
-
-    def __eq__(self, value: Any, /) -> bool: ...
+from typing import Any, override
+from uuid import UUID
 
 
-class IdentityMixin(ABC, PIdentity):
-    _entity_id: EntityId
-
-    @property
-    def entity_id(self) -> EntityId:
-        return self._entity_id
+class IdentityMixin(ABC):
+    entity_id: UUID
 
     @override
     def __eq__(self, value: Any, /) -> bool:

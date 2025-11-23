@@ -1,4 +1,5 @@
 from typing import Any, Literal, Mapping, Type
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,7 +7,6 @@ from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.query.base_query import BaseQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
-from shop_project.shared.entity_id import EntityId
 
 
 class RepositoryContainer:
@@ -34,7 +34,7 @@ class RepositoryContainer:
         for entity_type, difference in resource_changes_snapshot.items():
             await self.repositories[entity_type].save(difference)
 
-    def get_unique_id(self, model_type: type[PersistableEntity]) -> EntityId:
+    def get_unique_id(self, model_type: type[PersistableEntity]) -> UUID:
         raise NotImplementedError
 
 

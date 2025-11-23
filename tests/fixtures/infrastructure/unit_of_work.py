@@ -37,7 +37,7 @@ def uow_delete_and_check(
         async with uow_factory.create(
             QueryBuilder(mutating=True)
             .load(model_type)
-            .from_id([domain_object.entity_id.value])
+            .from_id([domain_object.entity_id])
             .for_update()
             .build()
         ) as uow:
@@ -69,7 +69,7 @@ def uow_check(
         async with uow_factory.create(
             QueryBuilder(mutating=False)
             .load(model_type)
-            .from_id([domain_object.entity_id.value])
+            .from_id([domain_object.entity_id])
             .no_lock()
             .build()
         ) as uow:

@@ -46,7 +46,7 @@ class ProductRepository(BaseRepository[Product]):
         if not items:
             return
 
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(ProductORM).where(ProductORM.entity_id.in_(ids))
         )

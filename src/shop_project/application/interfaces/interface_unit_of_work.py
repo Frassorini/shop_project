@@ -1,17 +1,17 @@
 from typing import AsyncContextManager, Protocol
+from uuid import UUID
 
 from shop_project.application.interfaces.interface_query_plan import IQueryPlan
 from shop_project.application.interfaces.interface_resource_container import (
     IResourceContainer,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.shared.entity_id import EntityId
 
 
 class IUnitOfWork(Protocol):
     def get_resorces(self) -> IResourceContainer: ...
 
-    def get_unique_id(self, model_type: type[PersistableEntity]) -> EntityId: ...
+    def get_unique_id(self, model_type: type[PersistableEntity]) -> UUID: ...
 
     def mark_commit(self) -> None: ...
 

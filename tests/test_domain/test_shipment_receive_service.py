@@ -10,7 +10,6 @@ from shop_project.domain.entities.shipment_summary import (
 )
 from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
-from shop_project.shared.entity_id import EntityId
 from tests.helpers import AggregateContainer
 
 
@@ -34,10 +33,7 @@ def test_receive(
     difference = get_difference(products_snapshot, products_snapshot_after)
 
     for item in difference:
-        assert (
-            item["difference"]
-            == shipment_summary.get_item(EntityId(item["entity_id"])).amount
-        )
+        assert item["difference"] == shipment_summary.get_item(item["entity_id"]).amount
 
     assert shipment_summary.reason == ShipmentSummaryReason.RECEIVED
 

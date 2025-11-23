@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_summary import (
     PurchaseSummary,
@@ -5,7 +7,6 @@ from shop_project.domain.entities.purchase_summary import (
     PurchaseSummaryReason,
 )
 from shop_project.domain.exceptions import DomainException
-from shop_project.shared.entity_id import EntityId
 
 
 class PurchaseSummaryService:
@@ -39,7 +40,7 @@ class PurchaseSummaryService:
 
         purchase_summary = PurchaseSummary(
             customer_id=purchase.customer_id,
-            entity_id=EntityId.get_random(),
+            entity_id=uuid4(),
             escrow_account_id=purchase.escrow_account_id,
             reason=reason,
             items=purchase_summary_items,

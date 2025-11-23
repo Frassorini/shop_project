@@ -72,7 +72,7 @@ class ShipmentSummaryRepository(BaseRepository[ShipmentSummary]):
             return
 
         # --- Удаляем сначала shipment_items ---
-        ids = [item.entity_id.value for item in items]
+        ids = [item.entity_id for item in items]
         await self.session.execute(
             delete(ShipmentSummaryItemORM).where(
                 ShipmentSummaryItemORM.shipment_summary_id.in_(ids)

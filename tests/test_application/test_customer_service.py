@@ -27,7 +27,7 @@ async def test_customer(
     service = await async_container.get(CustomerService)
 
     result: list[CustomerSchemaDefault] = await service.read_by_id(
-        [aggregate.entity_id.value]
+        [aggregate.entity_id]
     )
 
     assert len(result) == 1

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.purchase_active import (
     PurchaseActive,
@@ -5,7 +7,6 @@ from shop_project.domain.entities.purchase_active import (
 )
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.helpers.product_inventory import ProductInventory
-from shop_project.shared.entity_id import EntityId
 
 
 class PurchaseReservationService:
@@ -29,7 +30,7 @@ class PurchaseReservationService:
 
         purchase_active = PurchaseActive(
             customer_id=purchase_draft.customer_id,
-            entity_id=EntityId.get_random(),
+            entity_id=uuid4(),
             escrow_account_id=escrow_account.entity_id,
             items=purchase_active_items,
         )

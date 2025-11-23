@@ -14,15 +14,14 @@ from shop_project.infrastructure.repositories.customer_repository import (
 from shop_project.infrastructure.resource_manager.resource_container import (
     ResourceContainer,
 )
-from shop_project.shared.entity_id import EntityId
 
 
 def get_customers() -> list[Customer]:
     return [
-        Customer(entity_id=EntityId(uuid4()), name="user_1"),
-        Customer(entity_id=EntityId(uuid4()), name="user_2"),
-        Customer(entity_id=EntityId(uuid4()), name="user_3"),
-        Customer(entity_id=EntityId(uuid4()), name="user_4"),
+        Customer(entity_id=uuid4(), name="user_1"),
+        Customer(entity_id=uuid4(), name="user_2"),
+        Customer(entity_id=uuid4(), name="user_3"),
+        Customer(entity_id=uuid4(), name="user_4"),
     ]
 
 
@@ -51,7 +50,7 @@ async def test_from_id(
     ],
 ) -> None:
     uuid_id = uuid4()
-    customer = Customer(entity_id=EntityId(uuid_id), name="user_1")
+    customer = Customer(entity_id=uuid_id, name="user_1")
 
     await fill_database({Customer: cast(list[PersistableEntity], [customer])})
     async with test_db.create_session() as session:
@@ -139,9 +138,7 @@ async def test_repository_generic_create(
 
         resources = ResourceContainer(resources_registry=ResourcesRegistry.get_map())
         resources.take_snapshot()
-        resources.put(
-            Customer, Customer(entity_id=EntityId(uuid_id), name="Bear Lover")
-        )
+        resources.put(Customer, Customer(entity_id=uuid_id, name="Bear Lover"))
         resources.take_snapshot()
         await repository.save(resources.get_resource_changes()[Customer])
 
