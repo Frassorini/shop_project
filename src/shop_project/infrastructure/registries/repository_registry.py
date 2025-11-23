@@ -1,7 +1,9 @@
 from typing import Any, Mapping, Type
 
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
@@ -13,8 +15,14 @@ from shop_project.infrastructure.repositories.base_repository import BaseReposit
 from shop_project.infrastructure.repositories.customer_repository import (
     CustomerRepository,
 )
+from shop_project.infrastructure.repositories.employee_repository import (
+    EmployeeRepository,
+)
 from shop_project.infrastructure.repositories.escrow_account_repository import (
     EscrowAccountRepository,
+)
+from shop_project.infrastructure.repositories.manager_repository import (
+    ManagerRepository,
 )
 from shop_project.infrastructure.repositories.product_repository import (
     ProductRepository,
@@ -36,6 +44,8 @@ from shop_project.infrastructure.repositories.shipment_summary_repository import
 )
 
 _REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
+    Manager: ManagerRepository,
+    Employee: EmployeeRepository,
     Customer: CustomerRepository,
     PurchaseDraft: PurchaseDraftRepository,
     PurchaseActive: PurchaseActiveRepository,

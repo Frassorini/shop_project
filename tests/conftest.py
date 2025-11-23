@@ -23,6 +23,8 @@ pytest_plugins = [
     "tests.fixtures.infrastructure.repository",
     "tests.fixtures.infrastructure.dependency_injection",
     "tests.fixtures.shared.unique_id",
+    "tests.fixtures.domain.manager",
+    "tests.fixtures.domain.employee",
     "tests.fixtures.domain.product",
     "tests.fixtures.domain.customer",
     "tests.fixtures.domain.purchase_draft",

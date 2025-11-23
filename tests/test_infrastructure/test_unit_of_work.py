@@ -5,7 +5,9 @@ from dishka.container import Container
 
 from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
@@ -19,6 +21,120 @@ from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from tests.helpers import AggregateContainer
+
+
+@pytest.mark.asyncio
+async def test_manager(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = Manager
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj: Manager = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.name = "new name"
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+
+
+@pytest.mark.asyncio
+async def test_employee(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = Employee
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj: Employee = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.name = "new name"
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
 
 @pytest.mark.asyncio

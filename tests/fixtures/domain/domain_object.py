@@ -3,6 +3,8 @@ from typing import Callable, Type
 import pytest
 
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
@@ -13,6 +15,8 @@ from tests.helpers import AggregateContainer
 
 @pytest.fixture
 def domain_object_factory(
+    manager_tom: Callable[[], Manager],
+    employee_bob: Callable[[], Employee],
     customer_andrew: Callable[[], Customer],
     purchase_active_filled_container_factory: Callable[[], AggregateContainer],
     shipment_conatiner_factory: Callable[[], AggregateContainer],
@@ -20,7 +24,11 @@ def domain_object_factory(
     product_container_factory: Callable[..., AggregateContainer],
 ) -> Callable[[Type[PersistableEntity]], AggregateContainer]:
     def factory(model_type: Type[PersistableEntity]) -> AggregateContainer:
-        if model_type is Customer:
+        if model_type is Manager:
+            return AggregateContainer(manager_tom(), dependencies={})
+        if model_type is Employee:
+            return AggregateContainer(employee_bob(), dependencies={})
+        elif model_type is Customer:
             return AggregateContainer(customer_andrew(), dependencies={})
         elif model_type is PurchaseActive:
             return purchase_active_filled_container_factory()

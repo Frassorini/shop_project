@@ -6,7 +6,9 @@ from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.sql import select
 
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
@@ -15,9 +17,11 @@ from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.database.models.customer import Customer as CustomerORM
+from shop_project.infrastructure.database.models.employee import Employee as EmployeeORM
 from shop_project.infrastructure.database.models.escrow_account import (
     EscrowAccount as EscrowAccountORM,
 )
+from shop_project.infrastructure.database.models.manager import Manager as ManagerORM
 from shop_project.infrastructure.database.models.product import Product as ProductORM
 from shop_project.infrastructure.database.models.purchase_active import (
     PurchaseActive as PurchaseActiveORM,
@@ -60,6 +64,18 @@ def _apply_lock(query: Any, lock: QueryLock, of: list[Any]):
 def _compile_composed_query(model_type: Type[Customer], query: ComposedQuery) -> Any:
     base_query = select(CustomerORM).where(query.criteria.to_sqlalchemy(CustomerORM))
     return _apply_lock(base_query, query.lock, [CustomerORM])
+
+
+@overload
+def _compile_composed_query(model_type: Type[Manager], query: ComposedQuery) -> Any:
+    base_query = select(ManagerORM).where(query.criteria.to_sqlalchemy(ManagerORM))
+    return _apply_lock(base_query, query.lock, [ManagerORM])
+
+
+@overload
+def _compile_composed_query(model_type: Type[Employee], query: ComposedQuery) -> Any:
+    base_query = select(EmployeeORM).where(query.criteria.to_sqlalchemy(EmployeeORM))
+    return _apply_lock(base_query, query.lock, [EmployeeORM])
 
 
 @overload

@@ -1,7 +1,9 @@
 from typing import Any, Type
 
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
@@ -11,14 +13,16 @@ from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 _REGISTRY: dict[Type[PersistableEntity], int] = {
-    Customer: 0,
-    PurchaseDraft: 1,
-    PurchaseActive: 2,
-    PurchaseSummary: 3,
-    EscrowAccount: 4,
-    Shipment: 5,
-    ShipmentSummary: 6,
-    Product: 7,
+    Manager: 0,
+    Employee: 1,
+    Customer: 2,
+    PurchaseDraft: 3,
+    PurchaseActive: 4,
+    PurchaseSummary: 5,
+    EscrowAccount: 6,
+    Shipment: 7,
+    ShipmentSummary: 8,
+    Product: 9,
 }
 
 

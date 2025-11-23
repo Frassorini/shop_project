@@ -4,7 +4,9 @@ from plum import dispatch, overload
 
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.customer_dto import CustomerDTO
+from shop_project.application.dto.employee_dto import EmployeeDTO
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
+from shop_project.application.dto.manager_dto import ManagerDTO
 from shop_project.application.dto.product_dto import ProductDTO
 from shop_project.application.dto.purchase_active_dto import (
     PurchaseActiveDTO,
@@ -24,10 +26,12 @@ from shop_project.application.dto.shipment_summary_dto import (
     ShipmentSummaryItemDTO,
 )
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import (
     EscrowAccount,
     EscrowAccountState,
 )
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import (
     PurchaseActive,
@@ -56,6 +60,22 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 @overload
 def to_dto(domain_object: Customer) -> CustomerDTO:
     return CustomerDTO(
+        entity_id=domain_object.entity_id,
+        name=domain_object.name,
+    )
+
+
+@overload
+def to_dto(domain_object: Manager) -> ManagerDTO:
+    return ManagerDTO(
+        entity_id=domain_object.entity_id,
+        name=domain_object.name,
+    )
+
+
+@overload
+def to_dto(domain_object: Employee) -> EmployeeDTO:
+    return EmployeeDTO(
         entity_id=domain_object.entity_id,
         name=domain_object.name,
     )
@@ -151,6 +171,22 @@ def to_dto(domain_object: Any) -> Any:
 @overload
 def to_domain(dto_object: CustomerDTO) -> Customer:
     return Customer._load(  # type: ignore[access-private]
+        entity_id=dto_object.entity_id,
+        name=dto_object.name,
+    )
+
+
+@overload
+def to_domain(dto_object: ManagerDTO) -> Manager:
+    return Manager._load(  # type: ignore[access-private]
+        entity_id=dto_object.entity_id,
+        name=dto_object.name,
+    )
+
+
+@overload
+def to_domain(dto_object: EmployeeDTO) -> Employee:
+    return Employee._load(  # type: ignore[access-private]
         entity_id=dto_object.entity_id,
         name=dto_object.name,
     )
