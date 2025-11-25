@@ -1,14 +1,19 @@
 from typing import Any
 
+from sqlalchemy import select
+from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.sql import delete, insert, update
 
-from shop_project.application.dto.mapper import to_dto
+from shop_project.application.dto.mapper import to_domain, to_dto
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.infrastructure.database.models.purchase_active import (
     PurchaseActive as PurchaseActiveORM,
     PurchaseActiveItem as PurchaseActiveItemORM,
 )
+from shop_project.infrastructure.query.base_query import BaseQuery
+from shop_project.infrastructure.query.composed_query import ComposedQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
@@ -89,3 +94,27 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
         await self.session.execute(
             delete(PurchaseActiveORM).where(PurchaseActiveORM.entity_id.in_(ids))
         )
+
+    async def load(self, query: BaseQuery) -> list[PurchaseActive]:
+        if isinstance(query, ComposedQuery):
+            item_alias = aliased(PurchaseActiveItemORM, name="customer_order_item")
+
+            base_query = (
+                select(PurchaseActiveORM)
+                .outerjoin(item_alias, PurchaseActiveORM.items)
+                .where(query.criteria.to_sqlalchemy(PurchaseActiveORM))
+                .options(joinedload(PurchaseActiveORM.items))
+            )
+            base_query = self._apply_lock(
+                base_query, query.lock, [PurchaseActiveORM, item_alias]
+            )
+        elif isinstance(query, CustomQuery):
+            base_query = query.compile_sqlalchemy()
+        else:
+            raise ValueError(f"Unknown query type: {type(query)}")
+
+        result_raw = await self.session.execute(base_query)
+        result_orm = result_raw.scalars().unique().all()
+        result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
+
+        return result  # type: ignore

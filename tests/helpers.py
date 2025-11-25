@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Self, Type, TypeVar
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
@@ -37,3 +37,10 @@ class AggregateContainer:
     ) -> None:
         self.aggregate = aggregate
         self.dependencies = AggregateDependencies(dependencies)
+
+    def merge(self, other: Self) -> Self:
+        for dependency_type, dependencies in other.dependencies.dependencies.items():
+            self.dependencies.dependencies.setdefault(dependency_type, []).extend(
+                dependencies
+            )
+        return self

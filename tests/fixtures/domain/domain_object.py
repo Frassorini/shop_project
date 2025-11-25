@@ -15,9 +15,9 @@ from tests.helpers import AggregateContainer
 
 @pytest.fixture
 def domain_object_factory(
-    manager_tom: Callable[[], Manager],
-    employee_bob: Callable[[], Employee],
-    customer_andrew: Callable[[], Customer],
+    manager_container_factory: Callable[..., AggregateContainer],
+    employee_container_factory: Callable[..., AggregateContainer],
+    customer_container_factory: Callable[..., AggregateContainer],
     purchase_active_filled_container_factory: Callable[[], AggregateContainer],
     shipment_conatiner_factory: Callable[[], AggregateContainer],
     purchase_draft_container_factory: Callable[[], AggregateContainer],
@@ -25,11 +25,11 @@ def domain_object_factory(
 ) -> Callable[[Type[PersistableEntity]], AggregateContainer]:
     def factory(model_type: Type[PersistableEntity]) -> AggregateContainer:
         if model_type is Manager:
-            return AggregateContainer(manager_tom(), dependencies={})
+            return manager_container_factory()
         if model_type is Employee:
-            return AggregateContainer(employee_bob(), dependencies={})
+            return employee_container_factory()
         elif model_type is Customer:
-            return AggregateContainer(customer_andrew(), dependencies={})
+            return customer_container_factory()
         elif model_type is PurchaseActive:
             return purchase_active_filled_container_factory()
         elif model_type is Shipment:

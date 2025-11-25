@@ -9,10 +9,8 @@ from sqlalchemy.sql import and_, case, delete, insert
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.mapper import to_domain
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.query.base_query import BaseQuery
-from shop_project.infrastructure.query.queries.sqlalchemy_query_compiler import (
-    compile_query,
-)
+from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
+from shop_project.infrastructure.query.custom_query import CustomQuery
 
 T = TypeVar("T", bound=PersistableEntity)
 
@@ -30,15 +28,10 @@ class BaseRepository(Generic[T], ABC):
 
     async def delete(self, items: list[T]) -> None: ...
 
-    async def load(self, query: BaseQuery) -> list[T]:
-        result_raw = await self.session.execute(compile_query(query))
-        result_orm = result_raw.scalars().unique().all()
-        result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
+    async def load(self, query: BaseQuery) -> list[T]: ...
 
-        return result  # type: ignore
-
-    async def load_scalars(self, query: BaseQuery) -> Any:
-        result = await self.session.execute(compile_query(query))
+    async def load_scalars(self, query: CustomQuery) -> Any:
+        result = await self.session.execute(query.compile_sqlalchemy())
         return result.scalars().unique().all()
 
     async def save(
@@ -110,3 +103,11 @@ class BaseRepository(Generic[T], ABC):
                 for idx, snap in enumerate(snapshots)
             )
         )
+
+    @staticmethod
+    def _apply_lock(query: Any, lock: QueryLock, of: list[Any]):
+        if lock == QueryLock.EXCLUSIVE:
+            return query.with_for_update(of=of)
+        elif lock == QueryLock.SHARED:
+            return query.with_for_update(read=True, of=of)
+        return query

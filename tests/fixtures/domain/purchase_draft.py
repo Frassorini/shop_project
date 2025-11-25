@@ -23,15 +23,20 @@ def purchase_draft_factory(
 
 @pytest.fixture
 def purchase_draft_container_factory(
-    unique_id_factory: Callable[[], UUID], customer_andrew: Callable[[], Customer]
+    unique_id_factory: Callable[[], UUID],
+    customer_container_factory: Callable[..., AggregateContainer],
 ) -> Callable[[], AggregateContainer]:
     def factory() -> AggregateContainer:
-        customer = customer_andrew()
+        customer_container = customer_container_factory()
+        customer = customer_container.aggregate
         cart = PurchaseDraft(unique_id_factory(), customer_id=customer.entity_id)
 
         container = AggregateContainer(
             aggregate=cart, dependencies={Customer: [customer]}
         )
+
+        container.merge(customer_container)
+
         return container
 
     return factory

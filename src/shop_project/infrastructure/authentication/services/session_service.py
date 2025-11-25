@@ -5,12 +5,6 @@ from plum import dispatch, overload
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
-from shop_project.infrastructure.authentication.entities.auth_session import (
-    AuthSession,
-    CustomerSession,
-    EmployeeSession,
-    ManagerSession,
-)
 from shop_project.infrastructure.authentication.exceptions import (
     AuthSessionExpiredException,
 )
@@ -22,6 +16,9 @@ from shop_project.infrastructure.authentication.helpers.subject import Subject
 from shop_project.infrastructure.cryptography.interfaces.jwt_signer import JWTSigner
 from shop_project.infrastructure.cryptography.interfaces.random_data_generator import (
     RandomDataGenerator,
+)
+from shop_project.infrastructure.entities.auth_session import (
+    AuthSession,
 )
 
 
@@ -43,26 +40,29 @@ class SessionService:
 
     @overload
     def create_session(self, subject: Customer) -> AuthSession:
-        return CustomerSession(
-            subject_id=subject.entity_id,
-            ttl=self.refresh_ttl,
+        return AuthSession(
+            entity_id=subject.entity_id,
             refresh_token=self.rand_datagen.generate(),
+            issued_at=datetime.now(tz=timezone.utc),
+            expires_at=datetime.now(tz=timezone.utc) + self.refresh_ttl,
         )
 
     @overload
     def create_session(self, subject: Employee) -> AuthSession:
-        return EmployeeSession(
-            subject_id=subject.entity_id,
-            ttl=self.refresh_ttl,
+        return AuthSession(
+            entity_id=subject.entity_id,
             refresh_token=self.rand_datagen.generate(),
+            issued_at=datetime.now(tz=timezone.utc),
+            expires_at=datetime.now(tz=timezone.utc) + self.refresh_ttl,
         )
 
     @overload
     def create_session(self, subject: Manager) -> AuthSession:
-        return ManagerSession(
-            subject_id=subject.entity_id,
-            ttl=self.refresh_ttl,
+        return AuthSession(
+            entity_id=subject.entity_id,
             refresh_token=self.rand_datagen.generate(),
+            issued_at=datetime.now(tz=timezone.utc),
+            expires_at=datetime.now(tz=timezone.utc) + self.refresh_ttl,
         )
 
     @dispatch

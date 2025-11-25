@@ -262,8 +262,13 @@ async def test_uow_purchase_claim(
         PurchaseActive
     )
 
+    # customer = purchase_active_container.dependencies[Customer][0]
+
     async with uow_factory.create(
         QueryBuilder(mutating=True)
+        .load(Customer)
+        .from_id([purchase_active_container.aggregate.customer_id])
+        .for_update()
         .load(PurchaseActive)
         .from_id([purchase_active_container.aggregate.entity_id])
         .for_update()
@@ -271,12 +276,16 @@ async def test_uow_purchase_claim(
         .from_previous()
         .for_update()
         .load(Product)
-        .from_previous(0)
+        .from_previous(1)
         .for_update()
         .build()
     ) as uow:
         resources = uow.get_resorces()
         purchase_claim_service = domain_container.get(PurchaseClaimService)
+        customer = resources.get_by_id(
+            Customer, purchase_active_container.aggregate.customer_id
+        )
+        print(customer)
         purchase_active: PurchaseActive = resources.get_by_id(
             PurchaseActive, purchase_active_container.aggregate.entity_id
         )

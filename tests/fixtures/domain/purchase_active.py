@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, cast
 
 import pytest
 from dishka.container import Container
@@ -43,7 +43,7 @@ def purchase_active_filled_factory(
 
 @pytest.fixture
 def purchase_active_filled_container_factory(
-    purchase_draft_factory: Callable[[], PurchaseDraft],
+    purchase_draft_container_factory: Callable[[], AggregateContainer],
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
     domain_container: Container,
@@ -51,7 +51,10 @@ def purchase_active_filled_container_factory(
     def factory() -> AggregateContainer:
         purchase_activation_service = domain_container.get(PurchaseActivationService)
 
-        purchase_draft = purchase_draft_factory()
+        purchase_draft_container = purchase_draft_container_factory()
+        purchase_draft: PurchaseDraft = cast(
+            PurchaseDraft, purchase_draft_container.aggregate
+        )
         potatoes = potatoes_product_10()
         sausages = sausages_product_10()
         purchase_draft.add_item(potatoes.entity_id, 10)
@@ -70,6 +73,7 @@ def purchase_active_filled_container_factory(
                 Product: [potatoes, sausages],
             },
         )
+        container.merge(purchase_draft_container)
 
         return container
 

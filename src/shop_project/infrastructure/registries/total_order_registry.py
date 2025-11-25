@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Type
 
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
@@ -11,19 +11,21 @@ from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.entities.account import Account
 
-_REGISTRY: dict[Type[PersistableEntity], int] = {
-    Manager: 0,
-    Employee: 1,
-    Customer: 2,
-    PurchaseDraft: 3,
-    PurchaseActive: 4,
-    PurchaseSummary: 5,
-    EscrowAccount: 6,
-    Shipment: 7,
-    ShipmentSummary: 8,
-    Product: 9,
-}
+_REGISTRY: list[Type[PersistableEntity]] = [
+    Account,
+    Manager,
+    Employee,
+    Customer,
+    PurchaseDraft,
+    PurchaseActive,
+    PurchaseSummary,
+    EscrowAccount,
+    Shipment,
+    ShipmentSummary,
+    Product,
+]
 
 
 class TotalOrderRegistry:
@@ -32,7 +34,7 @@ class TotalOrderRegistry:
     @classmethod
     def get_priority(cls, aggregate_type: Type[PersistableEntity]) -> int:
         """Возвращает числовой приоритет агрегата (меньше = раньше в порядке)."""
-        return cls._get_map()[aggregate_type]
+        return cls._get_map().index(aggregate_type)
 
     @classmethod
     def forward(cls) -> list[Type[PersistableEntity]]:
@@ -40,8 +42,7 @@ class TotalOrderRegistry:
         Возвращает список агрегатов в порядке от независимых к зависимым.
         Подходит для операций загрузки, инициализации и валидации.
         """
-        mapping = cls._get_map()
-        return [a for a, _ in sorted(mapping.items(), key=lambda kv: kv[1])]
+        return cls._get_map()
 
     @classmethod
     def backward(cls) -> list[Type[PersistableEntity]]:
@@ -49,12 +50,9 @@ class TotalOrderRegistry:
         Возвращает список агрегатов в порядке от зависимых к независимым.
         Подходит для операций сохранения, удаления, отката и очистки.
         """
-        mapping = cls._get_map()
-        return [
-            a for a, _ in sorted(mapping.items(), key=lambda kv: kv[1], reverse=True)
-        ]
+        return cls.forward()[::-1]
 
     @classmethod
-    def _get_map(cls) -> dict[Type[Any], int]:
+    def _get_map(cls) -> list[Type[PersistableEntity]]:
         """Определяет фиксированный топологический порядок зависимостей."""
         return _REGISTRY

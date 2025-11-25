@@ -2,6 +2,7 @@ from typing import Any
 
 from plum import dispatch, overload
 
+from shop_project.application.dto.account_dto import AccountDTO
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.employee_dto import EmployeeDTO
@@ -55,6 +56,15 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummaryReason,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.entities.account import Account, SubjectType
+
+
+@overload
+def to_dto(domain_object: Account) -> AccountDTO:
+    return AccountDTO(
+        entity_id=domain_object.entity_id,
+        subject_type=domain_object.subject_type.value,
+    )
 
 
 @overload
@@ -166,6 +176,14 @@ def to_dto(domain_object: PersistableEntity) -> BaseDTO:
 @dispatch
 def to_dto(domain_object: Any) -> Any:
     pass
+
+
+@overload
+def to_domain(dto_object: AccountDTO) -> Account:
+    return Account._load(  # type: ignore[access-private]
+        entity_id=dto_object.entity_id,
+        subject_type=SubjectType(dto_object.subject_type),
+    )
 
 
 @overload

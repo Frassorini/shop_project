@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.query.base_query import BaseQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
@@ -18,7 +19,7 @@ class RepositoryContainer:
             Type[PersistableEntity], BaseRepository[PersistableEntity]
         ] = repositories
 
-    async def load_scalars(self, query: BaseQuery) -> Any:
+    async def load_scalars(self, query: CustomQuery) -> Any:
         return await self.repositories[query.model_type].load_scalars(query)
 
     async def load(self, query: BaseQuery) -> list[PersistableEntity]:

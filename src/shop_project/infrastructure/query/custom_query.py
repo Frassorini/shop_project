@@ -1,10 +1,11 @@
-from typing import Literal
+from abc import ABC, abstractmethod
+from typing import Any, Literal
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
 
 
-class CustomQuery(BaseQuery):
+class CustomQuery(BaseQuery, ABC):
     return_type: Literal["DOMAIN", "SCALARS"]
 
     def __init__(
@@ -28,5 +29,9 @@ class CustomQuery(BaseQuery):
 
         return self._result
 
+    @abstractmethod
     def set_args(self) -> None:
         pass
+
+    @abstractmethod
+    def compile_sqlalchemy(self) -> Any: ...

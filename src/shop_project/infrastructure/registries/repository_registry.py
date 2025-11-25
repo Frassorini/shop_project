@@ -11,6 +11,10 @@ from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.entities.account import Account
+from shop_project.infrastructure.repositories.account_repository import (
+    AccountRepository,
+)
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 from shop_project.infrastructure.repositories.customer_repository import (
     CustomerRepository,
@@ -44,6 +48,7 @@ from shop_project.infrastructure.repositories.shipment_summary_repository import
 )
 
 _REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
+    Account: AccountRepository,
     Manager: ManagerRepository,
     Employee: EmployeeRepository,
     Customer: CustomerRepository,

@@ -11,8 +11,10 @@ from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.entities.account import Account
 
 _REGISTRY: list[Type[PersistableEntity]] = [
+    Account,
     Manager,
     Employee,
     Customer,

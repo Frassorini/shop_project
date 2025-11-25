@@ -1,9 +1,13 @@
+from sqlalchemy import select
 from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.manager_dto import ManagerDTO
-from shop_project.application.dto.mapper import to_dto
+from shop_project.application.dto.mapper import to_domain, to_dto
 from shop_project.domain.entities.manager import Manager
 from shop_project.infrastructure.database.models.manager import Manager as ManagerORM
+from shop_project.infrastructure.query.base_query import BaseQuery
+from shop_project.infrastructure.query.composed_query import ComposedQuery
+from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
@@ -51,3 +55,20 @@ class ManagerRepository(BaseRepository[Manager]):
         await self.session.execute(
             delete(ManagerORM).where(ManagerORM.entity_id.in_(ids))
         )
+
+    async def load(self, query: BaseQuery) -> list[Manager]:
+        if isinstance(query, ComposedQuery):
+            base_query = select(ManagerORM).where(
+                query.criteria.to_sqlalchemy(ManagerORM)
+            )
+            base_query = self._apply_lock(base_query, query.lock, [ManagerORM])
+        elif isinstance(query, CustomQuery):
+            base_query = query.compile_sqlalchemy()
+        else:
+            raise ValueError(f"Unknown query type: {type(query)}")
+
+        result_raw = await self.session.execute(base_query)
+        result_orm = result_raw.scalars().unique().all()
+        result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
+
+        return result  # type: ignore
