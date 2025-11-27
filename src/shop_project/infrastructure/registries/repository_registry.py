@@ -47,7 +47,7 @@ from shop_project.infrastructure.repositories.shipment_summary_repository import
     ShipmentSummaryRepository,
 )
 
-_REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
+_REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any, Any]]] = {
     Account: AccountRepository,
     Manager: ManagerRepository,
     Employee: EmployeeRepository,
@@ -64,5 +64,7 @@ _REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]] = {
 
 class RepositoryRegistry:
     @classmethod
-    def get_map(cls) -> Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]]:
+    def get_map(
+        cls,
+    ) -> Mapping[Type[PersistableEntity], Type[BaseRepository[Any, Any]]]:
         return _REGISTRY

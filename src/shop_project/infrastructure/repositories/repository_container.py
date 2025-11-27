@@ -13,10 +13,12 @@ from shop_project.infrastructure.repositories.base_repository import BaseReposit
 class RepositoryContainer:
     def __init__(
         self,
-        repositories: dict[Type[PersistableEntity], BaseRepository[PersistableEntity]],
+        repositories: dict[
+            Type[PersistableEntity], BaseRepository[PersistableEntity, BaseDTO]
+        ],
     ) -> None:
         self.repositories: dict[
-            Type[PersistableEntity], BaseRepository[PersistableEntity]
+            Type[PersistableEntity], BaseRepository[PersistableEntity, BaseDTO]
         ] = repositories
 
     async def load_scalars(self, query: CustomQuery) -> Any:
@@ -41,7 +43,7 @@ class RepositoryContainer:
 
 def repository_container_factory(
     session: AsyncSession,
-    repositories: Mapping[Type[PersistableEntity], Type[BaseRepository[Any]]],
+    repositories: Mapping[Type[PersistableEntity], Type[BaseRepository[Any, Any]]],
 ) -> RepositoryContainer:
     return RepositoryContainer(
         {

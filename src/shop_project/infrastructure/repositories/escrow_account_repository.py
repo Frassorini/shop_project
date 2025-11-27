@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
-from shop_project.application.dto.mapper import to_domain, to_dto
+from shop_project.application.dto.mapper import to_domain
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.infrastructure.database.models.escrow_account import (
     EscrowAccount as EscrowAccountORM,
@@ -13,23 +13,23 @@ from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
-class EscrowAccountRepository(BaseRepository[EscrowAccount]):
+class EscrowAccountRepository(BaseRepository[EscrowAccount, EscrowAccountDTO]):
     model_type = EscrowAccount
     dto_type = EscrowAccountDTO
 
-    async def create(self, items: list[EscrowAccount]) -> None:
+    async def create(self, items: list[EscrowAccountDTO]) -> None:
         """Создает список EscrowAccounts одним запросом через bulk_insert."""
         if not items:
             return
 
-        values = [to_dto(item).model_dump() for item in items]
+        values = [item.model_dump() for item in items]
         await self.session.execute(insert(EscrowAccountORM), values)
 
-    async def update(self, items: list[EscrowAccount]) -> None:
+    async def update(self, items: list[EscrowAccountDTO]) -> None:
         if not items:
             return
 
-        snapshots = [to_dto(item).model_dump() for item in items]
+        snapshots = [item.model_dump() for item in items]
         ids = [snap["entity_id"] for snap in snapshots]
         fields = snapshots[0].keys()
 
@@ -47,7 +47,7 @@ class EscrowAccountRepository(BaseRepository[EscrowAccount]):
         )
         await self.session.execute(stmt)
 
-    async def delete(self, items: list[EscrowAccount]) -> None:
+    async def delete(self, items: list[EscrowAccountDTO]) -> None:
         """Удаляет список EscrowAccounts одним запросом через bulk_delete."""
         if not items:
             return
@@ -72,4 +72,4 @@ class EscrowAccountRepository(BaseRepository[EscrowAccount]):
         result_orm = result_raw.scalars().unique().all()
         result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
 
-        return result  # type: ignore
+        return result

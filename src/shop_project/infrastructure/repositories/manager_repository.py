@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.manager_dto import ManagerDTO
-from shop_project.application.dto.mapper import to_domain, to_dto
+from shop_project.application.dto.mapper import to_domain
 from shop_project.domain.entities.manager import Manager
 from shop_project.infrastructure.database.models.manager import Manager as ManagerORM
 from shop_project.infrastructure.query.base_query import BaseQuery
@@ -11,24 +11,24 @@ from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
-class ManagerRepository(BaseRepository[Manager]):
+class ManagerRepository(BaseRepository[Manager, ManagerDTO]):
     model_type = Manager
     dto_type = ManagerDTO
 
-    async def create(self, items: list[Manager]) -> None:
+    async def create(self, items: list[ManagerDTO]) -> None:
         """Создает список Managers одним запросом через bulk_insert."""
         if not items:
             return
 
-        values = [to_dto(item).model_dump() for item in items]
+        values = [item.model_dump() for item in items]
         await self.session.execute(insert(ManagerORM), values)
 
-    async def update(self, items: list[Manager]) -> None:
+    async def update(self, items: list[ManagerDTO]) -> None:
         """Обновляет список Stores одним bulk-запросом."""
         if not items:
             return
 
-        snapshots = [to_dto(item).model_dump() for item in items]
+        snapshots = [item.model_dump() for item in items]
         ids = [snap["entity_id"] for snap in snapshots]
         fields = snapshots[0].keys()
 
@@ -46,7 +46,7 @@ class ManagerRepository(BaseRepository[Manager]):
         )
         await self.session.execute(stmt)
 
-    async def delete(self, items: list[Manager]) -> None:
+    async def delete(self, items: list[ManagerDTO]) -> None:
         """Удаляет список Managers одним запросом через bulk_delete."""
         if not items:
             return
@@ -71,4 +71,4 @@ class ManagerRepository(BaseRepository[Manager]):
         result_orm = result_raw.scalars().unique().all()
         result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
 
-        return result  # type: ignore
+        return result

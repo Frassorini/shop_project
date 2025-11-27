@@ -7,28 +7,28 @@ from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql import and_, case, delete, insert
 
 from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.application.dto.mapper import to_domain
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
 from shop_project.infrastructure.query.custom_query import CustomQuery
 
-T = TypeVar("T", bound=PersistableEntity)
+E = TypeVar("E", bound=PersistableEntity)
+D = TypeVar("D", bound=BaseDTO)
 
 
-class BaseRepository(Generic[T], ABC):
-    model_type: Type[T]
-    dto_type: Type[BaseDTO]
+class BaseRepository(Generic[E, D], ABC):
+    model_type: Type[E]
+    dto_type: Type[D]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session: AsyncSession = session
 
-    async def create(self, items: list[T]) -> None: ...
+    async def create(self, items: list[D]) -> None: ...
 
-    async def update(self, items: list[T]) -> None: ...
+    async def update(self, items: list[D]) -> None: ...
 
-    async def delete(self, items: list[T]) -> None: ...
+    async def delete(self, items: list[D]) -> None: ...
 
-    async def load(self, query: BaseQuery) -> list[T]: ...
+    async def load(self, query: BaseQuery) -> list[E]: ...
 
     async def load_scalars(self, query: CustomQuery) -> Any:
         result = await self.session.execute(query.compile_sqlalchemy())
@@ -40,11 +40,11 @@ class BaseRepository(Generic[T], ABC):
             Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO]
         ],
     ) -> None:
-        await self.create([to_domain(item) for item in difference_snapshot["CREATED"]])  # type: ignore
+        await self.create(difference_snapshot["CREATED"])  # type: ignore
 
-        await self.update([to_domain(item) for item in difference_snapshot["UPDATED"]])  # type: ignore
+        await self.update(difference_snapshot["UPDATED"])  # type: ignore
 
-        await self.delete([to_domain(item) for item in difference_snapshot["DELETED"]])  # type: ignore
+        await self.delete(difference_snapshot["DELETED"])  # type: ignore
 
     @staticmethod
     async def _replace_children(

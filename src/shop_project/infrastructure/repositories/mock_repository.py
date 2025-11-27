@@ -3,7 +3,7 @@ from typing import Any
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
-class MockRepository(BaseRepository[Any]):
+class MockRepository(BaseRepository[Any, Any]):
     async def create(self, items: list[Any]) -> None:
         """Создает список Customers одним запросом через bulk_insert."""
         return

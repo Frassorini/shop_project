@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.sql import delete, insert, update
 
-from shop_project.application.dto.mapper import to_domain, to_dto
+from shop_project.application.dto.mapper import to_domain
 from shop_project.application.dto.purchase_summary_dto import PurchaseSummaryDTO
 from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.infrastructure.database.models.purchase_summary import (
@@ -17,17 +17,17 @@ from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
-class PurchaseSummaryRepository(BaseRepository[PurchaseSummary]):
+class PurchaseSummaryRepository(BaseRepository[PurchaseSummary, PurchaseSummaryDTO]):
     model_type = PurchaseSummary
     dto_type = PurchaseSummaryDTO
 
-    async def create(self, items: list[PurchaseSummary]) -> None:
+    async def create(self, items: list[PurchaseSummaryDTO]) -> None:
         """Создает список PurchaseSummarys и их order_items одним bulk-запросом."""
         if not items:
             return
 
         # --- PurchaseSummarys ---
-        order_snapshots = [to_dto(item).model_dump() for item in items]
+        order_snapshots = [item.model_dump() for item in items]
         await self.session.execute(insert(PurchaseSummaryORM), order_snapshots)
 
         # --- PurchaseSummaryItems ---
@@ -42,11 +42,11 @@ class PurchaseSummaryRepository(BaseRepository[PurchaseSummary]):
         if item_snapshots:
             await self.session.execute(insert(PurchaseSummaryItemORM), item_snapshots)
 
-    async def update(self, items: list[PurchaseSummary]) -> None:
+    async def update(self, items: list[PurchaseSummaryDTO]) -> None:
         if not items:
             return
 
-        order_snapshots = [to_dto(item).model_dump() for item in items]
+        order_snapshots = [item.model_dump() for item in items]
         order_ids = [snap["entity_id"] for snap in order_snapshots]
 
         order_fields = [f for f in order_snapshots[0].keys() if f != "items"]
@@ -77,7 +77,7 @@ class PurchaseSummaryRepository(BaseRepository[PurchaseSummary]):
             new_items=item_snapshots,
         )
 
-    async def delete(self, items: list[PurchaseSummary]) -> None:
+    async def delete(self, items: list[PurchaseSummaryDTO]) -> None:
         """Удаляет список PurchaseSummarys и их order_items одним bulk-запросом."""
         if not items:
             return
@@ -117,4 +117,4 @@ class PurchaseSummaryRepository(BaseRepository[PurchaseSummary]):
         result_orm = result_raw.scalars().unique().all()
         result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
 
-        return result  # type: ignore
+        return result

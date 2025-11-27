@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.sql import delete, insert, update
 
-from shop_project.application.dto.mapper import to_domain, to_dto
+from shop_project.application.dto.mapper import to_domain
 from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.infrastructure.database.models.purchase_active import (
@@ -17,17 +17,17 @@ from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
-class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
+class PurchaseActiveRepository(BaseRepository[PurchaseActive, PurchaseActiveDTO]):
     model_type = PurchaseActive
     dto_type = PurchaseActiveDTO
 
-    async def create(self, items: list[PurchaseActive]) -> None:
+    async def create(self, items: list[PurchaseActiveDTO]) -> None:
         """Создает список PurchaseActives и их order_items одним bulk-запросом."""
         if not items:
             return
 
         # --- PurchaseActives ---
-        order_snapshots = [to_dto(item).model_dump() for item in items]
+        order_snapshots = [item.model_dump() for item in items]
         await self.session.execute(insert(PurchaseActiveORM), order_snapshots)
 
         # --- PurchaseActiveItems ---
@@ -42,11 +42,11 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
         if item_snapshots:
             await self.session.execute(insert(PurchaseActiveItemORM), item_snapshots)
 
-    async def update(self, items: list[PurchaseActive]) -> None:
+    async def update(self, items: list[PurchaseActiveDTO]) -> None:
         if not items:
             return
 
-        order_snapshots = [to_dto(item).model_dump() for item in items]
+        order_snapshots = [item.model_dump() for item in items]
         order_ids = [snap["entity_id"] for snap in order_snapshots]
 
         order_fields = [f for f in order_snapshots[0].keys() if f != "items"]
@@ -77,7 +77,7 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
             new_items=item_snapshots,
         )
 
-    async def delete(self, items: list[PurchaseActive]) -> None:
+    async def delete(self, items: list[PurchaseActiveDTO]) -> None:
         """Удаляет список PurchaseActives и их order_items одним bulk-запросом."""
         if not items:
             return
@@ -117,4 +117,4 @@ class PurchaseActiveRepository(BaseRepository[PurchaseActive]):
         result_orm = result_raw.scalars().unique().all()
         result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
 
-        return result  # type: ignore
+        return result

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.sql import delete, insert, update
 
-from shop_project.application.dto.mapper import to_domain, to_dto
+from shop_project.application.dto.mapper import to_domain
 from shop_project.application.dto.shipment_dto import ShipmentDTO
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.infrastructure.database.models.shipment import (
@@ -17,15 +17,15 @@ from shop_project.infrastructure.query.custom_query import CustomQuery
 from shop_project.infrastructure.repositories.base_repository import BaseRepository
 
 
-class ShipmentRepository(BaseRepository[Shipment]):
+class ShipmentRepository(BaseRepository[Shipment, ShipmentDTO]):
     model_type = Shipment
     dto_type = ShipmentDTO
 
-    async def create(self, items: list[Shipment]) -> None:
+    async def create(self, items: list[ShipmentDTO]) -> None:
         if not items:
             return
 
-        shipment_snapshots = [to_dto(item).model_dump() for item in items]
+        shipment_snapshots = [item.model_dump() for item in items]
         await self.session.execute(insert(ShipmentORM), shipment_snapshots)
 
         item_snapshots: list[dict[str, Any]] = []
@@ -38,11 +38,11 @@ class ShipmentRepository(BaseRepository[Shipment]):
         if item_snapshots:
             await self.session.execute(insert(ShipmentItemORM), item_snapshots)
 
-    async def update(self, items: list[Shipment]) -> None:
+    async def update(self, items: list[ShipmentDTO]) -> None:
         if not items:
             return
 
-        shipment_snapshots = [to_dto(item).model_dump() for item in items]
+        shipment_snapshots = [item.model_dump() for item in items]
         shipment_ids = [snap["entity_id"] for snap in shipment_snapshots]
 
         shipment_fields = [f for f in shipment_snapshots[0].keys() if f != "items"]
@@ -73,7 +73,7 @@ class ShipmentRepository(BaseRepository[Shipment]):
             new_items=item_snapshots,
         )
 
-    async def delete(self, items: list[Shipment]) -> None:
+    async def delete(self, items: list[ShipmentDTO]) -> None:
         if not items:
             return
 
@@ -110,4 +110,4 @@ class ShipmentRepository(BaseRepository[Shipment]):
         result_orm = result_raw.scalars().unique().all()
         result = [to_domain(self.dto_type.model_validate(item)) for item in result_orm]
 
-        return result  # type: ignore
+        return result
