@@ -1,4 +1,4 @@
-from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type
+from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type, cast
 
 import pytest
 from dishka.container import Container
@@ -264,13 +264,17 @@ async def test_uow_purchase_claim(
 
     # customer = purchase_active_container.dependencies[Customer][0]
 
+    aggregate: PurchaseActive = cast(
+        PurchaseActive, purchase_active_container.aggregate
+    )
+
     async with uow_factory.create(
         QueryBuilder(mutating=True)
         .load(Customer)
-        .from_id([purchase_active_container.aggregate.customer_id])
+        .from_id([aggregate.customer_id])
         .for_update()
         .load(PurchaseActive)
-        .from_id([purchase_active_container.aggregate.entity_id])
+        .from_id([aggregate.entity_id])
         .for_update()
         .load(EscrowAccount)
         .from_previous()
@@ -282,10 +286,7 @@ async def test_uow_purchase_claim(
     ) as uow:
         resources = uow.get_resorces()
         purchase_claim_service = domain_container.get(PurchaseClaimService)
-        customer = resources.get_by_id(
-            Customer, purchase_active_container.aggregate.customer_id
-        )
-        print(customer)
+        customer = resources.get_by_id(Customer, aggregate.customer_id)
         purchase_active: PurchaseActive = resources.get_by_id(
             PurchaseActive, purchase_active_container.aggregate.entity_id
         )

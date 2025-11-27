@@ -1,8 +1,7 @@
-from typing import Any
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import aliased, joinedload
-from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.mapper import to_domain
 from shop_project.application.dto.shipment_summary_dto import ShipmentSummaryDTO
@@ -25,70 +24,67 @@ class ShipmentSummaryRepository(BaseRepository[ShipmentSummary, ShipmentSummaryD
         if not items:
             return
 
-        shipment_snapshots = [item.model_dump() for item in items]
-        await self.session.execute(insert(ShipmentSummaryORM), shipment_snapshots)
+        for dto in items:
+            entity = ShipmentSummaryORM(**dto.model_dump())
+            self.session.add(entity)
 
-        item_snapshots: list[dict[str, Any]] = []
-        for shipment_snapshot in shipment_snapshots:
-            for item in shipment_snapshot.get("items", []):
-                snapshot = item.copy()
-                snapshot["shipment_summary_id"] = shipment_snapshot["entity_id"]
-                item_snapshots.append(snapshot)
-
-        if item_snapshots:
-            await self.session.execute(insert(ShipmentSummaryItemORM), item_snapshots)
+            for child_dto in dto.items:
+                child = ShipmentSummaryItemORM(
+                    **child_dto.model_dump(), parent_id=entity.entity_id
+                )
+                child.parent_id = entity.entity_id
+                self.session.add(child)
 
     async def update(self, items: list[ShipmentSummaryDTO]) -> None:
         if not items:
             return
 
-        shipment_snapshots = [item.model_dump() for item in items]
-        shipment_ids = [snap["entity_id"] for snap in shipment_snapshots]
-
-        shipment_fields = [f for f in shipment_snapshots[0].keys() if f != "items"]
-        update_shipment_values = {
-            field: self._build_bulk_update_case(
-                field, shipment_snapshots, ShipmentSummaryORM, ["entity_id"]
+        for dto in items:
+            entity = self.session.identity_map.get(
+                self._get_identity_key(ShipmentSummaryORM, dto.entity_id)
             )
-            for field in shipment_fields
-        }
-        await self.session.execute(
-            update(ShipmentSummaryORM)
-            .where(ShipmentSummaryORM.entity_id.in_(shipment_ids))
-            .values(**update_shipment_values)
-        )
+            if not entity:
+                continue
 
-        item_snapshots: list[dict[str, Any]] = []
-        for snap in shipment_snapshots:
-            for item in snap.get("items", []):
-                snapshot = item.copy()
-                snapshot["shipment_summary_id"] = snap["entity_id"]
-                item_snapshots.append(snapshot)
+            entity.repopulate(**dto.model_dump())
 
-        await self._replace_children(
-            session=self.session,
-            root_id_name="shipment_summary_id",
-            root_ids=shipment_ids,
-            child_model=ShipmentSummaryItemORM,
-            new_items=item_snapshots,
-        )
+            current_children: dict[tuple[UUID, UUID], ShipmentSummaryItemORM] = {
+                (child.parent_id, child.product_id): child for child in entity.items
+            }
+
+            for child in current_children.values():
+                await self.session.delete(child)
+
+            for child_dto in dto.items:
+                key = (entity.entity_id, child_dto.product_id)
+                if key in current_children:
+                    current_children[key].repopulate(
+                        **child_dto.model_dump(), parent_id=entity.entity_id
+                    )
+                    self.session.add(current_children[key])
+                else:
+                    child = ShipmentSummaryItemORM(
+                        **child_dto.model_dump(), parent_id=entity.entity_id
+                    )
+                    child.parent_id = entity.entity_id
+                    self.session.add(child)
 
     async def delete(self, items: list[ShipmentSummaryDTO]) -> None:
         if not items:
             return
 
-        # --- Удаляем сначала shipment_items ---
-        ids = [item.entity_id for item in items]
-        await self.session.execute(
-            delete(ShipmentSummaryItemORM).where(
-                ShipmentSummaryItemORM.shipment_summary_id.in_(ids)
-            )
-        )
+        for dto in items:
+            entity = await self.session.get(ShipmentSummaryORM, dto.entity_id)
 
-        # --- Затем SupplierOrders ---
-        await self.session.execute(
-            delete(ShipmentSummaryORM).where(ShipmentSummaryORM.entity_id.in_(ids))
-        )
+            if not entity:
+                raise RuntimeError(
+                    f"Entity of type {self.model_type.__name__} {dto.entity_id} not found for deleting"
+                )
+
+            for child in list(entity.items):
+                await self.session.delete(child)
+
+            await self.session.delete(entity)
 
     async def load(self, query: BaseQuery) -> list[ShipmentSummary]:
         if isinstance(query, ComposedQuery):

@@ -1,8 +1,7 @@
-from typing import Any
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import aliased, joinedload
-from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.mapper import to_domain
 from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
@@ -22,82 +21,74 @@ class PurchaseDraftRepository(BaseRepository[PurchaseDraft, PurchaseDraftDTO]):
     dto_type = PurchaseDraftDTO
 
     async def create(self, items: list[PurchaseDraftDTO]) -> None:
-        """Создает список PurchaseDrafts и их order_items одним bulk-запросом."""
         if not items:
             return
 
-        # --- PurchaseDrafts ---
-        order_snapshots = [item.model_dump() for item in items]
-        await self.session.execute(insert(PurchaseDraftORM), order_snapshots)
+        for dto in items:
+            entity = PurchaseDraftORM(**dto.model_dump())
+            self.session.add(entity)
 
-        # --- PurchaseDraftItems ---
-        item_snapshots: list[dict[str, Any]] = []
-        for order_snap in order_snapshots:
-            purchase_draft_id = order_snap["entity_id"]
-            for item in order_snap.get("items", []):  # items — список словарей
-                snap = item.copy()
-                snap["purchase_draft_id"] = purchase_draft_id
-                item_snapshots.append(snap)
-
-        if item_snapshots:
-            await self.session.execute(insert(PurchaseDraftItemORM), item_snapshots)
+            for child_dto in dto.items:
+                child = PurchaseDraftItemORM(
+                    **child_dto.model_dump(), parent_id=entity.entity_id
+                )
+                child.parent_id = entity.entity_id
+                self.session.add(child)
 
     async def update(self, items: list[PurchaseDraftDTO]) -> None:
         if not items:
             return
 
-        order_snapshots = [item.model_dump() for item in items]
-        order_ids = [snap["entity_id"] for snap in order_snapshots]
-
-        order_fields = [f for f in order_snapshots[0].keys() if f != "items"]
-        update_order_values = {
-            field: self._build_bulk_update_case(
-                field, order_snapshots, PurchaseDraftORM, ["entity_id"]
+        for dto in items:
+            entity = self.session.identity_map.get(
+                self._get_identity_key(PurchaseDraftORM, dto.entity_id)
             )
-            for field in order_fields
-        }
-        await self.session.execute(
-            update(PurchaseDraftORM)
-            .where(PurchaseDraftORM.entity_id.in_(order_ids))
-            .values(**update_order_values)
-        )
+            if not entity:
+                continue
 
-        item_snapshots: list[dict[str, Any]] = []
-        for snap in order_snapshots:
-            for item in snap.get("items", []):
-                snapshot = item.copy()
-                snapshot["purchase_draft_id"] = snap["entity_id"]
-                item_snapshots.append(snapshot)
+            entity.repopulate(**dto.model_dump())
 
-        await self._replace_children(
-            session=self.session,
-            root_id_name="purchase_draft_id",
-            root_ids=order_ids,
-            child_model=PurchaseDraftItemORM,
-            new_items=item_snapshots,
-        )
+            current_children: dict[tuple[UUID, UUID], PurchaseDraftItemORM] = {
+                (child.parent_id, child.product_id): child for child in entity.items
+            }
+
+            for child in current_children.values():
+                await self.session.delete(child)
+
+            for child_dto in dto.items:
+                key = (entity.entity_id, child_dto.product_id)
+                if key in current_children:
+                    current_children[key].repopulate(
+                        **child_dto.model_dump(), parent_id=entity.entity_id
+                    )
+                    self.session.add(current_children[key])
+                else:
+                    child = PurchaseDraftItemORM(
+                        **child_dto.model_dump(), parent_id=entity.entity_id
+                    )
+                    child.parent_id = entity.entity_id
+                    self.session.add(child)
 
     async def delete(self, items: list[PurchaseDraftDTO]) -> None:
-        """Удаляет список PurchaseDrafts и их order_items одним bulk-запросом."""
         if not items:
             return
 
-        # --- Удаляем сначала order_items ---
-        ids = [item.entity_id for item in items]
-        await self.session.execute(
-            delete(PurchaseDraftItemORM).where(
-                PurchaseDraftItemORM.purchase_draft_id.in_(ids)
-            )
-        )
+        for dto in items:
+            entity = await self.session.get(PurchaseDraftORM, dto.entity_id)
 
-        # --- Затем PurchaseDrafts ---
-        await self.session.execute(
-            delete(PurchaseDraftORM).where(PurchaseDraftORM.entity_id.in_(ids))
-        )
+            if not entity:
+                raise RuntimeError(
+                    f"Entity of type {self.model_type.__name__} {dto.entity_id} not found for deleting"
+                )
+
+            for child in list(entity.items):
+                await self.session.delete(child)
+
+            await self.session.delete(entity)
 
     async def load(self, query: BaseQuery) -> list[PurchaseDraft]:
         if isinstance(query, ComposedQuery):
-            item_alias = aliased(PurchaseDraftItemORM, name="cart_item")
+            item_alias = aliased(PurchaseDraftItemORM, name="purchase_draft_item")
 
             base_query = (
                 select(PurchaseDraftORM)

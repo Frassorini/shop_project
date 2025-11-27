@@ -1,8 +1,8 @@
 import sqlite3
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Self
+from typing import Any, AsyncGenerator, Self
 
-from sqlalchemy import StaticPool
+from sqlalchemy import StaticPool, event
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -10,8 +10,27 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.orm import Mapper
 
 from shop_project.infrastructure.env_loader import get_env
+
+
+def _index_object(session: AsyncSession, instance: Any):
+    set_ = session.info.get("strong_set", None)
+    if not set_:
+        session.info["strong_set"] = set_ = set()
+
+    set_.add(instance)  # type: ignore
+
+
+@event.listens_for(Mapper, "load")
+def object_loaded(instance: Any, ctx: Any):
+    _index_object(ctx.session, instance)
+
+
+@event.listens_for(AsyncSession.sync_session_class, "after_attach")
+def index_object(session: AsyncSession, instance: Any):
+    _index_object(session, instance)
 
 
 class Database:

@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.mapper import to_domain
 from shop_project.application.dto.product_dto import ProductDTO
@@ -16,45 +15,39 @@ class ProductRepository(BaseRepository[Product, ProductDTO]):
     dto_type = ProductDTO
 
     async def create(self, items: list[ProductDTO]) -> None:
-        """Создает список Products одним запросом через bulk_insert."""
         if not items:
             return
 
-        values = [item.model_dump() for item in items]
-        await self.session.execute(insert(ProductORM), values)
+        for dto in items:
+            entity = ProductORM(**dto.model_dump())
+            self.session.add(entity)
 
     async def update(self, items: list[ProductDTO]) -> None:
-        """Обновляет список Stores одним bulk-запросом."""
         if not items:
             return
 
-        snapshots = [item.model_dump() for item in items]
-        ids = [snap["entity_id"] for snap in snapshots]
-        fields = snapshots[0].keys()
-
-        update_values = {
-            field: self._build_bulk_update_case(
-                field, snapshots, ProductORM, ["entity_id"]
+        for dto in items:
+            entity = self.session.identity_map.get(
+                self._get_identity_key(ProductORM, dto.entity_id)
             )
-            for field in fields
-        }
+            if not entity:
+                continue
 
-        stmt = (
-            update(ProductORM)
-            .where(ProductORM.entity_id.in_(ids))
-            .values(**update_values)
-        )
-        await self.session.execute(stmt)
+            entity.repopulate(**dto.model_dump())
 
     async def delete(self, items: list[ProductDTO]) -> None:
-        """Удаляет список Products одним запросом через bulk_delete."""
         if not items:
             return
 
-        ids = [item.entity_id for item in items]
-        await self.session.execute(
-            delete(ProductORM).where(ProductORM.entity_id.in_(ids))
-        )
+        for dto in items:
+            entity = await self.session.get(ProductORM, dto.entity_id)
+
+            if not entity:
+                raise RuntimeError(
+                    f"Entity of type {self.model_type.__name__} {dto.entity_id} not found for deleting"
+                )
+
+            await self.session.delete(entity)
 
     async def load(self, query: BaseQuery) -> list[Product]:
         if isinstance(query, ComposedQuery):

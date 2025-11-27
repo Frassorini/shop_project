@@ -1,34 +1,40 @@
-from sqlalchemy import Column, PrimaryKeyConstraint, String
+from typing import TYPE_CHECKING, Any
+from uuid import UUID
+
+from sqlalchemy import ForeignKeyConstraint, PrimaryKeyConstraint, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shop_project.infrastructure.database.models.base import Base
-from shop_project.infrastructure.database.uuid_binary import UUIDBinary
+
+if TYPE_CHECKING:
+    from shop_project.infrastructure.database.models.account import Account
 
 
-class CustomerSecret(Base):
-    __tablename__ = "customer_secret"
+class Secret(Base):
+    __tablename__ = "secret"
 
-    entity_id = Column(UUIDBinary(), nullable=False)
-    auth_type = Column(String(50), nullable=False)
-    payload = Column(String(255), nullable=False)
+    entity_id: Mapped[UUID] = mapped_column(nullable=False)
+    account_id: Mapped[UUID] = mapped_column(nullable=False)
+    auth_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    payload: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    __table_args__ = (PrimaryKeyConstraint("entity_id"),)
+    account: Mapped["Account"] = relationship(
+        lazy="raise",
+    )
 
+    __table_args__ = (
+        PrimaryKeyConstraint("entity_id"),
+        ForeignKeyConstraint(["account_id"], ["account.entity_id"]),
+    )
 
-class ManagerSecret(Base):
-    __tablename__ = "manager_secret"
+    def repopulate(
+        self, entity_id: UUID, account_id: UUID, auth_type: str, payload: str, **kw: Any
+    ) -> None:
+        self.entity_id = entity_id
+        self.account_id = account_id
+        self.auth_type = auth_type
+        self.payload = payload
 
-    entity_id = Column(UUIDBinary(), nullable=False)
-    auth_type = Column(String(50), nullable=False)
-    payload = Column(String(255), nullable=False)
-
-    __table_args__ = (PrimaryKeyConstraint("entity_id"),)
-
-
-class EmployeeSecret(Base):
-    __tablename__ = "employee_secret"
-
-    entity_id = Column(UUIDBinary(), nullable=False)
-    auth_type = Column(String(50), nullable=False)
-    payload = Column(String(255), nullable=False)
-
-    __table_args__ = (PrimaryKeyConstraint("entity_id"),)
+    def __init__(self, **kw: Any) -> None:
+        super().__init__()
+        self.repopulate(**kw)

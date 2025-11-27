@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.account_dto import AccountDTO
 from shop_project.application.dto.mapper import to_domain
@@ -16,47 +15,39 @@ class AccountRepository(BaseRepository[Account, AccountDTO]):
     dto_type = AccountDTO
 
     async def create(self, items: list[AccountDTO]) -> None:
-        """Создает список Accounts одним bulk-запросом."""
         if not items:
             return
 
-        values = [item.model_dump() for item in items]
-        # print(values)
-        await self.session.execute(insert(AccountORM), values)
+        for dto in items:
+            entity = AccountORM(**dto.model_dump())
+            self.session.add(entity)
 
     async def update(self, items: list[AccountDTO]) -> None:
-        """Обновляет список Accounts одним bulk-запросом."""
         if not items:
             return
 
-        snapshots = [item.model_dump() for item in items]
-        ids = [snap["entity_id"] for snap in snapshots]
-        fields = snapshots[0].keys()
-
-        update_values = {
-            field: self._build_bulk_update_case(
-                field, snapshots, AccountORM, ["entity_id"]
+        for dto in items:
+            entity = self.session.identity_map.get(
+                self._get_identity_key(AccountORM, dto.entity_id)
             )
-            for field in fields
-        }
+            if not entity:
+                continue
 
-        stmt = (
-            update(AccountORM)
-            .where(AccountORM.entity_id.in_(ids))
-            .values(**update_values)
-        )
-        await self.session.execute(stmt)
+            entity.repopulate(**dto.model_dump())
 
     async def delete(self, items: list[AccountDTO]) -> None:
-        """Удаляет список Accounts одним bulk_delete."""
         if not items:
             return
 
-        ids = [item.entity_id for item in items]
+        for dto in items:
+            entity = await self.session.get(AccountORM, dto.entity_id)
 
-        await self.session.execute(
-            delete(AccountORM).where(AccountORM.entity_id.in_(ids))
-        )
+            if not entity:
+                raise RuntimeError(
+                    f"Entity of type {self.model_type.__name__} {dto.entity_id} not found for deleting"
+                )
+
+            await self.session.delete(entity)
 
     async def load(self, query: BaseQuery) -> list[Account]:
         if isinstance(query, ComposedQuery):

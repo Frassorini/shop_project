@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.sql import delete, insert, update
 
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.mapper import to_domain
@@ -16,45 +15,39 @@ class CustomerRepository(BaseRepository[Customer, CustomerDTO]):
     dto_type = CustomerDTO
 
     async def create(self, items: list[CustomerDTO]) -> None:
-        """Создает список Customers одним запросом через bulk_insert."""
         if not items:
             return
 
-        values = [item.model_dump() for item in items]
-        await self.session.execute(insert(CustomerORM), values)
+        for dto in items:
+            entity = CustomerORM(**dto.model_dump())
+            self.session.add(entity)
 
     async def update(self, items: list[CustomerDTO]) -> None:
-        """Обновляет список Stores одним bulk-запросом."""
         if not items:
             return
 
-        snapshots = [item.model_dump() for item in items]
-        ids = [snap["entity_id"] for snap in snapshots]
-        fields = snapshots[0].keys()
-
-        update_values = {
-            field: self._build_bulk_update_case(
-                field, snapshots, CustomerORM, ["entity_id"]
+        for dto in items:
+            entity = self.session.identity_map.get(
+                self._get_identity_key(CustomerORM, dto.entity_id)
             )
-            for field in fields
-        }
+            if not entity:
+                continue
 
-        stmt = (
-            update(CustomerORM)
-            .where(CustomerORM.entity_id.in_(ids))
-            .values(**update_values)
-        )
-        await self.session.execute(stmt)
+            entity.repopulate(**dto.model_dump())
 
     async def delete(self, items: list[CustomerDTO]) -> None:
-        """Удаляет список Customers одним запросом через bulk_delete."""
         if not items:
             return
 
-        ids = [item.entity_id for item in items]
-        await self.session.execute(
-            delete(CustomerORM).where(CustomerORM.entity_id.in_(ids))
-        )
+        for dto in items:
+            entity = await self.session.get(CustomerORM, dto.entity_id)
+
+            if not entity:
+                raise RuntimeError(
+                    f"Entity of type {self.model_type.__name__} {dto.entity_id} not found for deleting"
+                )
+
+            await self.session.delete(entity)
 
     async def load(self, query: BaseQuery) -> list[Customer]:
         if isinstance(query, ComposedQuery):

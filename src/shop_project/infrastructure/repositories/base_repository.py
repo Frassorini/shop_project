@@ -1,18 +1,19 @@
 from abc import ABC
 from typing import Any, Generic, Literal, Type, TypeVar
 
-from sqlalchemy import bindparam
+from sqlalchemy import inspect
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute
-from sqlalchemy.sql import and_, case, delete, insert
+from sqlalchemy.orm._typing import _IdentityKeyType  # type: ignore
 
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.database.models.base import Base as BaseORM
 from shop_project.infrastructure.query.base_query import BaseQuery, QueryLock
 from shop_project.infrastructure.query.custom_query import CustomQuery
 
 E = TypeVar("E", bound=PersistableEntity)
 D = TypeVar("D", bound=BaseDTO)
+T = TypeVar("T", bound=BaseORM)
 
 
 class BaseRepository(Generic[E, D], ABC):
@@ -47,67 +48,13 @@ class BaseRepository(Generic[E, D], ABC):
         await self.delete(difference_snapshot["DELETED"])  # type: ignore
 
     @staticmethod
-    async def _replace_children(
-        session: AsyncSession,
-        root_id_name: str,
-        root_ids: list[Any],
-        child_model: type,
-        new_items: list[dict[str, Any]],
-    ) -> None:
-        """
-        Полностью заменяет дочерние записи для указанных root_id.
-
-        :param session: Асинхронная сессия SQLAlchemy
-        :param root_id_name: Имя колонки внешнего ключа в дочерней таблице
-        :param root_ids: Список ID root-объектов, для которых меняем дочерние элементы
-        :param child_model: ORM-модель дочерней таблицы
-        :param new_items: Список новых дочерних записей (dict), уже с root_id
-        """
-        if not root_ids:
-            return
-
-        # 1. Удаляем старые записи
-        await session.execute(
-            delete(child_model).where(getattr(child_model, root_id_name).in_(root_ids))
-        )
-
-        # 2. Вставляем новые
-        if new_items:
-            await session.execute(insert(child_model), new_items)
-
-    @staticmethod
-    def _build_bulk_update_case(
-        field_name: str,
-        snapshots: list[dict[str, Any]],
-        model_cls: type,
-        pk_fields: list[str],
-    ) -> Any:
-        """
-        Создаёт SQLAlchemy CASE для массового обновления одного поля, поддерживает составной PK.
-        :param field_name: Название обновляемого поля.
-        :param snapshots: Список dict'ов, каждый содержит значения всех ключевых полей и обновляемых полей.
-        :param model_cls: ORM-модель.
-        :param pk_fields: Список названий колонок, которые составляют первичный ключ.
-        """
-        column: InstrumentedAttribute[Any] = getattr(model_cls, field_name)
-        return case(
-            *(
-                (
-                    and_(*(getattr(model_cls, pk) == snap[pk] for pk in pk_fields)),
-                    bindparam(
-                        f"{field_name}_{idx}",
-                        snap[field_name],
-                        type_=column.type,
-                    ),
-                )
-                for idx, snap in enumerate(snapshots)
-            )
-        )
-
-    @staticmethod
     def _apply_lock(query: Any, lock: QueryLock, of: list[Any]):
         if lock == QueryLock.EXCLUSIVE:
             return query.with_for_update(of=of)
         elif lock == QueryLock.SHARED:
             return query.with_for_update(read=True, of=of)
         return query
+
+    @staticmethod
+    def _get_identity_key(model_type: Type[T], *args: Any) -> _IdentityKeyType[T]:
+        return inspect(model_type).identity_key_from_primary_key((*args,))
