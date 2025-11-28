@@ -10,11 +10,17 @@ from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.entities.account import Account
+from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.secret import Secret
 from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
 def domain_object_factory(
+    account_container_factory: Callable[..., AggregateContainer],
+    auth_session_container_factory: Callable[..., AggregateContainer],
+    secret_container_factory: Callable[..., AggregateContainer],
     manager_container_factory: Callable[..., AggregateContainer],
     employee_container_factory: Callable[..., AggregateContainer],
     customer_container_factory: Callable[..., AggregateContainer],
@@ -24,6 +30,12 @@ def domain_object_factory(
     product_container_factory: Callable[..., AggregateContainer],
 ) -> Callable[[Type[PersistableEntity]], AggregateContainer]:
     def factory(model_type: Type[PersistableEntity]) -> AggregateContainer:
+        if model_type is Account:
+            return account_container_factory()
+        if model_type is AuthSession:
+            return auth_session_container_factory()
+        if model_type is Secret:
+            return secret_container_factory()
         if model_type is Manager:
             return manager_container_factory()
         if model_type is Employee:

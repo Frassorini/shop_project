@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
+from pydantic import SecretStr
 from sqlalchemy import ForeignKeyConstraint, PrimaryKeyConstraint, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,7 +17,7 @@ class Secret(Base):
     entity_id: Mapped[UUID] = mapped_column(nullable=False)
     account_id: Mapped[UUID] = mapped_column(nullable=False)
     auth_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    payload: Mapped[str] = mapped_column(String(50), nullable=False)
+    payload: Mapped[str] = mapped_column(String(255), nullable=False)
 
     account: Mapped["Account"] = relationship(
         lazy="raise",
@@ -28,12 +29,17 @@ class Secret(Base):
     )
 
     def repopulate(
-        self, entity_id: UUID, account_id: UUID, auth_type: str, payload: str, **kw: Any
+        self,
+        entity_id: UUID,
+        account_id: UUID,
+        auth_type: str,
+        payload: SecretStr,
+        **kw: Any,
     ) -> None:
         self.entity_id = entity_id
         self.account_id = account_id
         self.auth_type = auth_type
-        self.payload = payload
+        self.payload = payload.get_secret_value()
 
     def __init__(self, **kw: Any) -> None:
         super().__init__()

@@ -3,6 +3,7 @@ from typing import Any
 from plum import dispatch, overload
 
 from shop_project.application.dto.account_dto import AccountDTO
+from shop_project.application.dto.auth_session_dto import AuthSessionDTO
 from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.employee_dto import EmployeeDTO
@@ -21,6 +22,7 @@ from shop_project.application.dto.purchase_summary_dto import (
     PurchaseSummaryDTO,
     PurchaseSummaryItemDTO,
 )
+from shop_project.application.dto.secret_dto import SecretDTO
 from shop_project.application.dto.shipment_dto import ShipmentDTO, ShipmentItemDTO
 from shop_project.application.dto.shipment_summary_dto import (
     ShipmentSummaryDTO,
@@ -56,7 +58,10 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummaryReason,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
 from shop_project.infrastructure.entities.account import Account, SubjectType
+from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.secret import Secret
 
 
 @overload
@@ -169,6 +174,27 @@ def to_dto(domain_object: ShipmentSummary) -> ShipmentSummaryDTO:
 
 
 @overload
+def to_dto(domain_object: AuthSession) -> AuthSessionDTO:
+    return AuthSessionDTO(
+        entity_id=domain_object.entity_id,
+        account_id=domain_object.account_id,
+        refresh_token=domain_object.refresh_token,
+        issued_at=domain_object.issued_at,
+        expires_at=domain_object.expires_at,
+    )
+
+
+@overload
+def to_dto(domain_object: Secret) -> SecretDTO:
+    return SecretDTO(
+        entity_id=domain_object.entity_id,
+        account_id=domain_object.account_id,
+        auth_type=domain_object.auth_type.value,
+        payload=domain_object.payload,
+    )
+
+
+@overload
 def to_dto(domain_object: PersistableEntity) -> BaseDTO:
     raise NotImplementedError
 
@@ -276,6 +302,27 @@ def to_domain(dto_object: ShipmentSummaryDTO) -> ShipmentSummary:
         entity_id=dto_object.entity_id,
         reason=ShipmentSummaryReason(dto_object.reason),
         items=[ShipmentSummaryItem(**item.model_dump()) for item in dto_object.items],
+    )
+
+
+@overload
+def to_domain(dto_object: AuthSessionDTO) -> AuthSession:
+    return AuthSession(
+        entity_id=dto_object.entity_id,
+        account_id=dto_object.account_id,
+        refresh_token=dto_object.refresh_token,
+        issued_at=dto_object.issued_at,
+        expires_at=dto_object.expires_at,
+    )
+
+
+@overload
+def to_domain(dto_object: SecretDTO) -> Secret:
+    return Secret(
+        entity_id=dto_object.entity_id,
+        account_id=dto_object.account_id,
+        auth_type=AuthType(dto_object.auth_type),
+        payload=dto_object.payload,
     )
 
 

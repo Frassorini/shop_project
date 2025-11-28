@@ -8,3 +8,7 @@ class AuthTypeMismatchException(AuthException):
 
 class AuthSessionExpiredException(AuthException):
     pass
+
+
+class PermissionException(AuthException):
+    pass

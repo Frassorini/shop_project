@@ -1,7 +1,9 @@
+from datetime import timedelta
 from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type, cast
 
 import pytest
 from dishka.container import Container
+from pydantic import SecretStr
 
 from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.customer import Customer
@@ -17,10 +19,184 @@ from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
+from shop_project.infrastructure.entities.account import Account, SubjectType
+from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.secret import Secret
 from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from tests.helpers import AggregateContainer
+
+
+@pytest.mark.asyncio
+async def test_auth_session(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = AuthSession
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.expires_at = domain_obj.expires_at + timedelta(days=1)
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+
+
+@pytest.mark.asyncio
+async def test_secret(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = Secret
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.payload = SecretStr("new payload")
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+
+
+@pytest.mark.asyncio
+async def test_account(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = Account
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj: Account = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.subject_type = SubjectType.EMPLOYEE
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
 
 @pytest.mark.asyncio

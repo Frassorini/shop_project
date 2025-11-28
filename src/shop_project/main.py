@@ -7,10 +7,10 @@ from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
 from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.dependency_injection.domain.domain_container import (
+from shop_project.infrastructure.dependency_injection.domain.domain_provider import (
     DomainProvider,
 )
-from shop_project.infrastructure.dependency_injection.infrastructure.database_container import (
+from shop_project.infrastructure.dependency_injection.infrastructure.database_provider import (
     DatabaseProvider,
 )
 

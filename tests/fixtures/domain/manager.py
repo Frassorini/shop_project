@@ -4,7 +4,10 @@ from uuid import UUID
 import pytest
 
 from shop_project.domain.entities.manager import Manager
-from shop_project.infrastructure.entities.account import Account, SubjectType
+from shop_project.infrastructure.authentication.helpers.subject_type_union import (
+    SubjectTypeUnion,
+)
+from shop_project.infrastructure.entities.account import Account
 from tests.helpers import AggregateContainer
 
 
@@ -18,12 +21,13 @@ def manager_tom(
 @pytest.fixture
 def manager_container_factory(
     manager_tom: Callable[[], Manager],
+    subject_account: Callable[[SubjectTypeUnion], Account],
 ) -> Callable[..., AggregateContainer]:
 
     def fact() -> AggregateContainer:
 
         manager = manager_tom()
-        account = Account(manager.entity_id, subject_type=SubjectType.MANAGER)
+        account = subject_account(manager)
 
         return AggregateContainer(aggregate=manager, dependencies={Account: [account]})
 

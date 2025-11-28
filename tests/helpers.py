@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Self, Type, TypeVar
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
@@ -44,3 +45,14 @@ class AggregateContainer:
                 dependencies
             )
         return self
+
+
+BASE = Path(__file__).resolve().parent / "keys"
+
+
+def get_test_jwt_private_key() -> bytes:
+    return (BASE / "test_jwt_private.pem").read_bytes()
+
+
+def get_test_jwt_public_key() -> bytes:
+    return (BASE / "test_jwt_public.pem").read_bytes()

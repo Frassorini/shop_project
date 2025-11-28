@@ -1,17 +1,18 @@
 from typing import Literal
+from uuid import uuid4
 
 import pytest
+from dishka.async_container import AsyncContainer
+from pydantic import SecretStr
 
 from shop_project.infrastructure.authentication.exceptions import (
     AuthTypeMismatchException,
 )
 from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
 from shop_project.infrastructure.authentication.helpers.credential import Credential
-from shop_project.infrastructure.authentication.helpers.secret import Secret
 from shop_project.infrastructure.authentication.services.secret_service import (
     SecretService,
 )
-from shop_project.infrastructure.cryptography.bcrypt_hasher import BcryptPasswordHasher
 
 
 def test_auth_type():
@@ -20,26 +21,38 @@ def test_auth_type():
     assert auth == AuthType.PASSWORD
 
 
-def test_secret_service():
-    secret_service = SecretService(BcryptPasswordHasher())
+@pytest.mark.asyncio
+async def test_secret_service(async_container: AsyncContainer):
+    secret_service = await async_container.get(SecretService)
 
     secret = secret_service.create_secret(
+        account_id=uuid4(),
         credential=Credential(
-            auth_type=AuthType.PASSWORD, payload={"password": "password"}
-        )
+            auth_type=AuthType.PASSWORD, payload={"password": SecretStr("password")}
+        ),
     )
 
     assert secret_service.verify(
         secret=secret,
         credential=Credential(
-            auth_type=AuthType.PASSWORD, payload={"password": "password"}
+            auth_type=AuthType.PASSWORD, payload={"password": SecretStr("password")}
         ),
     )
 
 
-def test_auth_type_mismatch():
+@pytest.mark.asyncio
+async def test_auth_type_mismatch(async_container: AsyncContainer):
+    secret_service = await async_container.get(SecretService)
+    secret = secret_service.create_secret(
+        account_id=uuid4(),
+        credential=Credential(
+            auth_type=AuthType.PASSWORD, payload={"password": SecretStr("password")}
+        ),
+    )
     with pytest.raises(AuthTypeMismatchException):
-        SecretService(BcryptPasswordHasher()).verify(
-            Secret(auth_type=AuthType.PASSWORD, payload="password"),
-            Credential(auth_type=AuthType.PHONE, payload={"password": "password"}),
+        secret_service.verify(
+            secret=secret,
+            credential=Credential(
+                auth_type=AuthType.PHONE, payload={"password": SecretStr("password")}
+            ),
         )

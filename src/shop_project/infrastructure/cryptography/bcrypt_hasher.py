@@ -7,7 +7,7 @@ from shop_project.shared.bytes_utils import bytes_to_str, str_to_bytes
 
 
 class BcryptPasswordHasher(SecretHasher):
-    def __init__(self, rounds: int = 12):
+    def __init__(self, rounds: int):
         self._rounds = rounds
 
     def hash(self, password: str) -> str:
@@ -15,4 +15,7 @@ class BcryptPasswordHasher(SecretHasher):
         return bytes_to_str(h)
 
     def verify(self, password: str, hashed: str) -> bool:
-        return bcrypt.checkpw(str_to_bytes(password), str_to_bytes(hashed))
+        try:
+            return bcrypt.checkpw(str_to_bytes(password), str_to_bytes(hashed))
+        except ValueError:
+            return False
