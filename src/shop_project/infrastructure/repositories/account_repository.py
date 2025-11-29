@@ -40,7 +40,9 @@ class AccountRepository(BaseRepository[Account, AccountDTO]):
             return
 
         for dto in items:
-            entity = await self.session.get(AccountORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(AccountORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(
@@ -63,4 +65,6 @@ class AccountRepository(BaseRepository[Account, AccountDTO]):
         rows = await self.session.execute(stmt)
         orm_entities = rows.scalars().unique().all()
 
-        return [to_domain(self.dto_type.model_validate(e)) for e in orm_entities]
+        res = [to_domain(self.dto_type.model_validate(e)) for e in orm_entities]
+
+        return res

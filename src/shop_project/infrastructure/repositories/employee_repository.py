@@ -40,7 +40,9 @@ class EmployeeRepository(BaseRepository[Employee, EmployeeDTO]):
             return
 
         for dto in items:
-            entity = await self.session.get(EmployeeORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(EmployeeORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(

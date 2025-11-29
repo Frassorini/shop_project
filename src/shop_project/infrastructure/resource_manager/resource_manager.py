@@ -29,10 +29,8 @@ class ResourceManager:
         *,
         resources_registry: list[Type[PersistableEntity]],
         read_only: bool,
-        raise_on_not_found: bool = True,
     ) -> None:
         self.repository_container: RepositoryContainer = repository_container
-        self.raise_on_not_found: bool = raise_on_not_found
         self.read_only: bool = read_only
         self.total_order: Type[TotalOrderRegistry] = total_order
         self.resource_container: ResourceContainer = ResourceContainer(

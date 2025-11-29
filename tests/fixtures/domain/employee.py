@@ -4,8 +4,8 @@ from uuid import UUID
 import pytest
 
 from shop_project.domain.entities.employee import Employee
-from shop_project.infrastructure.authentication.helpers.subject_type_union import (
-    SubjectTypeUnion,
+from shop_project.domain.interfaces.subject import (
+    Subject,
 )
 from shop_project.infrastructure.entities.account import Account
 from tests.helpers import AggregateContainer
@@ -21,7 +21,7 @@ def employee_bob(
 @pytest.fixture
 def employee_container_factory(
     employee_bob: Callable[[], Employee],
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
 ) -> Callable[..., AggregateContainer]:
 
     def fact() -> AggregateContainer:

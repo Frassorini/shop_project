@@ -74,7 +74,9 @@ class PurchaseSummaryRepository(BaseRepository[PurchaseSummary, PurchaseSummaryD
             return
 
         for dto in items:
-            entity = await self.session.get(PurchaseSummaryORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(PurchaseSummaryORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(

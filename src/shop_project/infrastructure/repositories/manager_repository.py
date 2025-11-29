@@ -40,7 +40,9 @@ class ManagerRepository(BaseRepository[Manager, ManagerDTO]):
             return
 
         for dto in items:
-            entity = await self.session.get(ManagerORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(ManagerORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(

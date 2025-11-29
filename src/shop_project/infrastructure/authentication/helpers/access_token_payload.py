@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from shop_project.infrastructure.entities.account import SubjectType
+from shop_project.domain.interfaces.subject import SubjectType
 
 
 class AccessTokenPayload(BaseModel):

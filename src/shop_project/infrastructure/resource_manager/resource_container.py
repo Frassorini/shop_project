@@ -120,16 +120,26 @@ class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
                 result.append(item)
         return result
 
-    def get_by_id(self, model_type: Type[T], entity_id: UUID) -> T:
-        result: list[T] = self.get_by_attribute(model_type, "entity_id", [entity_id])
+    def get_one_by_attribute(
+        self, model_type: Type[T], attribute_name: str, value: Any
+    ) -> T:
+        result: list[T] = self.get_by_attribute(model_type, attribute_name, [value])
 
         if not result:
-            raise ResourcesException(f"Could not find {model_type} with id {entity_id}")
+            raise ResourcesException(
+                f"Could not find {model_type} with attribute {attribute_name}=={value}"
+            )
 
         if len(result) > 1:
-            raise RuntimeError(f"Found more than one {model_type} with id {entity_id}")
+            raise RuntimeError(
+                f"Found more than one {model_type} with attribute {attribute_name}=={value}"
+            )
 
         return result[0]
+
+    def get_by_id(self, model_type: Type[T], entity_id: UUID) -> T:
+        result: T = self.get_one_by_attribute(model_type, "entity_id", entity_id)
+        return result
 
     def get_by_ids(self, model_type: Type[T], entity_ids: list[UUID]) -> list[T]:
         result: list[T] = self.get_by_attribute(model_type, "entity_id", entity_ids)
@@ -145,12 +155,18 @@ class ResourceContainer(ResourceSnapshotSentinelMixin, IResourceContainer):
         return self._get_resource_by_type(model_type).copy()
 
     def put(self, model_type: Type[PersistableEntity], item: PersistableEntity) -> None:
+        if not isinstance(item, model_type):
+            raise ResourcesException(
+                f"Cannot put {type(item)} into container for {model_type}"
+            )
+
         self._get_resource_by_type(model_type).append(item)
 
     def put_many(
         self, model_type: Type[PersistableEntity], items: list[PersistableEntity]
     ) -> None:
-        self._get_resource_by_type(model_type).extend(items)
+        for item in items:
+            self.put(model_type, item)
 
     def delete(
         self, model_type: Type[PersistableEntity], item: PersistableEntity

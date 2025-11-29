@@ -40,7 +40,9 @@ class SecretRepository(BaseRepository[Secret, SecretDTO]):
             return
 
         for dto in items:
-            entity = await self.session.get(SecretORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(SecretORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(

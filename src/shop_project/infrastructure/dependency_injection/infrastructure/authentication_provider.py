@@ -1,7 +1,14 @@
 from datetime import timedelta
 
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, alias, provide
 
+from shop_project.application.interfaces.interface_account_service import (
+    IAccountService,
+)
+from shop_project.application.interfaces.interface_secret_service import ISecretService
+from shop_project.infrastructure.authentication.services.account_service import (
+    AccountService,
+)
 from shop_project.infrastructure.authentication.services.secret_service import (
     SecretService,
 )
@@ -22,6 +29,10 @@ class AuthenticationProvider(Provider):
     scope = Scope.APP
 
     @provide
+    def account_service(self) -> AccountService:
+        return AccountService()
+
+    @provide
     def secret_service(self, secret_hasher: SecretHasher) -> SecretService:
         return SecretService(secret_hasher=secret_hasher)
 
@@ -39,3 +50,6 @@ class AuthenticationProvider(Provider):
             refresh_ttl=timedelta(seconds=int(get_env("REFRESH_TOKEN_TTL"))),
             access_ttl=timedelta(seconds=int(get_env("ACCESS_TOKEN_TTL"))),
         )
+
+    account_service_proto = alias(AccountService, provides=IAccountService)
+    secret_service_proto = alias(SecretService, provides=ISecretService)

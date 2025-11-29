@@ -74,7 +74,9 @@ class ShipmentRepository(BaseRepository[Shipment, ShipmentDTO]):
             return
 
         for dto in items:
-            entity = await self.session.get(ShipmentORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(ShipmentORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(

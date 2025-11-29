@@ -1,30 +1,38 @@
 from typing import Callable
 
 import pytest
+from dishka.container import Container
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
-from shop_project.infrastructure.authentication.helpers.account_factory import (
-    create_account,
+from shop_project.domain.interfaces.subject import (
+    Subject,
 )
-from shop_project.infrastructure.authentication.helpers.subject_type_union import (
-    SubjectTypeUnion,
+from shop_project.infrastructure.authentication.services.account_service import (
+    AccountService,
 )
 from shop_project.infrastructure.entities.account import Account
 
 
 @pytest.fixture
-def subject_account() -> Callable[[SubjectTypeUnion], Account]:
-    def _inner(subject: SubjectTypeUnion) -> Account:
-        return create_account(subject)
+def subject_account(
+    domain_container: Callable[[], Container],
+) -> Callable[[Subject], Account]:
+    def _inner(subject: Subject) -> Account:
+        account_service: AccountService = domain_container.get(AccountService)
+
+        return account_service.create_account(
+            subject=subject, phone_number=PhoneNumber("+7(999)999-99-99"), email=None
+        )
 
     return _inner
 
 
 @pytest.fixture
 def customer_account(
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
     customer_andrew: Callable[[], Customer],
 ) -> Callable[[], Account]:
     def _inner() -> Account:
@@ -35,7 +43,7 @@ def customer_account(
 
 @pytest.fixture
 def employee_account(
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
     employee_bob: Callable[[], Employee],
 ) -> Callable[[], Account]:
     def _inner() -> Account:
@@ -46,7 +54,7 @@ def employee_account(
 
 @pytest.fixture
 def manager_account(
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
     manager_tom: Callable[[], Manager],
 ) -> Callable[[], Account]:
     def _inner() -> Account:

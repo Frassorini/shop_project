@@ -74,7 +74,9 @@ class ShipmentSummaryRepository(BaseRepository[ShipmentSummary, ShipmentSummaryD
             return
 
         for dto in items:
-            entity = await self.session.get(ShipmentSummaryORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(ShipmentSummaryORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(

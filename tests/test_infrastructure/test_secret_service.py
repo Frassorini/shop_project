@@ -8,11 +8,11 @@ from pydantic import SecretStr
 from shop_project.infrastructure.authentication.exceptions import (
     AuthTypeMismatchException,
 )
-from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
 from shop_project.infrastructure.authentication.helpers.credential import Credential
 from shop_project.infrastructure.authentication.services.secret_service import (
     SecretService,
 )
+from shop_project.infrastructure.entities.secret import AuthType
 
 
 def test_auth_type():

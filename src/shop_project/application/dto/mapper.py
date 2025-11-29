@@ -58,10 +58,9 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummaryReason,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
 from shop_project.infrastructure.entities.account import Account, SubjectType
 from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.secret import Secret
+from shop_project.infrastructure.entities.secret import AuthType, Secret
 
 
 @overload
@@ -69,6 +68,9 @@ def to_dto(domain_object: Account) -> AccountDTO:
     return AccountDTO(
         entity_id=domain_object.entity_id,
         subject_type=domain_object.subject_type.value,
+        login=domain_object.login,
+        email=domain_object.email,
+        phone_number=domain_object.phone_number,
     )
 
 
@@ -209,6 +211,9 @@ def to_domain(dto_object: AccountDTO) -> Account:
     return Account._load(  # type: ignore[access-private]
         entity_id=dto_object.entity_id,
         subject_type=SubjectType(dto_object.subject_type),
+        login=dto_object.login,
+        email=dto_object.email,
+        phone=dto_object.phone_number,
     )
 
 
@@ -307,7 +312,7 @@ def to_domain(dto_object: ShipmentSummaryDTO) -> ShipmentSummary:
 
 @overload
 def to_domain(dto_object: AuthSessionDTO) -> AuthSession:
-    return AuthSession(
+    return AuthSession._load(  # type: ignore[access-private]
         entity_id=dto_object.entity_id,
         account_id=dto_object.account_id,
         refresh_token=dto_object.refresh_token,
@@ -318,7 +323,7 @@ def to_domain(dto_object: AuthSessionDTO) -> AuthSession:
 
 @overload
 def to_domain(dto_object: SecretDTO) -> Secret:
-    return Secret(
+    return Secret._load(  # type: ignore[access-private]
         entity_id=dto_object.entity_id,
         account_id=dto_object.account_id,
         auth_type=AuthType(dto_object.auth_type),

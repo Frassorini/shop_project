@@ -5,11 +5,10 @@ from dishka.container import Container
 from pydantic import SecretStr
 
 from shop_project.domain.entities.customer import Customer
-from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
-from shop_project.infrastructure.authentication.helpers.credential import Credential
-from shop_project.infrastructure.authentication.helpers.subject_type_union import (
-    SubjectTypeUnion,
+from shop_project.domain.interfaces.subject import (
+    Subject,
 )
+from shop_project.infrastructure.authentication.helpers.credential import Credential
 from shop_project.infrastructure.authentication.services.secret_service import (
     SecretService,
 )
@@ -17,13 +16,14 @@ from shop_project.infrastructure.authentication.services.session_service import 
     SessionService,
 )
 from shop_project.infrastructure.entities.account import Account
+from shop_project.infrastructure.entities.secret import AuthType
 from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
 def account_container_factory(
     customer_andrew: Callable[[], Customer],
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
 ) -> Callable[..., AggregateContainer]:
 
     def fact() -> AggregateContainer:
@@ -39,7 +39,7 @@ def account_container_factory(
 @pytest.fixture
 def auth_session_container_factory(
     customer_andrew: Callable[[], Customer],
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
     domain_container: Container,
 ) -> Callable[..., AggregateContainer]:
 
@@ -61,7 +61,7 @@ def auth_session_container_factory(
 @pytest.fixture
 def secret_container_factory(
     customer_andrew: Callable[[], Customer],
-    subject_account: Callable[[SubjectTypeUnion], Account],
+    subject_account: Callable[[Subject], Account],
     domain_container: Container,
 ) -> Callable[..., AggregateContainer]:
 

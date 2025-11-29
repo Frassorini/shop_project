@@ -1,6 +1,6 @@
 from pydantic import BaseModel, SecretStr
 
-from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
+from shop_project.infrastructure.entities.secret import AuthType
 
 
 class Credential(BaseModel):

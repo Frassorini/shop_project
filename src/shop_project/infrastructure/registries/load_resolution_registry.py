@@ -2,13 +2,17 @@ from dataclasses import dataclass
 from typing import Any, Callable, Generic, Type, TypeVar
 
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
+from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
+from shop_project.infrastructure.entities.account import Account
+from shop_project.infrastructure.entities.secret import Secret
 
 SourceType = TypeVar("SourceType")
 TargetType = TypeVar("TargetType")
@@ -21,6 +25,25 @@ class LoadResolutionDescriptor(Generic[SourceType]):
 
 
 _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
+    Account: {
+        Customer: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda account: [account.entity_id],
+        ),
+        Employee: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda account: [account.entity_id],
+        ),
+        Manager: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda account: [account.entity_id],
+        ),
+        Secret: LoadResolutionDescriptor(
+            attribute_name="account_id",
+            strategy=lambda account: [account.entity_id],
+        ),
+    },
+    Secret: {},
     Customer: {
         PurchaseActive: LoadResolutionDescriptor(
             attribute_name="customer_id",

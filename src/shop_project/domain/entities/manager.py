@@ -2,9 +2,10 @@ from typing import Self
 from uuid import UUID
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.subject import Subject
 
 
-class Manager(PersistableEntity):
+class Manager(Subject, PersistableEntity):
     entity_id: UUID
     name: str
 

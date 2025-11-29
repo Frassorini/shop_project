@@ -1,29 +1,42 @@
-from enum import Enum
-from typing import Self
+from typing import Any, Self
 from uuid import UUID
 
+from pydantic import BaseModel, EmailStr
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.domain.interfaces.subject import SubjectType
 
 
-class SubjectType(Enum):
-    CUSTOMER = "CUSTOMER"
-    EMPLOYEE = "EMPLOYEE"
-    MANAGER = "MANAGER"
-
-
-class Account(PersistableEntity):
+class Account(PersistableEntity, BaseModel):
     entity_id: UUID
     subject_type: SubjectType
+    login: str | None
+    email: EmailStr | None
+    phone_number: PhoneNumber | None
 
-    def __init__(self, subject_id: UUID, subject_type: SubjectType) -> None:
-        self.entity_id = subject_id
-        self.subject_type = subject_type
+    def __post_init__(self) -> None:
+        if not self.login and not self.email and not self.phone_number:
+            raise ValueError("Phone or email or login must be provided")
 
     @classmethod
-    def _load(cls, entity_id: UUID, subject_type: SubjectType) -> Self:
-        obj = cls.__new__(cls)
+    def _load(
+        cls,
+        entity_id: UUID,
+        subject_type: SubjectType,
+        login: str | None,
+        phone: PhoneNumber | None,
+        email: EmailStr | None,
+        **kw: Any,
+    ) -> Self:
+        obj = cls(
+            entity_id=entity_id,
+            subject_type=subject_type,
+            login=login,
+            email=email,
+            phone_number=phone,
+        )
 
-        obj.entity_id = entity_id
-        obj.subject_type = subject_type
+        obj.__post_init__()
 
         return obj

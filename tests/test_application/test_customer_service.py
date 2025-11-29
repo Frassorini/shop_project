@@ -14,7 +14,7 @@ from tests.helpers import AggregateContainer
 
 
 @pytest.mark.asyncio
-async def xtest_customer(
+async def test_customer(
     prepare_container: Callable[
         [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
     ],

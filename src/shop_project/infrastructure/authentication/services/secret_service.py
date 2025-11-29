@@ -7,12 +7,11 @@ from pydantic import SecretStr
 from shop_project.infrastructure.authentication.exceptions import (
     AuthTypeMismatchException,
 )
-from shop_project.infrastructure.authentication.helpers.auth_type import AuthType
 from shop_project.infrastructure.authentication.helpers.credential import Credential
 from shop_project.infrastructure.cryptography.interfaces.secret_hasher import (
     SecretHasher,
 )
-from shop_project.infrastructure.entities.secret import Secret
+from shop_project.infrastructure.entities.secret import AuthType, Secret
 
 
 class SecretService:

@@ -42,7 +42,9 @@ class EscrowAccountRepository(BaseRepository[EscrowAccount, EscrowAccountDTO]):
             return
 
         for dto in items:
-            entity = await self.session.get(EscrowAccountORM, dto.entity_id)
+            entity = self.session.identity_map.get(
+                self._get_identity_key(EscrowAccountORM, dto.entity_id)
+            )
 
             if not entity:
                 raise RuntimeError(
