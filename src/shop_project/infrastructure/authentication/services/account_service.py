@@ -1,4 +1,5 @@
 from plum import dispatch, overload
+from pydantic import SecretStr
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.application.interfaces.interface_account_service import (
@@ -8,10 +9,28 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject, SubjectType
+from shop_project.infrastructure.authentication.exceptions import AuthException
+from shop_project.infrastructure.cryptography.interfaces.password_hasher import (
+    PasswordHasher,
+)
 from shop_project.infrastructure.entities.account import Account
 
 
 class AccountService(IAccountService):
+    def __init__(self, password_hasher: PasswordHasher) -> None:
+        self.password_hasher: PasswordHasher = password_hasher
+
+    def set_password(self, account: Account, password: str) -> None:
+        account.password_verifier = SecretStr(self.password_hasher.hash(password))
+
+    def verify_password(self, account: Account, password: str) -> bool:
+        if not account.password_verifier:
+            raise AuthException("Account has no password")
+
+        return self.password_hasher.verify(
+            password, account.password_verifier.get_secret_value()
+        )
+
     def create_account(
         self,
         subject: Subject,
@@ -29,6 +48,7 @@ def _create_account(
     return Account(
         entity_id=subject.entity_id,
         subject_type=SubjectType.CUSTOMER,
+        password_verifier=None,
         login=login,
         email=email,
         phone_number=PhoneNumber(phone_number) if phone_number else None,
@@ -42,6 +62,7 @@ def _create_account(
     return Account(
         entity_id=subject.entity_id,
         subject_type=SubjectType.EMPLOYEE,
+        password_verifier=None,
         login=login,
         email=email,
         phone_number=PhoneNumber(phone_number) if phone_number else None,
@@ -55,6 +76,7 @@ def _create_account(
     return Account(
         entity_id=subject.entity_id,
         subject_type=SubjectType.MANAGER,
+        password_verifier=None,
         login=login,
         email=email,
         phone_number=PhoneNumber(phone_number) if phone_number else None,

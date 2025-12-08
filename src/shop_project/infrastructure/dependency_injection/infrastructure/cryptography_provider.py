@@ -1,18 +1,36 @@
 from dishka import BaseScope, Component, Provider, Scope, alias, provide
 from pydantic import BaseModel, SecretBytes
 
-from shop_project.infrastructure.cryptography.base_64_rand_datagen import (
-    Base64RandomDataGenerator,
+from shop_project.infrastructure.cryptography.base64_32byte_token_generator import (
+    Base64_32ByteTokenGenerator,
 )
 from shop_project.infrastructure.cryptography.bcrypt_hasher import BcryptPasswordHasher
-from shop_project.infrastructure.cryptography.interfaces.jwt_signer import JWTSigner
-from shop_project.infrastructure.cryptography.interfaces.random_data_generator import (
-    RandomDataGenerator,
+from shop_project.infrastructure.cryptography.digits4_random_codegen import (
+    Digits4RandomCodegen,
 )
-from shop_project.infrastructure.cryptography.interfaces.secret_hasher import (
-    SecretHasher,
+from shop_project.infrastructure.cryptography.interfaces.code_generator import (
+    CodeGenerator,
+)
+from shop_project.infrastructure.cryptography.interfaces.entropy_source import (
+    EntropySource,
+)
+from shop_project.infrastructure.cryptography.interfaces.jwt_signer import JWTSigner
+from shop_project.infrastructure.cryptography.interfaces.password_hasher import (
+    PasswordHasher,
+)
+from shop_project.infrastructure.cryptography.interfaces.token_fingerprint_calculator import (
+    TokenFingerprintCalculator,
+)
+from shop_project.infrastructure.cryptography.interfaces.token_generator import (
+    TokenGenerator,
 )
 from shop_project.infrastructure.cryptography.pyjwt_signer import PyJWTSigner
+from shop_project.infrastructure.cryptography.secrets_entropy_source import (
+    SecretsEntropySource,
+)
+from shop_project.infrastructure.cryptography.sha256_token_fingerprint_calculator import (
+    Sha256TokenFingerprintCalculator,
+)
 from shop_project.infrastructure.env_loader import get_env
 
 
@@ -36,6 +54,14 @@ class CryptographyProvider(Provider):
         self.jwt_keys = jwt_keys
 
     @provide
+    def entropy_source(self) -> SecretsEntropySource:
+        return SecretsEntropySource()
+
+    @provide
+    def sha256_token_fingerprint_calculator(self) -> Sha256TokenFingerprintCalculator:
+        return Sha256TokenFingerprintCalculator()
+
+    @provide
     def bcrypt_password_hasher(self) -> BcryptPasswordHasher:
         return BcryptPasswordHasher(rounds=int(get_env("BCRYPT_ROUNDS")))
 
@@ -47,13 +73,24 @@ class CryptographyProvider(Provider):
         )
 
     @provide
-    def base64_random_data_generator(self) -> Base64RandomDataGenerator:
-        return Base64RandomDataGenerator(
-            num_bytes=int(get_env("REFRESH_TOKEN_NUM_BYTES"))
-        )
+    def base64_32byte_token_generator(
+        self, entropy_source: EntropySource
+    ) -> Base64_32ByteTokenGenerator:
+        return Base64_32ByteTokenGenerator(entropy_source=entropy_source)
 
+    @provide
+    def digits4_random_codegen(
+        self, entropy_source: EntropySource
+    ) -> Digits4RandomCodegen:
+        return Digits4RandomCodegen(entropy_source=entropy_source)
+
+    entropy_source_proto = alias(SecretsEntropySource, provides=EntropySource)
     jwt_signer_proto = alias(PyJWTSigner, provides=JWTSigner)
-    secret_hasher_proto = alias(BcryptPasswordHasher, provides=SecretHasher)
-    random_data_generator_proto = alias(
-        Base64RandomDataGenerator, provides=RandomDataGenerator
+    token_fingerprint_calculator_proto = alias(
+        Sha256TokenFingerprintCalculator, provides=TokenFingerprintCalculator
     )
+    password_hasher_proto = alias(BcryptPasswordHasher, provides=PasswordHasher)
+    random_data_generator_proto = alias(
+        Base64_32ByteTokenGenerator, provides=TokenGenerator
+    )
+    digits4_random_codegen_proto = alias(Digits4RandomCodegen, provides=CodeGenerator)

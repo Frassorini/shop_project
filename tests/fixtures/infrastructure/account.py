@@ -14,6 +14,7 @@ from shop_project.infrastructure.authentication.services.account_service import 
     AccountService,
 )
 from shop_project.infrastructure.entities.account import Account
+from tests.helpers import AggregateContainer
 
 
 @pytest.fixture
@@ -61,3 +62,19 @@ def manager_account(
         return subject_account(manager_tom())
 
     return _inner
+
+
+@pytest.fixture
+def account_container_factory(
+    customer_andrew: Callable[[], Customer],
+    subject_account: Callable[[Subject], Account],
+) -> Callable[..., AggregateContainer]:
+
+    def fact() -> AggregateContainer:
+
+        customer = customer_andrew()
+        account = subject_account(customer)
+
+        return AggregateContainer(aggregate=account, dependencies={})
+
+    return fact

@@ -1,12 +1,12 @@
 import bcrypt
 
-from shop_project.infrastructure.cryptography.interfaces.secret_hasher import (
-    SecretHasher,
+from shop_project.infrastructure.cryptography.interfaces.password_hasher import (
+    PasswordHasher,
 )
 from shop_project.shared.bytes_utils import bytes_to_str, str_to_bytes
 
 
-class BcryptPasswordHasher(SecretHasher):
+class BcryptPasswordHasher(PasswordHasher):
     def __init__(self, rounds: int):
         self._rounds = rounds
 

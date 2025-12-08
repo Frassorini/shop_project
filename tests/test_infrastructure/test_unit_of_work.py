@@ -3,7 +3,6 @@ from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type, ca
 
 import pytest
 from dishka.container import Container
-from pydantic import SecretStr
 
 from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.customer import Customer
@@ -21,7 +20,7 @@ from shop_project.domain.services.purchase_claim_service import PurchaseClaimSer
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
 from shop_project.infrastructure.entities.account import Account, SubjectType
 from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.secret import Secret
+from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
@@ -29,7 +28,7 @@ from tests.helpers import AggregateContainer
 
 
 @pytest.mark.asyncio
-async def test_auth_session(
+async def test_external_id_totp(
     uow_factory: UnitOfWorkFactory,
     prepare_container: Callable[
         [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
@@ -38,7 +37,7 @@ async def test_auth_session(
         [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
     ],
 ) -> None:
-    model_type: Type[PersistableEntity] = AuthSession
+    model_type: Type[PersistableEntity] = ExternalIdTotp
     domain_container: AggregateContainer = await prepare_container(model_type)
 
     async with uow_factory.create(
@@ -49,11 +48,11 @@ async def test_auth_session(
         .build()
     ) as uow:
         resources = uow.get_resorces()
-        domain_obj = resources.get_by_id(
+        domain_obj: ExternalIdTotp = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
 
-        domain_obj.expires_at = domain_obj.expires_at + timedelta(days=1)
+        domain_obj.expiration = domain_obj.expiration + timedelta(days=1)
 
         snapshot_before = to_dto(domain_obj)
         uow.mark_commit()
@@ -86,7 +85,7 @@ async def test_auth_session(
 
 
 @pytest.mark.asyncio
-async def test_secret(
+async def test_auth_session(
     uow_factory: UnitOfWorkFactory,
     prepare_container: Callable[
         [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
@@ -95,7 +94,7 @@ async def test_secret(
         [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
     ],
 ) -> None:
-    model_type: Type[PersistableEntity] = Secret
+    model_type: Type[PersistableEntity] = AuthSession
     domain_container: AggregateContainer = await prepare_container(model_type)
 
     async with uow_factory.create(
@@ -110,7 +109,7 @@ async def test_secret(
             model_type, domain_container.aggregate.entity_id
         )
 
-        domain_obj.payload = SecretStr("new payload")
+        domain_obj.expiration = domain_obj.expiration + timedelta(days=1)
 
         snapshot_before = to_dto(domain_obj)
         uow.mark_commit()

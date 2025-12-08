@@ -1,7 +1,7 @@
 from typing import Any, Self
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, SecretStr
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
@@ -11,6 +11,7 @@ from shop_project.domain.interfaces.subject import SubjectType
 class Account(PersistableEntity, BaseModel):
     entity_id: UUID
     subject_type: SubjectType
+    password_verifier: SecretStr | None
     login: str | None
     email: EmailStr | None
     phone_number: PhoneNumber | None
@@ -20,10 +21,11 @@ class Account(PersistableEntity, BaseModel):
             raise ValueError("Phone or email or login must be provided")
 
     @classmethod
-    def _load(
+    def load(
         cls,
         entity_id: UUID,
         subject_type: SubjectType,
+        password_verifier: SecretStr | None,
         login: str | None,
         phone: PhoneNumber | None,
         email: EmailStr | None,
@@ -32,6 +34,7 @@ class Account(PersistableEntity, BaseModel):
         obj = cls(
             entity_id=entity_id,
             subject_type=subject_type,
+            password_verifier=password_verifier,
             login=login,
             email=email,
             phone_number=phone,

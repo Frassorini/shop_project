@@ -13,7 +13,7 @@ from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.secret import Secret
+from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.repositories.account_repository import (
     AccountRepository,
 )
@@ -30,6 +30,9 @@ from shop_project.infrastructure.repositories.employee_repository import (
 from shop_project.infrastructure.repositories.escrow_account_repository import (
     EscrowAccountRepository,
 )
+from shop_project.infrastructure.repositories.external_id_totp_repository import (
+    ExternalIdTotpRepository,
+)
 from shop_project.infrastructure.repositories.manager_repository import (
     ManagerRepository,
 )
@@ -45,7 +48,6 @@ from shop_project.infrastructure.repositories.purchase_draft_repository import (
 from shop_project.infrastructure.repositories.purchase_summary_repository import (
     PurchaseSummaryRepository,
 )
-from shop_project.infrastructure.repositories.secret_repository import SecretRepository
 from shop_project.infrastructure.repositories.shipment_repository import (
     ShipmentRepository,
 )
@@ -54,9 +56,9 @@ from shop_project.infrastructure.repositories.shipment_summary_repository import
 )
 
 _REGISTRY: Mapping[Type[PersistableEntity], Type[BaseRepository[Any, Any]]] = {
+    ExternalIdTotp: ExternalIdTotpRepository,
     Account: AccountRepository,
     AuthSession: AuthSessionRepository,
-    Secret: SecretRepository,
     Manager: ManagerRepository,
     Employee: EmployeeRepository,
     Customer: CustomerRepository,

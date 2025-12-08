@@ -40,7 +40,7 @@ class PurchaseDraft(PersistableEntity):
         self._state_machine = PurchaseDraftStateMachine(PurchaseDraftState.ACTIVE)
 
     @classmethod
-    def _load(
+    def load(
         cls,
         entity_id: UUID,
         customer_id: UUID,

@@ -8,6 +8,7 @@ from shop_project.application.dto.base_dto import BaseDTO
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.employee_dto import EmployeeDTO
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
+from shop_project.application.dto.external_id_totp_dto import ExternalIdTotpDTO
 from shop_project.application.dto.manager_dto import ManagerDTO
 from shop_project.application.dto.product_dto import ProductDTO
 from shop_project.application.dto.purchase_active_dto import (
@@ -22,7 +23,6 @@ from shop_project.application.dto.purchase_summary_dto import (
     PurchaseSummaryDTO,
     PurchaseSummaryItemDTO,
 )
-from shop_project.application.dto.secret_dto import SecretDTO
 from shop_project.application.dto.shipment_dto import ShipmentDTO, ShipmentItemDTO
 from shop_project.application.dto.shipment_summary_dto import (
     ShipmentSummaryDTO,
@@ -60,7 +60,19 @@ from shop_project.domain.entities.shipment_summary import (
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.entities.account import Account, SubjectType
 from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.secret import AuthType, Secret
+from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
+
+
+@overload
+def to_dto(domain_object: ExternalIdTotp) -> ExternalIdTotpDTO:
+    return ExternalIdTotpDTO(
+        entity_id=domain_object.entity_id,
+        external_id_type=domain_object.external_id_type,
+        external_id=domain_object.external_id,
+        totp_verifier=domain_object.totp_verifier,
+        issued_at=domain_object.issued_at,
+        expiration=domain_object.expiration,
+    )
 
 
 @overload
@@ -68,6 +80,7 @@ def to_dto(domain_object: Account) -> AccountDTO:
     return AccountDTO(
         entity_id=domain_object.entity_id,
         subject_type=domain_object.subject_type.value,
+        password_verifier=domain_object.password_verifier,
         login=domain_object.login,
         email=domain_object.email,
         phone_number=domain_object.phone_number,
@@ -180,19 +193,9 @@ def to_dto(domain_object: AuthSession) -> AuthSessionDTO:
     return AuthSessionDTO(
         entity_id=domain_object.entity_id,
         account_id=domain_object.account_id,
-        refresh_token=domain_object.refresh_token,
+        refresh_token_fingerprint=domain_object.refresh_token_fingerprint,
         issued_at=domain_object.issued_at,
-        expires_at=domain_object.expires_at,
-    )
-
-
-@overload
-def to_dto(domain_object: Secret) -> SecretDTO:
-    return SecretDTO(
-        entity_id=domain_object.entity_id,
-        account_id=domain_object.account_id,
-        auth_type=domain_object.auth_type.value,
-        payload=domain_object.payload,
+        expiration=domain_object.expiration,
     )
 
 
@@ -207,10 +210,23 @@ def to_dto(domain_object: Any) -> Any:
 
 
 @overload
+def to_domain(dto_object: ExternalIdTotpDTO) -> ExternalIdTotp:
+    return ExternalIdTotp.load(
+        entity_id=dto_object.entity_id,
+        external_id_type=dto_object.external_id_type,
+        external_id=dto_object.external_id,
+        totp_verifier=dto_object.totp_verifier,
+        issued_at=dto_object.issued_at,
+        expiration=dto_object.expiration,
+    )
+
+
+@overload
 def to_domain(dto_object: AccountDTO) -> Account:
-    return Account._load(  # type: ignore[access-private]
+    return Account.load(
         entity_id=dto_object.entity_id,
         subject_type=SubjectType(dto_object.subject_type),
+        password_verifier=dto_object.password_verifier,
         login=dto_object.login,
         email=dto_object.email,
         phone=dto_object.phone_number,
@@ -219,7 +235,7 @@ def to_domain(dto_object: AccountDTO) -> Account:
 
 @overload
 def to_domain(dto_object: CustomerDTO) -> Customer:
-    return Customer._load(  # type: ignore[access-private]
+    return Customer.load(
         entity_id=dto_object.entity_id,
         name=dto_object.name,
     )
@@ -227,7 +243,7 @@ def to_domain(dto_object: CustomerDTO) -> Customer:
 
 @overload
 def to_domain(dto_object: ManagerDTO) -> Manager:
-    return Manager._load(  # type: ignore[access-private]
+    return Manager.load(
         entity_id=dto_object.entity_id,
         name=dto_object.name,
     )
@@ -235,7 +251,7 @@ def to_domain(dto_object: ManagerDTO) -> Manager:
 
 @overload
 def to_domain(dto_object: EmployeeDTO) -> Employee:
-    return Employee._load(  # type: ignore[access-private]
+    return Employee.load(
         entity_id=dto_object.entity_id,
         name=dto_object.name,
     )
@@ -243,7 +259,7 @@ def to_domain(dto_object: EmployeeDTO) -> Employee:
 
 @overload
 def to_domain(dto_object: PurchaseDraftDTO) -> PurchaseDraft:
-    return PurchaseDraft._load(  # type: ignore[access-private]
+    return PurchaseDraft.load(
         entity_id=dto_object.entity_id,
         state=PurchaseDraftState(dto_object.state),
         customer_id=dto_object.customer_id,
@@ -253,7 +269,7 @@ def to_domain(dto_object: PurchaseDraftDTO) -> PurchaseDraft:
 
 @overload
 def to_domain(dto_object: PurchaseActiveDTO) -> PurchaseActive:
-    return PurchaseActive._load(  # type: ignore[access-private]
+    return PurchaseActive.load(
         entity_id=dto_object.entity_id,
         state=PurchaseActiveState(dto_object.state),
         customer_id=dto_object.customer_id,
@@ -264,7 +280,7 @@ def to_domain(dto_object: PurchaseActiveDTO) -> PurchaseActive:
 
 @overload
 def to_domain(dto_object: PurchaseSummaryDTO) -> PurchaseSummary:
-    return PurchaseSummary._load(  # type: ignore[access-private]
+    return PurchaseSummary.load(
         entity_id=dto_object.entity_id,
         customer_id=dto_object.customer_id,
         escrow_account_id=dto_object.escrow_account_id,
@@ -275,7 +291,7 @@ def to_domain(dto_object: PurchaseSummaryDTO) -> PurchaseSummary:
 
 @overload
 def to_domain(dto_object: EscrowAccountDTO) -> EscrowAccount:
-    return EscrowAccount._load(  # type: ignore[access-private]
+    return EscrowAccount.load(
         entity_id=dto_object.entity_id,
         state=EscrowAccountState(dto_object.state),
         total_amount=dto_object.total_amount,
@@ -284,7 +300,7 @@ def to_domain(dto_object: EscrowAccountDTO) -> EscrowAccount:
 
 @overload
 def to_domain(dto_object: ProductDTO) -> Product:
-    return Product._load(  # type: ignore[access-private]
+    return Product.load(
         entity_id=dto_object.entity_id,
         name=dto_object.name,
         amount=dto_object.amount,
@@ -294,7 +310,7 @@ def to_domain(dto_object: ProductDTO) -> Product:
 
 @overload
 def to_domain(dto_object: ShipmentDTO) -> Shipment:
-    return Shipment._load(  # type: ignore[access-private]
+    return Shipment.load(
         entity_id=dto_object.entity_id,
         state=ShipmentState(dto_object.state),
         items=[ShipmentItem(**item.model_dump()) for item in dto_object.items],
@@ -303,7 +319,7 @@ def to_domain(dto_object: ShipmentDTO) -> Shipment:
 
 @overload
 def to_domain(dto_object: ShipmentSummaryDTO) -> ShipmentSummary:
-    return ShipmentSummary._load(  # type: ignore[access-private]
+    return ShipmentSummary.load(
         entity_id=dto_object.entity_id,
         reason=ShipmentSummaryReason(dto_object.reason),
         items=[ShipmentSummaryItem(**item.model_dump()) for item in dto_object.items],
@@ -312,22 +328,12 @@ def to_domain(dto_object: ShipmentSummaryDTO) -> ShipmentSummary:
 
 @overload
 def to_domain(dto_object: AuthSessionDTO) -> AuthSession:
-    return AuthSession._load(  # type: ignore[access-private]
+    return AuthSession.load(
         entity_id=dto_object.entity_id,
         account_id=dto_object.account_id,
-        refresh_token=dto_object.refresh_token,
+        refresh_token_fingerprint=dto_object.refresh_token_fingerprint,
         issued_at=dto_object.issued_at,
-        expires_at=dto_object.expires_at,
-    )
-
-
-@overload
-def to_domain(dto_object: SecretDTO) -> Secret:
-    return Secret._load(  # type: ignore[access-private]
-        entity_id=dto_object.entity_id,
-        account_id=dto_object.account_id,
-        auth_type=AuthType(dto_object.auth_type),
-        payload=dto_object.payload,
+        expiration=dto_object.expiration,
     )
 
 

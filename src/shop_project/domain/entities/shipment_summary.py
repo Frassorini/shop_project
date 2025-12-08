@@ -44,7 +44,7 @@ class ShipmentSummary(PersistableEntity):
             self._items[item.product_id] = item
 
     @classmethod
-    def _load(
+    def load(
         cls,
         entity_id: UUID,
         reason: ShipmentSummaryReason,

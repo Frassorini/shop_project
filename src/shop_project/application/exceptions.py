@@ -4,3 +4,7 @@ class ApplicationException(Exception):
 
 class AlreadyExistsException(ApplicationException):
     pass
+
+
+class ForbiddenException(ApplicationException):
+    pass

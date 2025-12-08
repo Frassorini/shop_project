@@ -7,6 +7,10 @@ from shop_project.infrastructure.entities.account import Account
 
 
 class IAccountService(Protocol):
+    def set_password(self, account: Account, password: str) -> None: ...
+
+    def verify_password(self, account: Account, password: str) -> bool: ...
+
     def create_account(
         self,
         subject: Subject,

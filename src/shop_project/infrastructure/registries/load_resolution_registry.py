@@ -12,7 +12,6 @@ from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.secret import Secret
 
 SourceType = TypeVar("SourceType")
 TargetType = TypeVar("TargetType")
@@ -38,12 +37,7 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
             attribute_name="entity_id",
             strategy=lambda account: [account.entity_id],
         ),
-        Secret: LoadResolutionDescriptor(
-            attribute_name="account_id",
-            strategy=lambda account: [account.entity_id],
-        ),
     },
-    Secret: {},
     Customer: {
         PurchaseActive: LoadResolutionDescriptor(
             attribute_name="customer_id",

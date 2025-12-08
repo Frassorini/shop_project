@@ -1,4 +1,4 @@
-from typing import Callable, Literal
+from typing import Callable
 from uuid import uuid4
 
 import pytest
@@ -17,13 +17,7 @@ from shop_project.infrastructure.authentication.services.session_service import 
 )
 from shop_project.infrastructure.entities.account import Account, SubjectType
 from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.secret import AuthType
-
-
-def test_auth_type():
-    auth: Literal[AuthType.PASSWORD] = AuthType.PASSWORD
-
-    assert auth == AuthType.PASSWORD
+from tests.fixtures.infrastructure.account import AccountService
 
 
 @pytest.mark.asyncio
@@ -31,6 +25,19 @@ async def test_account(customer_account: Callable[[], Account]):
     account = customer_account()
 
     assert isinstance(account, Account)
+
+
+@pytest.mark.asyncio
+async def test_password(
+    customer_account: Callable[[], Account], async_container: AsyncContainer
+):
+    secret_service = await async_container.get(AccountService)
+
+    account = customer_account()
+    secret_service.set_password(account, "password")
+
+    assert secret_service.verify_password(account, "password")
+    assert not secret_service.verify_password(account, "wrong_password")
 
 
 @pytest.mark.asyncio
@@ -63,7 +70,9 @@ async def test_verify_session(
     account = subject_account(customer)
     session, sesion_refresh = session_service.create_session(account, customer)
 
-    assert session_service.verify_session(session, sesion_refresh.refresh_token)
+    assert session_service.verify_session(
+        session, sesion_refresh.refresh_token.get_secret_value()
+    )
     assert not session_service.verify_session(session, uuid4().hex)
 
 
@@ -79,7 +88,7 @@ async def test_access_token(
     session, sesion_refresh = session_service.create_session(account, customer)
 
     token_payload: AccessTokenPayload | None = session_service.verify_access_token(
-        sesion_refresh.access_token
+        sesion_refresh.access_token.get_secret_value()
     )
 
     assert token_payload

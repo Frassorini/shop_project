@@ -47,7 +47,7 @@ class EscrowAccount(PersistableEntity):
         self._state_machine = EscrowAccountStateMachine(EscrowAccountState.PENDING)
 
     @classmethod
-    def _load(
+    def load(
         cls, entity_id: UUID, total_amount: Decimal, state: EscrowAccountState
     ) -> Self:
         obj = cls.__new__(cls)

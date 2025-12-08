@@ -7,18 +7,18 @@ from pydantic_extra_types.phone_numbers import PhoneNumber
 from shop_project.application.schemas.base_schema import BaseSchema
 
 
-class RegisterRequestSchema(BaseSchema, ABC):
+class CredentialSchema(BaseSchema, ABC):
     identifier: Any
-    credential: SecretStr
+    plaintext_secret: SecretStr
 
 
-class EmailRegisterRequestSchema(RegisterRequestSchema):
+class EmailCredentialSchema(CredentialSchema):
     identifier: EmailStr
 
 
-class PhoneRegisterRequestSchema(RegisterRequestSchema):
+class PhoneCredentialSchema(CredentialSchema):
     identifier: PhoneNumber
 
 
-class LoginRegisterRequestSchema(RegisterRequestSchema):
+class LoginCredentialSchema(CredentialSchema):
     identifier: str

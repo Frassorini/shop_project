@@ -22,7 +22,7 @@ class Product(PersistableEntity):
         self.price: Decimal = price
 
     @classmethod
-    def _load(cls, entity_id: UUID, name: str, amount: int, price: Decimal) -> Self:
+    def load(cls, entity_id: UUID, name: str, amount: int, price: Decimal) -> Self:
         obj = cls.__new__(cls)
 
         obj.entity_id = entity_id

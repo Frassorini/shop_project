@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
+from pydantic import SecretStr
 from sqlalchemy import (
     DateTime,
     ForeignKeyConstraint,
@@ -20,9 +21,9 @@ class AuthSession(Base):
 
     entity_id: Mapped[UUID] = mapped_column(nullable=False)
     account_id: Mapped[UUID] = mapped_column(nullable=False)
-    refresh_token: Mapped[str] = mapped_column(String(255), nullable=False)
+    refresh_token_fingerprint: Mapped[str] = mapped_column(String(255), nullable=False)
     issued_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
-    expires_at: Mapped[DateTime] = mapped_column(
+    expiration: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
 
@@ -39,16 +40,16 @@ class AuthSession(Base):
         self,
         entity_id: UUID,
         account_id: UUID,
-        refresh_token: str,
+        refresh_token_fingerprint: SecretStr,
         issued_at: DateTime,
-        expires_at: DateTime,
+        expiration: DateTime,
         **kw: Any,
     ) -> None:
         self.entity_id = entity_id
         self.account_id = account_id
-        self.refresh_token = refresh_token
+        self.refresh_token_fingerprint = refresh_token_fingerprint.get_secret_value()
         self.issued_at = issued_at
-        self.expires_at = expires_at
+        self.expiration = expiration
 
     def __init__(self, **kw: Any) -> None:
         super().__init__()

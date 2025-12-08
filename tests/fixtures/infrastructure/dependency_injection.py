@@ -28,6 +28,9 @@ from shop_project.infrastructure.dependency_injection.infrastructure.cryptograph
 from shop_project.infrastructure.dependency_injection.infrastructure.database_provider import (
     DatabaseProvider,
 )
+from shop_project.infrastructure.dependency_injection.infrastructure.notification_provider import (
+    NotificationProvider,
+)
 from shop_project.infrastructure.message_broker.broker_container import BrokerContainer
 from tests.helpers import get_test_jwt_private_key, get_test_jwt_public_key
 
@@ -43,6 +46,7 @@ def domain_container() -> Container:
             )
         ),
         AuthenticationProvider(),
+        NotificationProvider(),
     )
 
     return container
@@ -67,6 +71,7 @@ async def async_container(
         DatabaseProvider(test_db_factory),
         BrokerProvider(test_broker_container_factory),
         ApplicationServiceProvider(),
+        NotificationProvider(),
     )
 
     async with container() as ct:

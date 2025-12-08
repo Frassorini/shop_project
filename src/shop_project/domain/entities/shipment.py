@@ -59,7 +59,7 @@ class Shipment(PersistableEntity):
             self._items[item.product_id] = item
 
     @classmethod
-    def _load(
+    def load(
         cls, entity_id: UUID, items: list[ShipmentItem], state: ShipmentState
     ) -> Self:
         obj = cls.__new__(cls)
