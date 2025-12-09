@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from plum import dispatch, overload
 from pydantic import SecretStr
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.application.interfaces.interface_notification import (
     EmailNotificationService,
@@ -66,7 +65,7 @@ class TotpService(ITotpService):
     def create_sms_code_message_pair(self, phone_number: str) -> CodeMessagePair:
         code = self._code_generator.generate()
         totp = self._create_totp(
-            external_id_type="phone", external_id=phone_number, totp_secret=code
+            external_id_type="phone_number", external_id=phone_number, totp_secret=code
         )
         message = self._create_sms_message(phone_number=phone_number, code=code)
         return CodeMessagePair(totp=totp, message=message)
@@ -95,8 +94,8 @@ class TotpService(ITotpService):
 
     def _create_sms_message(self, phone_number: str, code: str) -> SMSMessage:
         return SMSMessage(
-            from_number=PhoneNumber(self._sms_sender),
-            to_number=PhoneNumber(phone_number),
+            from_number=self._sms_sender,
+            to_number=phone_number,
             body=f"Your TOTP code is: {code}",
         )
 

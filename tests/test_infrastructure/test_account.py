@@ -15,7 +15,7 @@ from shop_project.infrastructure.authentication.services.session_service import 
     SessionRefresh,
     SessionService,
 )
-from shop_project.infrastructure.entities.account import Account, SubjectType
+from shop_project.infrastructure.entities.account import Account, SubjectEnum
 from shop_project.infrastructure.entities.auth_session import AuthSession
 from tests.fixtures.infrastructure.account import AccountService
 
@@ -92,7 +92,7 @@ async def test_access_token(
     )
 
     assert token_payload
-    assert token_payload.subject_type == SubjectType.CUSTOMER
+    assert token_payload.subject_type == SubjectEnum.CUSTOMER
     assert token_payload.account_id == account.entity_id
 
     assert not session_service.verify_access_token(uuid4().hex)

@@ -11,21 +11,26 @@ from shop_project.application.interfaces.interface_account_service import (
     IAccountService,
 )
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
+from shop_project.application.interfaces.interface_session_service import (
+    ISessionService,
+)
 from shop_project.application.interfaces.interface_totp_service import ITotpService
 from shop_project.application.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
 from shop_project.application.schemas.credential_schema import (
     CredentialSchema,
-    EmailCredentialSchema,
-    LoginCredentialSchema,
-    PhoneCredentialSchema,
+    EmailTotpCredentialSchema,
+    LoginPasswordCredentialSchema,
+    PhoneTotpCredentialSchema,
 )
+from shop_project.application.schemas.session_refresh_schema import SessionRefreshSchema
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject
 from shop_project.infrastructure.entities.account import Account
+from shop_project.infrastructure.entities.auth_session import AuthSession
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 
 
@@ -36,24 +41,32 @@ class RegistrationService:
         query_builder_type: Type[IQueryBuilder],
         account_service: IAccountService,
         totp_service: ITotpService,
+        session_service: ISessionService,
     ) -> None:
         self._unit_of_work_factory: IUnitOfWorkFactory = unit_of_work_factory
         self._query_builder_type: Type[IQueryBuilder] = query_builder_type
         self._account_service: IAccountService = account_service
         self._totp_service: ITotpService = totp_service
+        self._session_service: ISessionService = session_service
 
-    async def register_customer(self, register_request: CredentialSchema) -> None:
+    async def register_customer(
+        self, register_request: CredentialSchema
+    ) -> SessionRefreshSchema:
         return await self._register_subject(Customer, register_request)
 
-    async def register_employee(self, register_request: CredentialSchema) -> None:
+    async def register_employee(
+        self, register_request: CredentialSchema
+    ) -> SessionRefreshSchema:
         return await self._register_subject(Employee, register_request)
 
-    async def register_manager(self, register_request: CredentialSchema) -> None:
+    async def register_manager(
+        self, register_request: CredentialSchema
+    ) -> SessionRefreshSchema:
         return await self._register_subject(Manager, register_request)
 
     async def _register_subject_sms(
-        self, subject_type: Type[Subject], register_request: PhoneCredentialSchema
-    ) -> None:
+        self, subject_type: Type[Subject], register_request: PhoneTotpCredentialSchema
+    ) -> SessionRefreshSchema:
         subject = _create_subject(subject_type, register_request)
         account = self._account_service.create_account(
             subject, phone_number=register_request.identifier
@@ -67,7 +80,7 @@ class RegistrationService:
             .load(ExternalIdTotp)
             .from_attribute("external_id", [register_request.identifier])
             .and_()
-            .from_attribute("external_id_type", ["phone"])
+            .from_attribute("external_id_type", ["phone_number"])
             .for_update()
             .build()
         ) as uow:
@@ -80,19 +93,27 @@ class RegistrationService:
             )
 
             if not self._totp_service.verify_totp(
-                totp, register_request.plaintext_secret.get_secret_value()
+                totp, register_request.code_plaintext.get_secret_value()
             ):
                 raise ForbiddenException
 
+            auth_session, session_refresh = self._session_service.create_session(
+                account, subject
+            )
+            resources.put(AuthSession, auth_session)
             resources.put(Account, account)
             resources.put(subject_type, subject)
             resources.delete(ExternalIdTotp, totp)
 
             uow.mark_commit()
 
+        return SessionRefreshSchema.model_validate(
+            session_refresh, from_attributes=True
+        )
+
     async def _register_subject_email(
-        self, subject_type: Type[Subject], register_request: EmailCredentialSchema
-    ) -> None:
+        self, subject_type: Type[Subject], register_request: EmailTotpCredentialSchema
+    ) -> SessionRefreshSchema:
         subject = _create_subject(subject_type, register_request)
         account = self._account_service.create_account(
             subject, email=register_request.identifier
@@ -119,25 +140,35 @@ class RegistrationService:
             )
 
             if not self._totp_service.verify_totp(
-                totp, register_request.plaintext_secret.get_secret_value()
+                totp, register_request.code_plaintext.get_secret_value()
             ):
                 raise ForbiddenException
 
+            auth_session, session_refresh = self._session_service.create_session(
+                account, subject
+            )
+            resources.put(AuthSession, auth_session)
             resources.put(Account, account)
             resources.put(subject_type, subject)
             resources.delete(ExternalIdTotp, totp)
 
             uow.mark_commit()
 
+        return SessionRefreshSchema.model_validate(
+            session_refresh, from_attributes=True
+        )
+
     async def _register_subject_login(
-        self, subject_type: Type[Subject], register_request: LoginCredentialSchema
-    ) -> None:
+        self,
+        subject_type: Type[Subject],
+        register_request: LoginPasswordCredentialSchema,
+    ) -> SessionRefreshSchema:
         subject = _create_subject(subject_type, register_request)
         account = self._account_service.create_account(
             subject, login=register_request.identifier
         )
         self._account_service.set_password(
-            account, register_request.plaintext_secret.get_secret_value()
+            account, register_request.password_plaintext.get_secret_value()
         )
 
         async with self._unit_of_work_factory.create(
@@ -152,38 +183,49 @@ class RegistrationService:
             if resources.get_all(Account):
                 raise AlreadyExistsException
 
+            auth_session, session_refresh = self._session_service.create_session(
+                account, subject
+            )
+            resources.put(AuthSession, auth_session)
             resources.put(Account, account)
             resources.put(subject_type, subject)
+
             uow.mark_commit()
+
+        return SessionRefreshSchema.model_validate(
+            session_refresh, from_attributes=True
+        )
 
     @overload
     def _register_subject(
-        self, subject_type: Type[Subject], register_request: LoginCredentialSchema
-    ) -> Coroutine[None, None, None]:
+        self,
+        subject_type: Type[Subject],
+        register_request: LoginPasswordCredentialSchema,
+    ) -> Coroutine[None, None, SessionRefreshSchema]:
         return self._register_subject_login(subject_type, register_request)
 
     @overload
     def _register_subject(
-        self, subject_type: Type[Subject], register_request: EmailCredentialSchema
-    ) -> Coroutine[None, None, None]:
+        self, subject_type: Type[Subject], register_request: EmailTotpCredentialSchema
+    ) -> Coroutine[None, None, SessionRefreshSchema]:
         return self._register_subject_email(subject_type, register_request)
 
     @overload
     def _register_subject(
-        self, subject_type: Type[Subject], register_request: PhoneCredentialSchema
-    ) -> Coroutine[None, None, None]:
+        self, subject_type: Type[Subject], register_request: PhoneTotpCredentialSchema
+    ) -> Coroutine[None, None, SessionRefreshSchema]:
         return self._register_subject_sms(subject_type, register_request)
 
     @overload
     def _register_subject(
         self, subject_type: Type[Subject], register_request: CredentialSchema
-    ) -> Coroutine[None, None, None]:
+    ) -> Coroutine[None, None, SessionRefreshSchema]:
         raise NotImplementedError
 
     @dispatch
     def _register_subject(
         self, subject_type: Type[Subject], register_request: CredentialSchema
-    ) -> Coroutine[None, None, None]: ...
+    ) -> Coroutine[None, None, SessionRefreshSchema]: ...
 
 
 @overload

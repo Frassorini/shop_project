@@ -17,6 +17,9 @@ def pytest_addoption(parser: pytest.Parser):
 
 
 pytest_plugins = [
+    "tests.fixtures.application.login",
+    "tests.fixtures.application.totp",
+    "tests.fixtures.application.registration",
     "tests.fixtures.infrastructure.unit_of_work",
     "tests.fixtures.infrastructure.database",
     "tests.fixtures.infrastructure.broker",

@@ -2,19 +2,19 @@ from typing import Any, Self
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, SecretStr
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.domain.interfaces.subject import SubjectType
+from shop_project.domain.interfaces.subject import SubjectEnum
+from shop_project.shared.phone_str import PhoneStr
 
 
 class Account(PersistableEntity, BaseModel):
     entity_id: UUID
-    subject_type: SubjectType
+    subject_type: SubjectEnum
     password_verifier: SecretStr | None
     login: str | None
     email: EmailStr | None
-    phone_number: PhoneNumber | None
+    phone_number: PhoneStr | None
 
     def __post_init__(self) -> None:
         if not self.login and not self.email and not self.phone_number:
@@ -24,11 +24,11 @@ class Account(PersistableEntity, BaseModel):
     def load(
         cls,
         entity_id: UUID,
-        subject_type: SubjectType,
+        subject_type: SubjectEnum,
         password_verifier: SecretStr | None,
         login: str | None,
-        phone: PhoneNumber | None,
-        email: EmailStr | None,
+        phone_number: str | None,
+        email: str | None,
         **kw: Any,
     ) -> Self:
         obj = cls(
@@ -37,7 +37,7 @@ class Account(PersistableEntity, BaseModel):
             password_verifier=password_verifier,
             login=login,
             email=email,
-            phone_number=phone,
+            phone_number=phone_number,
         )
 
         obj.__post_init__()

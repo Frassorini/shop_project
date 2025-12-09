@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from pydantic import SecretStr
 from sqlalchemy import (
     DateTime,
     ForeignKeyConstraint,
@@ -11,6 +10,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shop_project.infrastructure.database.models.base import Base
+from shop_project.infrastructure.database.utc_datetime import UTCDateTime
 
 if TYPE_CHECKING:
     from shop_project.infrastructure.database.models.account import Account
@@ -22,9 +22,11 @@ class AuthSession(Base):
     entity_id: Mapped[UUID] = mapped_column(nullable=False)
     account_id: Mapped[UUID] = mapped_column(nullable=False)
     refresh_token_fingerprint: Mapped[str] = mapped_column(String(255), nullable=False)
-    issued_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
+    issued_at: Mapped[DateTime] = mapped_column(
+        UTCDateTime(timezone=True), nullable=False
+    )
     expiration: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), nullable=False
+        UTCDateTime(timezone=True), nullable=False
     )
 
     account: Mapped["Account"] = relationship(
@@ -40,14 +42,14 @@ class AuthSession(Base):
         self,
         entity_id: UUID,
         account_id: UUID,
-        refresh_token_fingerprint: SecretStr,
+        refresh_token_fingerprint: str,
         issued_at: DateTime,
         expiration: DateTime,
         **kw: Any,
     ) -> None:
         self.entity_id = entity_id
         self.account_id = account_id
-        self.refresh_token_fingerprint = refresh_token_fingerprint.get_secret_value()
+        self.refresh_token_fingerprint = refresh_token_fingerprint
         self.issued_at = issued_at
         self.expiration = expiration
 

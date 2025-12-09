@@ -5,6 +5,7 @@ from typing import (
     Awaitable,
     Callable,
     Coroutine,
+    Sequence,
     Type,
 )
 
@@ -64,16 +65,80 @@ def uow_check(
 ]:
     @asynccontextmanager
     async def _inner(
-        model_type: Type[PersistableEntity], domain_object: PersistableEntity
+        model_type: Type[PersistableEntity], domain_object_id: PersistableEntity
     ) -> AsyncIterator[UnitOfWork]:
         async with uow_factory.create(
             QueryBuilder(mutating=False)
             .load(model_type)
-            .from_id([domain_object.entity_id])
+            .from_id([domain_object_id.entity_id])
             .no_lock()
             .build()
         ) as uow:
             yield uow
+
+    return _inner
+
+
+@pytest.fixture
+def uow_get_all_single_model(
+    uow_factory: UnitOfWorkFactory,
+) -> Callable[[Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]]:
+    async def _inner(
+        model_type: Type[PersistableEntity],
+    ) -> Sequence[PersistableEntity]:
+        async with uow_factory.create(
+            QueryBuilder(mutating=False).load(model_type).no_lock().build()
+        ) as uow:
+            resources = uow.get_resorces()
+            return resources.get_all(model_type)
+
+    return _inner
+
+
+@pytest.fixture
+def uow_get_one_single_model(
+    uow_factory: UnitOfWorkFactory,
+) -> Callable[[Type[PersistableEntity], str, str], Awaitable[PersistableEntity]]:
+    async def _inner(
+        model_type: Type[PersistableEntity], attribute_name: str, attribute_value: str
+    ) -> PersistableEntity:
+        async with uow_factory.create(
+            QueryBuilder(mutating=False)
+            .load(model_type)
+            .from_attribute(attribute_name, [attribute_value])
+            .no_lock()
+            .build()
+        ) as uow:
+            resources = uow.get_resorces()
+            return resources.get_one_by_attribute(
+                model_type, attribute_name, attribute_value
+            )
+
+    return _inner
+
+
+@pytest.fixture
+def uow_get_many_single_model(
+    uow_factory: UnitOfWorkFactory,
+) -> Callable[
+    [Type[PersistableEntity], str, list[str]], Awaitable[Sequence[PersistableEntity]]
+]:
+    async def _inner(
+        model_type: Type[PersistableEntity],
+        attribute_name: str,
+        attribute_values: list[str],
+    ) -> Sequence[PersistableEntity]:
+        async with uow_factory.create(
+            QueryBuilder(mutating=False)
+            .load(model_type)
+            .from_attribute(attribute_name, attribute_values)
+            .no_lock()
+            .build()
+        ) as uow:
+            resources = uow.get_resorces()
+            return resources.get_by_attribute(
+                model_type, attribute_name, attribute_values
+            )
 
     return _inner
 

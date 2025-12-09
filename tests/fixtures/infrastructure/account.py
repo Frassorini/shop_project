@@ -1,8 +1,8 @@
 from typing import Callable
+from uuid import uuid4
 
 import pytest
 from dishka.container import Container
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
@@ -21,12 +21,31 @@ from tests.helpers import AggregateContainer
 def subject_account(
     domain_container: Callable[[], Container],
 ) -> Callable[[Subject], Account]:
-    def _inner(subject: Subject) -> Account:
+    def _inner(
+        subject: Subject,
+        phone_number: str | None = None,
+        email: str | None = None,
+        login: str | None = None,
+        password: str | None = None,
+    ) -> Account:
         account_service: AccountService = domain_container.get(AccountService)
 
-        return account_service.create_account(
-            subject=subject, phone_number=PhoneNumber("+7(999)999-99-99"), email=None
+        if not (login and email and phone_number):
+            login = f"login-{uuid4()}"
+
+        if not password:
+            password = "password"
+
+        account = account_service.create_account(
+            subject=subject,
+            login=login,
+            phone_number=phone_number,
+            email=email,
         )
+
+        account_service.set_password(account=account, password=password)
+
+        return account
 
     return _inner
 

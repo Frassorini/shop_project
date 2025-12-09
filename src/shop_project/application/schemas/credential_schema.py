@@ -2,23 +2,38 @@ from abc import ABC
 from typing import Any
 
 from pydantic import EmailStr, SecretStr
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.application.schemas.base_schema import BaseSchema
+from shop_project.shared.phone_str import PhoneStr
 
 
 class CredentialSchema(BaseSchema, ABC):
     identifier: Any
-    plaintext_secret: SecretStr
 
 
-class EmailCredentialSchema(CredentialSchema):
+class TotpCredentialSchema(CredentialSchema):
+    code_plaintext: SecretStr
+
+
+class PasswordCredentialSchema(CredentialSchema):
+    password_plaintext: SecretStr
+
+
+class EmailTotpCredentialSchema(TotpCredentialSchema):
     identifier: EmailStr
 
 
-class PhoneCredentialSchema(CredentialSchema):
-    identifier: PhoneNumber
+class PhoneTotpCredentialSchema(TotpCredentialSchema):
+    identifier: PhoneStr
 
 
-class LoginCredentialSchema(CredentialSchema):
+class EmailPasswordCredentialSchema(PasswordCredentialSchema):
+    identifier: EmailStr
+
+
+class PhonePasswordCredentialSchema(PasswordCredentialSchema):
+    identifier: PhoneStr
+
+
+class LoginPasswordCredentialSchema(PasswordCredentialSchema):
     identifier: str

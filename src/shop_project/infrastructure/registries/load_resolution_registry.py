@@ -12,6 +12,7 @@ from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.infrastructure.entities.account import Account
+from shop_project.infrastructure.entities.auth_session import AuthSession
 
 SourceType = TypeVar("SourceType")
 TargetType = TypeVar("TargetType")
@@ -36,6 +37,20 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
         Manager: LoadResolutionDescriptor(
             attribute_name="entity_id",
             strategy=lambda account: [account.entity_id],
+        ),
+    },
+    AuthSession: {
+        Customer: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda auth_session: [auth_session.account_id],
+        ),
+        Employee: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda auth_session: [auth_session.account_id],
+        ),
+        Manager: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda auth_session: [auth_session.account_id],
         ),
     },
     Customer: {

@@ -9,6 +9,9 @@ from shop_project.application.interfaces.interface_notification import (
     EmailNotificationService,
     SMSNotificationService,
 )
+from shop_project.application.interfaces.interface_session_service import (
+    ISessionService,
+)
 from shop_project.application.interfaces.interface_totp_service import ITotpService
 from shop_project.infrastructure.authentication.services.account_service import (
     AccountService,
@@ -75,3 +78,4 @@ class AuthenticationProvider(Provider):
 
     account_service_proto = alias(AccountService, provides=IAccountService)
     totp_service_proto = alias(TotpService, provides=ITotpService)
+    session_service_proto = alias(SessionService, provides=ISessionService)

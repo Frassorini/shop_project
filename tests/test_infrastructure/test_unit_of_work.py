@@ -18,7 +18,7 @@ from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
-from shop_project.infrastructure.entities.account import Account, SubjectType
+from shop_project.infrastructure.entities.account import Account, SubjectEnum
 from shop_project.infrastructure.entities.auth_session import AuthSession
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.exceptions import ResourcesException
@@ -166,7 +166,7 @@ async def test_account(
             model_type, domain_container.aggregate.entity_id
         )
 
-        domain_obj.subject_type = SubjectType.EMPLOYEE
+        domain_obj.subject_type = SubjectEnum.EMPLOYEE
 
         snapshot_before = to_dto(domain_obj)
         uow.mark_commit()

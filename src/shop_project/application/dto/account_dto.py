@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from pydantic import EmailStr, SecretStr
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.application.dto.base_dto import BaseDTO
+from shop_project.shared.phone_str import PhoneStr
 
 
 class AccountDTO(BaseDTO):
@@ -12,4 +12,4 @@ class AccountDTO(BaseDTO):
     password_verifier: SecretStr | None
     login: str | None
     email: EmailStr | None
-    phone_number: PhoneNumber | None
+    phone_number: PhoneStr | None

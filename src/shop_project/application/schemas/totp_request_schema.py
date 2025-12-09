@@ -2,9 +2,9 @@ from abc import ABC
 from typing import Any
 
 from pydantic import EmailStr
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.application.schemas.base_schema import BaseSchema
+from shop_project.shared.phone_str import PhoneStr
 
 
 class TotpRequestSchema(BaseSchema, ABC):
@@ -16,4 +16,4 @@ class EmailTotpRequestSchema(TotpRequestSchema):
 
 
 class SmsTotpRequestSchema(TotpRequestSchema):
-    identifier: PhoneNumber
+    identifier: PhoneStr

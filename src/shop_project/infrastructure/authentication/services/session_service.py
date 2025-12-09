@@ -2,12 +2,16 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from plum import dispatch, overload
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr
 
+from shop_project.application.interfaces.interface_session_service import (
+    ISessionService,
+    SessionRefresh,
+)
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
-from shop_project.domain.interfaces.subject import Subject, SubjectType
+from shop_project.domain.interfaces.subject import Subject, SubjectEnum
 from shop_project.infrastructure.authentication.exceptions import (
     AuthSessionExpiredException,
     PermissionException,
@@ -29,12 +33,7 @@ from shop_project.infrastructure.entities.auth_session import (
 )
 
 
-class SessionRefresh(BaseModel):
-    refresh_token: SecretStr
-    access_token: SecretStr
-
-
-class SessionService:
+class SessionService(ISessionService):
     def __init__(
         self,
         token_fingerprint_calculator: TokenFingerprintCalculator,
@@ -71,8 +70,8 @@ class SessionService:
         session = AuthSession(
             entity_id=uuid4(),
             account_id=account.entity_id,
-            refresh_token_fingerprint=SecretStr(
-                self.token_fingerprint_calculator.fingerprint(refresh_token)
+            refresh_token_fingerprint=self.token_fingerprint_calculator.fingerprint(
+                refresh_token
             ),
             issued_at=datetime.now(tz=timezone.utc),
             expiration=datetime.now(tz=timezone.utc) + self.refresh_ttl,
@@ -96,8 +95,9 @@ class SessionService:
         )
 
         session.update_refresh_token_fingerprint(
-            self.token_fingerprint_calculator.fingerprint(new_refresh_token)
+            self.get_refresh_token_fingerprint(new_refresh_token)
         )
+        session.expiration = datetime.now(tz=timezone.utc) + self.refresh_ttl
 
         return SessionRefresh(
             refresh_token=SecretStr(new_refresh_token),
@@ -106,7 +106,7 @@ class SessionService:
 
     def verify_session(self, session: AuthSession, refresh_token: str) -> bool:
         if (
-            session.refresh_token_fingerprint.get_secret_value()
+            session.refresh_token_fingerprint
             == self.token_fingerprint_calculator.fingerprint(refresh_token)
         ):
             return True
@@ -115,19 +115,19 @@ class SessionService:
     @overload
     def _create_access_token_payload(self, subject: Customer) -> AccessTokenPayload:
         return AccessTokenPayload(
-            subject_type=SubjectType.CUSTOMER, account_id=subject.entity_id
+            subject_type=SubjectEnum.CUSTOMER, account_id=subject.entity_id
         )
 
     @overload
     def _create_access_token_payload(self, subject: Employee) -> AccessTokenPayload:
         return AccessTokenPayload(
-            subject_type=SubjectType.EMPLOYEE, account_id=subject.entity_id
+            subject_type=SubjectEnum.EMPLOYEE, account_id=subject.entity_id
         )
 
     @overload
     def _create_access_token_payload(self, subject: Manager) -> AccessTokenPayload:
         return AccessTokenPayload(
-            subject_type=SubjectType.MANAGER, account_id=subject.entity_id
+            subject_type=SubjectEnum.MANAGER, account_id=subject.entity_id
         )
 
     @overload

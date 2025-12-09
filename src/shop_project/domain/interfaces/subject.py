@@ -4,7 +4,7 @@ from enum import Enum
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
-class SubjectType(Enum):
+class SubjectEnum(Enum):
     CUSTOMER = "CUSTOMER"
     EMPLOYEE = "EMPLOYEE"
     MANAGER = "MANAGER"

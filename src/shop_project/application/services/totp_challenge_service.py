@@ -34,7 +34,7 @@ class TotpChallengeService:
             .load(ExternalIdTotp)
             .from_attribute("external_id", [totp_request.identifier])
             .and_()
-            .from_attribute("external_id_type", ["phone"])
+            .from_attribute("external_id_type", ["phone_number"])
             .for_update()
             .build()
         ) as uow:

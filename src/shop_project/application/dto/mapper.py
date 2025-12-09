@@ -58,7 +58,7 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummaryReason,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.entities.account import Account, SubjectType
+from shop_project.infrastructure.entities.account import Account, SubjectEnum
 from shop_project.infrastructure.entities.auth_session import AuthSession
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 
@@ -225,11 +225,11 @@ def to_domain(dto_object: ExternalIdTotpDTO) -> ExternalIdTotp:
 def to_domain(dto_object: AccountDTO) -> Account:
     return Account.load(
         entity_id=dto_object.entity_id,
-        subject_type=SubjectType(dto_object.subject_type),
+        subject_type=SubjectEnum(dto_object.subject_type),
         password_verifier=dto_object.password_verifier,
         login=dto_object.login,
         email=dto_object.email,
-        phone=dto_object.phone_number,
+        phone_number=dto_object.phone_number,
     )
 
 

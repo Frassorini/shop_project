@@ -1,6 +1,5 @@
 from plum import dispatch, overload
 from pydantic import SecretStr
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from shop_project.application.interfaces.interface_account_service import (
     IAccountService,
@@ -8,7 +7,7 @@ from shop_project.application.interfaces.interface_account_service import (
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
-from shop_project.domain.interfaces.subject import Subject, SubjectType
+from shop_project.domain.interfaces.subject import Subject, SubjectEnum
 from shop_project.infrastructure.authentication.exceptions import AuthException
 from shop_project.infrastructure.cryptography.interfaces.password_hasher import (
     PasswordHasher,
@@ -47,11 +46,11 @@ def _create_account(
 ) -> Account:
     return Account(
         entity_id=subject.entity_id,
-        subject_type=SubjectType.CUSTOMER,
+        subject_type=SubjectEnum.CUSTOMER,
         password_verifier=None,
         login=login,
         email=email,
-        phone_number=PhoneNumber(phone_number) if phone_number else None,
+        phone_number=phone_number,
     )
 
 
@@ -61,11 +60,11 @@ def _create_account(
 ) -> Account:
     return Account(
         entity_id=subject.entity_id,
-        subject_type=SubjectType.EMPLOYEE,
+        subject_type=SubjectEnum.EMPLOYEE,
         password_verifier=None,
         login=login,
         email=email,
-        phone_number=PhoneNumber(phone_number) if phone_number else None,
+        phone_number=phone_number,
     )
 
 
@@ -75,11 +74,11 @@ def _create_account(
 ) -> Account:
     return Account(
         entity_id=subject.entity_id,
-        subject_type=SubjectType.MANAGER,
+        subject_type=SubjectEnum.MANAGER,
         password_verifier=None,
         login=login,
         email=email,
-        phone_number=PhoneNumber(phone_number) if phone_number else None,
+        phone_number=phone_number,
     )
 
 
