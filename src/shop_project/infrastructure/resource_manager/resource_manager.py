@@ -1,6 +1,8 @@
 from typing import Any, Type
 from uuid import UUID
 
+from shop_project.application.dto.base_dto import BaseDTO
+from shop_project.application.dto.mapper import to_domain
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import UnitOfWorkException
 from shop_project.infrastructure.query.base_query import BaseQuery
@@ -45,9 +47,9 @@ class ResourceManager:
         if isinstance(query, CustomQuery) and query.return_type == "SCALARS":
             loaded: Any = await self.repository_container.load_scalars(query)
         else:
-            loaded: list[PersistableEntity] = await self.repository_container.load(
-                query
-            )
+            loaded_dto: list[BaseDTO[Any]] = await self.repository_container.load(query)
+            loaded: list[PersistableEntity] = [to_domain(dto) for dto in loaded_dto]
+
             self.resource_container.put_many(query.model_type, loaded)
 
         query.load(loaded)

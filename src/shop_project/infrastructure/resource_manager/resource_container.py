@@ -43,7 +43,7 @@ class ResourceSnapshotSentinelMixin(ABC):
         self,
     ) -> dict[
         Type[PersistableEntity],
-        dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO]],
+        dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO[Any]]],
     ]:
         if (
             self._resource_snapshot_current is None
@@ -74,7 +74,7 @@ class ResourceSnapshotSentinelMixin(ABC):
 
         result: dict[
             Type[PersistableEntity],
-            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO]],
+            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO[Any]]],
         ] = {}
         for item_type in self.resources.keys():
             result[item_type] = {

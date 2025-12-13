@@ -1,8 +1,28 @@
-from typing import Callable
+from typing import Any, Callable, Self, TypeVar
+from uuid import UUID, uuid4
 
+from pydantic import BaseModel
+
+from shop_project.application.dto.base_dto import BaseDTO, DTODynamicRegistry
 from shop_project.application.dto.mapper import to_domain, to_dto
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+
+
+class MyTestEntity(BaseModel, PersistableEntity):
+    entity_id: UUID
+
+    x: int
+
+    @classmethod
+    def load(cls, *args: Any, **kwargs: Any) -> Self:
+        return cls.model_validate(*args, **kwargs, from_attributes=True)
+
+
+class MyTestDTO(BaseDTO[MyTestEntity]):
+    entity_id: UUID
+    x: int
 
 
 def test_to_dto(
@@ -34,3 +54,17 @@ def test_to_domain(
     assert order_from_dto.entity_id == purchase_draft.entity_id
     assert order_from_dto.state == purchase_draft.state
     assert order_from_dto.get_items() == purchase_draft.get_items()
+
+
+T = TypeVar("T", bound=PersistableEntity)
+
+
+def test_dto_generic() -> None:
+
+    dto = MyTestDTO(x=1, entity_id=uuid4())
+    other_dto = MyTestDTO(x=2, entity_id=uuid4())
+
+    assert MyTestEntity in DTODynamicRegistry.map
+
+    ent = DTODynamicRegistry.get(MyTestEntity).to_domain(dto)
+    dto_same = MyTestDTO.to_dto(ent)

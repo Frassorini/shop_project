@@ -16,7 +16,7 @@ from shop_project.infrastructure.database.models.purchase_draft import (
     PurchaseDraftItem as PurchaseDraftItemORM,
 )
 from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.repositories.purchase_draft_repository import (
+from shop_project.infrastructure.repositories.implementations.purchase_draft_repository import (
     PurchaseDraftRepository,
 )
 

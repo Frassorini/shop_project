@@ -6,8 +6,8 @@ import pytest
 import pytest_asyncio
 from dishka import AsyncContainer
 
-from shop_project.infrastructure.database import models
 from shop_project.infrastructure.database.core import Database
+from shop_project.infrastructure.database.models.base import Base
 
 
 @pytest_asyncio.fixture
@@ -36,7 +36,7 @@ def test_db_docker() -> Callable[[], Any]:
         db = Database.from_env()
 
         async with db.get_engine().begin() as conn:
-            await conn.run_sync(models.Base.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)
             # await conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
             # await conn.commit()
 
@@ -47,7 +47,7 @@ def test_db_docker() -> Callable[[], Any]:
         finally:
             # print("yield db after")
             async with db.get_engine().begin() as conn:
-                await conn.run_sync(models.Base.metadata.drop_all)
+                await conn.run_sync(Base.metadata.drop_all)
             await db.close()
 
     return fact
@@ -58,7 +58,7 @@ async def base_db_in_memory() -> AsyncGenerator[sqlite3.Connection, None]:
     sqlite_conn = sqlite3.connect(":memory:", check_same_thread=False)
     db = Database.from_sync_conn(sqlite_conn)
     async with db.get_engine().begin() as conn:
-        await conn.run_sync(models.Base.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
     value = sqlite_conn
     try:
         yield sqlite_conn

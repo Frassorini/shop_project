@@ -83,7 +83,7 @@ class Shipment(PersistableEntity):
 
     @property
     def items(self) -> list[ShipmentItem]:
-        return list(self._items.values())
+        return sorted(self._items.values(), key=lambda item: item.product_id)
 
     def get_items(self) -> list[ShipmentItem]:
         return list(self._items.values())

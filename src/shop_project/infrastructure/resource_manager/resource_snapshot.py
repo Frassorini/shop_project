@@ -1,4 +1,4 @@
-from typing import Self, Type
+from typing import Any, Self, Type
 from uuid import UUID
 
 from shop_project.application.dto.base_dto import BaseDTO
@@ -6,12 +6,12 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
 class EntitySnapshot:
-    def __init__(self, snapshot: BaseDTO) -> None:
+    def __init__(self, snapshot: BaseDTO[Any]) -> None:
         if not hasattr(snapshot, "entity_id"):
             raise ValueError("Snapshot must have entity_id attribute")
 
-        self.entity_id: UUID = snapshot.entity_id  # type: ignore
-        self.snapshot: BaseDTO = snapshot
+        self.entity_id: UUID = snapshot.entity_id
+        self.snapshot: BaseDTO[Any] = snapshot
 
     def compare_identity(self, other: Self) -> bool:
         return self.entity_id == other.entity_id
@@ -125,8 +125,8 @@ class ResourceSnapshot:
 
         return self.__class__(result)
 
-    def to_dict(self) -> dict[Type[PersistableEntity], list[BaseDTO]]:
-        result: dict[Type[PersistableEntity], list[BaseDTO]] = {}
+    def to_dict(self) -> dict[Type[PersistableEntity], list[BaseDTO[Any]]]:
+        result: dict[Type[PersistableEntity], list[BaseDTO[Any]]] = {}
 
         for resource_type in self.snapshot_set_vector:
             result[resource_type] = [

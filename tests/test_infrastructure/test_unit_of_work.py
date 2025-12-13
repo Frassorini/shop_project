@@ -402,8 +402,11 @@ async def test_purchase_draft(
             model_type, domain_container.aggregate.entity_id
         )
         product = product_container_factory(name="test item", amount=10, price=1)
+        product_other = product_container_factory(name="test item2", amount=20, price=2)
         resources.put(Product, product.aggregate)
+        resources.put(Product, product_other.aggregate)
         domain_obj.add_item(product.aggregate.entity_id, 1)
+        domain_obj.add_item(product_other.aggregate.entity_id, 2)
 
         snapshot_before = to_dto(domain_obj)
         uow.mark_commit()
@@ -601,3 +604,62 @@ async def test_shipment(
 
     await uow_delete_and_check(Shipment, shipment_container.aggregate)
     await uow_delete_and_check(ShipmentSummary, shipment_summary)
+
+
+@pytest.mark.asyncio
+async def xtest_load_by_chlidren(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+    uow_delete_and_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], Awaitable[None]
+    ],
+    product_container_factory: Callable[..., AggregateContainer],
+) -> None:
+
+    model_type: Type[PersistableEntity] = PurchaseDraft
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .load(Product)
+        .from_previous()
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj: PurchaseDraft = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        product = product_container_factory(name="test item", amount=10, price=1)
+        other_product = product_container_factory(name="test item2", amount=20, price=2)
+        resources.put(Product, product.aggregate)
+        resources.put(Product, other_product.aggregate)
+        domain_obj.add_item(product.aggregate.entity_id, 1)
+        domain_obj.add_item(other_product.aggregate.entity_id, 2)
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_attribute("items.product_id", [product.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+        assert len(snapshot_after.items) == 2
+
+    await uow_delete_and_check(model_type, domain_container.aggregate)

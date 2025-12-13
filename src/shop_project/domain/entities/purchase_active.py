@@ -93,7 +93,7 @@ class PurchaseActive(PersistableEntity):
 
     @property
     def items(self) -> list[PurchaseActiveItem]:
-        return list(self._items.values())
+        return sorted(self._items.values(), key=lambda item: item.product_id)
 
     def get_items(self) -> list[PurchaseActiveItem]:
         return list(self._items.values())

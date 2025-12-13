@@ -66,7 +66,7 @@ class QueryPlan(ABC, IQueryPlan):
         self,
         resource_changes_snapshot: dict[
             Type[PersistableEntity],
-            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO]],
+            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO[Any]]],
         ],
     ) -> None: ...
 
@@ -90,7 +90,7 @@ class NoLockQueryPlan(QueryPlan):
         self,
         resource_changes_snapshot: dict[
             Type[PersistableEntity],
-            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO]],
+            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO[Any]]],
         ],
     ) -> None:
         for model_type, model_changes in resource_changes_snapshot.items():
@@ -156,7 +156,7 @@ class LockQueryPlan(QueryPlan):
         self,
         resource_changes_snapshot: dict[
             Type[PersistableEntity],
-            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO]],
+            dict[Literal["CREATED", "UPDATED", "DELETED"], list[BaseDTO[Any]]],
         ],
     ) -> None:
         query_map = self._build_map()

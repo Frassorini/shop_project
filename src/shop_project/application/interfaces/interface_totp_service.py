@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.notifications.messages.email_message import (
@@ -10,7 +10,8 @@ from shop_project.infrastructure.notifications.messages.message import (
 from shop_project.infrastructure.notifications.messages.sms_message import SMSMessage
 
 
-class CodeMessagePair(BaseModel):
+@dataclass(frozen=True)
+class CodeMessagePair:
     totp: ExternalIdTotp
     message: EmailMessage | SMSMessage
 

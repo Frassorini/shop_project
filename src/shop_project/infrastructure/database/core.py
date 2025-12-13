@@ -13,6 +13,9 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import Mapper
 
 from shop_project.infrastructure.env_loader import get_env
+from shop_project.infrastructure.repositories import init_repositories
+
+init_repositories.init_repositories()
 
 
 def _index_object(session: AsyncSession, instance: Any):

@@ -12,13 +12,11 @@ from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.exceptions import UnitOfWorkException
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.query.query_plan import QueryPlan
-from shop_project.infrastructure.registries.repository_registry import (
-    RepositoryRegistry,
-)
 from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
 from shop_project.infrastructure.registries.total_order_registry import (
     TotalOrderRegistry,
 )
+from shop_project.infrastructure.repositories.base_repository import RepositoryRegistry
 from shop_project.infrastructure.repositories.repository_container import (
     repository_container_factory,
 )

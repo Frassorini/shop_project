@@ -2,18 +2,27 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
-class ExternalIdTotp(PersistableEntity, BaseModel):
-    entity_id: UUID
-    external_id_type: str
-    external_id: str
-    totp_verifier: SecretStr
-    issued_at: datetime
-    expiration: datetime
+class ExternalIdTotp(PersistableEntity):
+    def __init__(
+        self,
+        entity_id: UUID,
+        external_id_type: str,
+        external_id: str,
+        totp_verifier: SecretStr,
+        issued_at: datetime,
+        expiration: datetime,
+    ) -> None:
+        self.entity_id: UUID = entity_id
+        self.external_id_type: str = external_id_type
+        self.external_id: str = external_id
+        self.totp_verifier: SecretStr = totp_verifier
+        self.issued_at: datetime = issued_at
+        self.expiration: datetime = expiration
 
     @classmethod
     def load(

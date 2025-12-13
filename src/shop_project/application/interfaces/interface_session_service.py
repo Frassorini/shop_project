@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 from typing import Protocol
 
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr
 
 from shop_project.domain.interfaces.subject import Subject
 from shop_project.infrastructure.authentication.helpers.access_token_payload import (
@@ -12,7 +13,8 @@ from shop_project.infrastructure.entities.auth_session import (
 )
 
 
-class SessionRefresh(BaseModel):
+@dataclass(frozen=True)
+class SessionRefresh:
     refresh_token: SecretStr
     access_token: SecretStr
 

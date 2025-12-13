@@ -1,7 +1,16 @@
 from enum import Enum
 from typing import Any, Self, Type
 
-from sqlalchemy import BinaryExpression, Column, ColumnElement, and_, or_
+from sqlalchemy import (
+    BinaryExpression,
+    Column,
+    ColumnElement,
+    and_,
+    exists,
+    or_,
+    select,
+)
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql import true
 
 from shop_project.infrastructure.database.models.base import Base as BaseORM
@@ -46,12 +55,61 @@ class QueryCriterion:
 
         return obj
 
-    def to_sqlalchemy(self, model: Type[BaseORM]) -> BinaryExpression[Any]:
-        column: Column[Any] = getattr(model, self.left_project_by)
+    def to_sqlalchemy(
+        self,
+        model: Type[BaseORM],
+        *,
+        child_tables: dict[str, Any] | None = None,
+        parent_refs: dict[str, str] | None = None,
+    ) -> ColumnElement[bool]:
+
+        # --- простой атрибут родителя ---
+        if "." not in self.left_project_by:
+            column: Column[Any] = getattr(model, self.left_project_by)
+            return self._apply_operator(column, self.value_provider.get())
+
+        # --- nested child ---
+        if child_tables is None or parent_refs is None:
+            raise QueryPlanException(
+                f"Cannot filter by nested attribute {self.left_project_by} without aliases and parent_refs"
+            )
+
+        container_name, field_name = self.left_project_by.split(".", 1)
+
+        if container_name not in child_tables:
+            raise QueryPlanException(f"Unknown child container '{container_name}'")
+
+        if container_name not in parent_refs:
+            raise QueryPlanException(f"No parent ref for child '{container_name}'")
+
+        child_alias = aliased(
+            child_tables[container_name],
+            name=f"{child_tables[container_name].__tablename__}_filter",
+        )
+        parent_fk_field = parent_refs[container_name]
+
+        child_fk_column = getattr(child_alias, parent_fk_field)
+        parent_pk_column = getattr(model, "entity_id")
+        child_column = getattr(child_alias, field_name)
+
+        return exists(
+            select(1)
+            .select_from(child_alias)
+            .where(
+                child_fk_column == parent_pk_column,
+                self._apply_operator(child_column, self.value_provider.get()),
+            )
+        )
+
+    def _apply_operator(
+        self,
+        column: Column[Any],
+        values: list[Any],
+    ) -> BinaryExpression[Any]:
         if self.operator == QueryCriterionOperator.IN:
-            return column.in_(self.value_provider.get())
+            return column.in_(values)
         elif self.operator == QueryCriterionOperator.GREATER_THAN:
-            return column > self.value_provider.get()[0]
+            return column > values[0]
         else:
             raise QueryPlanException(f"Unknown operator: {self.operator}")
 
@@ -111,21 +169,25 @@ class QueryCriteria:
         self.operators.append(QueryCriteriaOperator.OR)
         return self
 
-    def to_sqlalchemy(self, model: Type[BaseORM]) -> ColumnElement[bool]:
-        """
-        Преобразует набор критериев в одно SQLAlchemy-выражение.
-        """
+    def to_sqlalchemy(
+        self,
+        model: Type[BaseORM],
+        *,
+        child_tables: dict[str, Any] | None = None,
+        parent_refs: dict[str, Any] | None = None,
+    ) -> ColumnElement[bool]:
         self.validate()
         if len(self.criteria) == 0:
             return true()
 
-        # Берём первый критерий как базу
-        result = self.criteria[0].to_sqlalchemy(model)
+        result = self.criteria[0].to_sqlalchemy(
+            model, child_tables=child_tables, parent_refs=parent_refs
+        )
 
-        # Дальше проходим попарно по (оператор, критерий)
         for operator, criterion in zip(self.operators, self.criteria[1:]):
-            right = criterion.to_sqlalchemy(model)
-
+            right = criterion.to_sqlalchemy(
+                model, child_tables=child_tables, parent_refs=parent_refs
+            )
             if operator == QueryCriteriaOperator.AND:
                 result = and_(result, right)
             elif operator == QueryCriteriaOperator.OR:
