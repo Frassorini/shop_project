@@ -1,29 +1,31 @@
 from contextlib import AbstractAsyncContextManager
-from typing import AsyncGenerator, Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
-import pytest_asyncio
 from dishka import AsyncContainer
 
-from shop_project.infrastructure.message_broker.broker import (
+if TYPE_CHECKING:
+    from taskiq import AsyncBroker
+
+from shop_project.infrastructure.background_tasks.broker import (
     make_broker,
     make_broker_inmem,
     producer_broker_context_factory,
 )
-from shop_project.infrastructure.message_broker.broker_container import BrokerContainer
 
 
-@pytest_asyncio.fixture
-async def test_broker_container(
-    async_container: AsyncContainer,
-) -> AsyncGenerator[BrokerContainer, None]:
-    yield await async_container.get(BrokerContainer)
+@pytest.fixture
+def setup_broker() -> Callable[["AsyncBroker", AsyncContainer], None]:
+    def _inner(broker: "AsyncBroker", async_container: AsyncContainer) -> None:
+        broker.state["di_container"] = async_container
+
+    return _inner
 
 
 @pytest.fixture
 def test_broker_container_factory(
     request: pytest.FixtureRequest,
-) -> Callable[[], AbstractAsyncContextManager[BrokerContainer]]:
+) -> Callable[[], AbstractAsyncContextManager["AsyncBroker"]]:
     if request.config.getoption("--real-broker"):
         return producer_broker_context_factory(make_broker)
     else:

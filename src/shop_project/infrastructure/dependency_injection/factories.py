@@ -1,11 +1,5 @@
-from contextlib import AbstractAsyncContextManager
-from typing import AsyncGenerator, Callable
-
-import pytest
-import pytest_asyncio
-from dishka import make_async_container, make_container
+from dishka import make_async_container
 from dishka.async_container import AsyncContainer
-from dishka.container import Container
 from pydantic import SecretBytes
 from taskiq import AsyncBroker
 
@@ -32,34 +26,14 @@ from shop_project.infrastructure.dependency_injection.infrastructure.database_pr
 from shop_project.infrastructure.dependency_injection.infrastructure.notification_provider import (
     NotificationProvider,
 )
+from shop_project.shared.create_context import create_context_from_value
 from tests.helpers import get_test_jwt_private_key, get_test_jwt_public_key
 
 
-@pytest.fixture()
-def domain_container() -> Container:
-    container = make_container(
-        DomainProvider(),
-        CryptographyProvider(
-            JwtKeyContainer(
-                public_key=SecretBytes(get_test_jwt_public_key()),
-                private_key=SecretBytes(get_test_jwt_private_key()),
-            )
-        ),
-        AuthenticationProvider(),
-        NotificationProvider(),
-    )
+def container_taskiq_worker_factory(broker: AsyncBroker) -> AsyncContainer:
+    broker_ctx = create_context_from_value(broker)
+    database_ctx = create_context_from_value(Database.from_env())
 
-    return container
-
-
-@pytest_asyncio.fixture()
-async def async_container(
-    test_db_factory: Callable[[], AbstractAsyncContextManager[Database]],
-    test_broker_container_factory: Callable[
-        [], AbstractAsyncContextManager[AsyncBroker]
-    ],
-    setup_broker: Callable[[AsyncBroker, AsyncContainer], None],
-) -> AsyncGenerator[AsyncContainer, None]:
     container = make_async_container(
         DomainProvider(),
         CryptographyProvider(
@@ -69,14 +43,10 @@ async def async_container(
             )
         ),
         AuthenticationProvider(),
-        DatabaseProvider(test_db_factory),
-        BrokerProvider(test_broker_container_factory),
+        DatabaseProvider(database_ctx),
+        BrokerProvider(broker_ctx),
         ApplicationServiceProvider(),
         NotificationProvider(),
     )
 
-    async with container() as ct:
-        setup_broker(await ct.get(AsyncBroker), ct)
-        yield ct
-
-    await container.close()
+    return container

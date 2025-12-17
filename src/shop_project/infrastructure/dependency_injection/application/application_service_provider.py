@@ -1,6 +1,7 @@
 from typing import Type
 
 from dishka import Provider, Scope, provide
+from taskiq import AsyncBroker
 
 from shop_project.application.interfaces.interface_account_service import (
     IAccountService,
@@ -20,6 +21,12 @@ from shop_project.application.services.customer_service import CustomerService
 from shop_project.application.services.registration_service import RegistrationService
 from shop_project.application.services.totp_challenge_service import (
     TotpChallengeService,
+)
+from shop_project.application.tasks.implementations.example_task_handler import (
+    ExampleTaskHandler,
+)
+from shop_project.infrastructure.background_tasks.application_task_sender_service import (
+    TaskSender,
 )
 
 
@@ -83,3 +90,18 @@ class ApplicationServiceProvider(Provider):
             query_builder_type=query_builder_type,
             totp_service=totp_service,
         )
+
+    @provide
+    async def example_background_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> ExampleTaskHandler:
+        return ExampleTaskHandler(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+        )
+
+    @provide
+    async def application_task_sender_service(self, broker: AsyncBroker) -> TaskSender:
+        return TaskSender(broker)

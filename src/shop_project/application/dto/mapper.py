@@ -22,6 +22,7 @@ from shop_project.application.dto.shipment_dto import ShipmentDTO
 from shop_project.application.dto.shipment_summary_dto import (
     ShipmentSummaryDTO,
 )
+from shop_project.application.dto.task_dto import TaskDTO
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import (
@@ -46,10 +47,13 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
+from shop_project.infrastructure.entities.task import Task
 
 T = TypeVar("T", bound=PersistableEntity)
 
 
+@overload
+def to_dto(entity: Task) -> TaskDTO: ...
 @overload
 def to_dto(entity: ExternalIdTotp) -> ExternalIdTotpDTO: ...
 @overload

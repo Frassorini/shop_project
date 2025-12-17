@@ -2,8 +2,7 @@ from contextlib import AbstractAsyncContextManager
 from typing import AsyncGenerator, Callable
 
 from dishka import BaseScope, Component, Provider, Scope, provide
-
-from shop_project.infrastructure.message_broker.broker_container import BrokerContainer
+from taskiq import AsyncBroker
 
 
 class BrokerProvider(Provider):
@@ -11,7 +10,7 @@ class BrokerProvider(Provider):
 
     def __init__(
         self,
-        database_ctx: Callable[[], AbstractAsyncContextManager[BrokerContainer]],
+        database_ctx: Callable[[], AbstractAsyncContextManager[AsyncBroker]],
         *,
         scope: BaseScope | None = None,
         component: Component | None = None,
@@ -21,7 +20,7 @@ class BrokerProvider(Provider):
         self.broker_ctx = database_ctx
 
     @provide(scope=Scope.APP)
-    async def broker(self) -> AsyncGenerator[BrokerContainer, None]:
+    async def broker(self) -> AsyncGenerator[AsyncBroker, None]:
         ctx = self.broker_ctx()
         res = await ctx.__aenter__()  # вручную войти
         try:

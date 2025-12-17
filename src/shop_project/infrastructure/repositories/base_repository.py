@@ -3,7 +3,7 @@ from typing import Any, Generic, Literal, Mapping, Type, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import inspect
+from sqlalchemy import Select, inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.orm._typing import _IdentityKeyType  # type: ignore
@@ -224,6 +224,13 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
                 )
                 # base_query = base_query.outerjoin(alias, children_container_field)
                 base_query = base_query.options(joinedload(children_container_field))
+                # base_query = (
+                #     base_query
+                #     .outerjoin(alias, children_container_field)
+                #     .options(
+                #         contains_eager(children_container_field.of_type(alias))
+                #     )
+                # )
 
             base_query = base_query.where(
                 query.criteria.to_sqlalchemy(
@@ -231,9 +238,7 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
                 )
             )
 
-            base_query = self._apply_lock(
-                base_query, query.lock, [self.orm_type, *aliases.values()]
-            )
+            base_query = self._apply_lock_mysql(base_query, query.lock)
         elif isinstance(query, CustomQuery):
             base_query = query.compile_sqlalchemy()
         else:
@@ -262,11 +267,11 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
         await self.delete(difference_snapshot["DELETED"])  # type: ignore
 
     @staticmethod
-    def _apply_lock(query: Any, lock: QueryLock, of: list[Any]):
+    def _apply_lock_mysql(query: Select[Any], lock: QueryLock):
         if lock == QueryLock.EXCLUSIVE:
-            return query.with_for_update(of=of)
+            return query.with_for_update()
         elif lock == QueryLock.SHARED:
-            return query.with_for_update(read=True, of=of)
+            return query.with_for_update(read=True)
         return query
 
     @staticmethod

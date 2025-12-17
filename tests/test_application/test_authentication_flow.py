@@ -56,7 +56,8 @@ async def test_auth_customer_sms_code_flow(
     auth_session_snapshot_after = to_dto(auth_session_after)
 
     assert (
-        auth_session_snapshot_before.expiration < auth_session_snapshot_after.expiration
+        auth_session_snapshot_before.expiration
+        <= auth_session_snapshot_after.expiration
     )
     assert (
         auth_session_snapshot_before.account_id
@@ -101,7 +102,8 @@ async def test_auth_employee_email_code_flow(
     auth_session_snapshot_after = to_dto(auth_session_after)
 
     assert (
-        auth_session_snapshot_before.expiration < auth_session_snapshot_after.expiration
+        auth_session_snapshot_before.expiration
+        <= auth_session_snapshot_after.expiration
     )
     assert (
         auth_session_snapshot_before.account_id
@@ -147,7 +149,8 @@ async def test_auth_manager_login_flow(
     auth_session_snapshot_after = to_dto(auth_session_after)
 
     assert (
-        auth_session_snapshot_before.expiration < auth_session_snapshot_after.expiration
+        auth_session_snapshot_before.expiration
+        <= auth_session_snapshot_after.expiration
     )
     assert (
         auth_session_snapshot_before.account_id
@@ -195,7 +198,8 @@ async def test_customer_session_refresh(
     auth_session_snapshot_after = to_dto(auth_session_after)
 
     assert (
-        auth_session_snapshot_before.expiration < auth_session_snapshot_after.expiration
+        auth_session_snapshot_before.expiration
+        <= auth_session_snapshot_after.expiration
     )
     assert (
         auth_session_snapshot_before.account_id

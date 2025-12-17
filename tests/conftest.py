@@ -25,6 +25,7 @@ pytest_plugins = [
     "tests.fixtures.infrastructure.broker",
     "tests.fixtures.infrastructure.repository",
     "tests.fixtures.infrastructure.dependency_injection",
+    "tests.fixtures.infrastructure.task",
     "tests.fixtures.infrastructure.account",
     "tests.fixtures.infrastructure.auth_session",
     "tests.fixtures.infrastructure.external_id_totp",

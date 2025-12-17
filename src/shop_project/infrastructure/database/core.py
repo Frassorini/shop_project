@@ -37,8 +37,10 @@ def index_object(session: AsyncSession, instance: Any):
 
 
 class Database:
+    debug = False
+
     def __init__(self, db_url: str, echo: bool = False) -> None:
-        self._engine = create_async_engine(db_url, echo=echo, future=True)
+        self._engine = create_async_engine(db_url, echo=self.debug, future=True)
         self._session_factory = async_sessionmaker(
             bind=self._engine, expire_on_commit=False, class_=AsyncSession
         )
@@ -78,7 +80,7 @@ class Database:
             connect_args={"check_same_thread": False},
             creator=lambda: conn,
             future=True,
-            echo=False,
+            echo=cls.debug,
         )
         return cls.from_engine(engine)
 
