@@ -186,3 +186,6 @@ tmp/.env.docker
 # tach
 tach.toml
 .tach/
+
+# process ids for make bash
+.pids

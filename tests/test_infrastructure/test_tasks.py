@@ -29,10 +29,8 @@ async def test_background_tasks_inmemory(
         [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
     ],
 ) -> None:
-    wait = False
-
     if request.config.getoption("--real-broker"):
-        wait = True
+        pytest.skip()
 
     application_task_sender = await async_container.get(TaskSender)
 
@@ -44,8 +42,34 @@ async def test_background_tasks_inmemory(
 
     await application_task_sender.send(task)
 
-    if wait:
-        await asyncio.sleep(1)
+    async with uow_check(Task, task) as uow:
+        resources = uow.get_resorces()
+        tasks = resources.get_all(Task)
+
+    assert len(tasks) == 0
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_background_tasks_real(
+    request: pytest.FixtureRequest,
+    async_container: AsyncContainer,
+    uow_factory: UnitOfWorkFactory,
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    application_task_sender = await async_container.get(TaskSender)
+
+    task = TaskFactory.create(ExampleTaskHandler, ExampleTaskParams(message="test"))
+
+    async with uow_factory.create(QueryBuilder(mutating=True).build()) as uow:
+        uow.get_resorces().put(Task, task)
+        uow.mark_commit()
+
+    await application_task_sender.send(task)
+
+    await asyncio.sleep(1)
 
     async with uow_check(Task, task) as uow:
         resources = uow.get_resorces()

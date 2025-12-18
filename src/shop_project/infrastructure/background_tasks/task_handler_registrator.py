@@ -9,8 +9,12 @@ from shop_project.application.tasks.base_task_handler import (
     BaseTaskParams,
     TaskHandlerRegistry,
 )
+from shop_project.application.tasks.exceptions import RetryException
 from shop_project.application.tasks.init_background_service_registry import (
     init_background_service_registry,
+)
+from shop_project.infrastructure.background_tasks.on_task_fail_actions import (
+    log_message_taskiq,
 )
 
 init_background_service_registry()
@@ -29,9 +33,15 @@ def construct_handler_callback(
         container = context.state.get("di_container")
         if not isinstance(container, AsyncContainer):
             raise ValueError("Container is not AsyncContainer")
-        async with container() as ctx:
-            use_case = await ctx.get(use_case_type)
-        await use_case.handle(task_id=task_id)
+        try:
+            async with container() as ctx:
+                use_case = await ctx.get(use_case_type)
+            await use_case.handle(task_id=task_id)
+        except RetryException:
+            raise
+        except Exception as e:
+            await log_message_taskiq(context.message, e)
+            raise RetryException from e
 
     return _inner
 
@@ -43,5 +53,4 @@ def register_background_tasks(
         broker.register_task(
             task_name=use_case_type.handler_name,
             func=construct_handler_callback(use_case_type),
-            retry_on_error=True,
         )

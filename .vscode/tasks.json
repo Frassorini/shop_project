@@ -2,21 +2,6 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Pytest",
-      "type": "shell",
-      "command": "bash",
-      "args": ["-ic", "make tests"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Run Unit Tests",
       "type": "shell",
       "command": "bash",
@@ -28,10 +13,21 @@
       "problemMatcher": []
     },
     {
-      "label": "Run Integration Tests",
+      "label": "Run only Integration Tests",
       "type": "shell",
       "command": "bash",
-      "args": ["-ic", "make test-real-db"],
+      "args": ["-ic", "make integration-tests"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run tests with integration",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-ic", "make tests-with-integration"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
