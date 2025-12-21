@@ -7,6 +7,9 @@ from taskiq.brokers.inmemory_broker import InMemoryBroker
 from taskiq_aio_pika.broker import AioPikaBroker
 
 from shop_project.application.tasks.exceptions import RetryException
+from shop_project.infrastructure.background_tasks.maybe_cdc_formatter import (
+    MaybeCDCFormatter,
+)
 from shop_project.infrastructure.background_tasks.on_smart_retry_fail_middleware import (
     OnSmartRetryFailMiddleware,
 )
@@ -29,17 +32,21 @@ def make_broker() -> "AioPikaBroker":
     vhost = quote(get_env("RABBITMQ_VHOST"), safe="")
     url = f"amqp://{user}:{password}@{host}:{port}/{vhost}"
 
-    broker = AioPikaBroker(broker_url=url).with_middlewares(
-        OnSmartRetryFailMiddleware(
-            default_delay=5,
-            use_jitter=True,
-            use_delay_exponent=True,
-            max_delay_exponent=60,
-            default_retry_count=3,
-            default_retry_label=True,
-            types_of_exceptions=[RetryException],
-            on_out_of_retries_callback=log_message_taskiq,
+    broker = (
+        AioPikaBroker(broker_url=url, exchange_name="tasks")
+        .with_middlewares(
+            OnSmartRetryFailMiddleware(
+                default_delay=5,
+                use_jitter=True,
+                use_delay_exponent=True,
+                max_delay_exponent=60,
+                default_retry_count=3,
+                default_retry_label=True,
+                types_of_exceptions=[RetryException],
+                on_out_of_retries_callback=log_message_taskiq,
+            )
         )
+        .with_formatter(MaybeCDCFormatter())
     )
 
     return broker

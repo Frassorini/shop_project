@@ -8,10 +8,14 @@ include makefiles/helpers.mk
 # start_taskiq_bg: $(1)=mode, $(2)=PID_DIR, $(3)=LOG_DIR, $(4)=broker_path
 define start_taskiq_bg
 	@mkdir -p $(2) $(3)
-	@echo "Starting Taskiq workers in background for mode $(1)..."
-	@nohup taskiq worker $(4) --ack-type when_saved > $(3)/taskiq-$(1).log 2>&1 & \
-	echo $$! > $(2)/taskiq-$(1).pid
-	@echo "Taskiq started with PID $$(cat $(2)/taskiq-$(1).pid)"
+	@if [ -f $(2)/taskiq-$(1).pid ] && kill -0 $$(cat $(2)/taskiq-$(1).pid) 2>/dev/null; then \
+		echo "Taskiq for mode $(1) is already running with PID $$(cat $(2)/taskiq-$(1).pid)"; \
+	else \
+		echo "Starting Taskiq workers in background for mode $(1)..."; \
+		nohup taskiq worker $(4) --ack-type when_saved > $(3)/taskiq-$(1).log 2>&1 & \
+		echo $$! > $(2)/taskiq-$(1).pid; \
+		echo "Taskiq started with PID $$(cat $(2)/taskiq-$(1).pid)"; \
+	fi
 endef
 
 # stop_taskiq_bg: $(1)=mode, $(2)=PID_DIR
@@ -34,9 +38,6 @@ define tail_taskiq_log
 	fi
 endef
 
-# --- Цели Makefile ---
-.PHONY: bg-up bg-down bg-up-interactive bg-logs bg-all-down
-
 bg-up: ## Start Taskiq workers in background
 	$(call ask_confirmation_if_prod)
 	$(call start_taskiq_bg,$(call get_mode),$(PID_DIR),$(LOG_DIR),$(call get_taskiq_broker_by_mode,$(call get_mode)))
@@ -45,13 +46,18 @@ bg-down: ## Stop Taskiq workers in background
 	$(call stop_taskiq_bg,$(call get_mode),$(PID_DIR))
 
 bg-up-interactive: ## Start Taskiq workers in interactive mode
+	$(call ask_confirmation_if_prod)
 	@echo "Starting Taskiq workers in interactive mode..."
 	taskiq worker $(call get_taskiq_broker_by_mode,$(call get_mode)) --ack-type when_saved
+
+bg-reload: ## Reload Taskiq workers
+	@$(MAKE) --no-print-directory bg-down
+	@$(MAKE) --no-print-directory bg-up
 
 bg-logs: ## Tail Taskiq logs
 	$(call tail_taskiq_log,$(call get_mode),$(LOG_DIR))
 
-bg-all-down: ## Stop all Taskiq workers
+bg-all-down: ## pkill taskiq
 	$(call ask_confirmation,"Are you sure you want to stop all Taskiq workers?")
 	$(foreach mode,$(VALID_MODES),$(call stop_taskiq_bg,$(mode),$(PID_DIR))$(newline))
 

@@ -1,11 +1,18 @@
 import traceback
 import warnings
 from contextlib import AbstractAsyncContextManager
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 import pytest
 from dishka import AsyncContainer
 from taskiq import TaskiqMessage, TaskiqMiddleware, TaskiqResult
+
+from shop_project.infrastructure.background_tasks.application_task_sender_service import (
+    TaskSender,
+)
+from shop_project.infrastructure.entities.task import Task
+from shop_project.infrastructure.query.query_builder import QueryBuilder
+from shop_project.infrastructure.unit_of_work import UnitOfWorkFactory
 
 if TYPE_CHECKING:
     from taskiq import AsyncBroker
@@ -53,3 +60,33 @@ def test_broker_container_factory(
         return producer_broker_context_factory(make_broker)
     else:
         return producer_broker_context_factory(make_broker_inmem)
+
+
+@pytest.fixture
+def ensure_tasks_completion(
+    request: pytest.FixtureRequest,
+    async_container: AsyncContainer,
+    uow_factory: UnitOfWorkFactory,
+) -> Callable[[], Awaitable[None]]:
+    async def _inner(max_tries: int = 10) -> None:
+        if request.config.getoption("--real-broker"):
+            return
+
+        task_sender = await async_container.get(TaskSender)
+
+        for i in range(max_tries):
+            async with uow_factory.create(
+                QueryBuilder(mutating=False).load(Task).no_lock().build()
+            ) as uow:
+                resources = uow.get_resorces()
+
+                tasks = resources.get_all(Task)
+
+            if len(tasks) == 0:
+                return
+
+            for task in tasks:
+                await task_sender.send(task)
+        raise RuntimeError("Attempts to complete tasks exceeded max_tries")
+
+    return _inner

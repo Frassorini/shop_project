@@ -9,6 +9,7 @@ services:
       - ../environment/.env.test
     volumes:
       - test-mysql-data:/var/lib/mysql
+      - ../docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
     restart: unless-stopped
   rabbitmq:
     container_name: test-rabbit
@@ -22,7 +23,20 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     restart: unless-stopped
-
+  maxwell:
+    container_name: test-maxwell
+    image: zendesk/maxwell
+    hostname: test-maxwell
+    env_file:
+      - ../environment/.env.test
+    volumes:
+    - ../docker/maxwell/entrypoint.sh:/entrypoint.sh:ro
+    - ../docker/maxwell/filter.js:/filter.js
+    entrypoint: ["/entrypoint.sh"]
+    depends_on:
+      - mysql
+      - rabbitmq
+    restart: unless-stopped
 volumes:
   test-mysql-data:
   rabbitmq-data:

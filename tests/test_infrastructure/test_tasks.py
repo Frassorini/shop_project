@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncContextManager, Callable, Type
+from typing import AsyncContextManager, Awaitable, Callable, Type
 
 import pytest
 from dishka.async_container import AsyncContainer
@@ -21,40 +21,10 @@ from tests.test_infrastructure.test_unit_of_work import PersistableEntity
 
 
 @pytest.mark.asyncio
-async def test_background_tasks_inmemory(
-    request: pytest.FixtureRequest,
+async def test_background_tasks(
     async_container: AsyncContainer,
     uow_factory: UnitOfWorkFactory,
-    uow_check: Callable[
-        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
-    ],
-) -> None:
-    if request.config.getoption("--real-broker"):
-        pytest.skip()
-
-    application_task_sender = await async_container.get(TaskSender)
-
-    task = TaskFactory.create(ExampleTaskHandler, ExampleTaskParams(message="test"))
-
-    async with uow_factory.create(QueryBuilder(mutating=True).build()) as uow:
-        uow.get_resorces().put(Task, task)
-        uow.mark_commit()
-
-    await application_task_sender.send(task)
-
-    async with uow_check(Task, task) as uow:
-        resources = uow.get_resorces()
-        tasks = resources.get_all(Task)
-
-    assert len(tasks) == 0
-
-
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_background_tasks_real(
-    request: pytest.FixtureRequest,
-    async_container: AsyncContainer,
-    uow_factory: UnitOfWorkFactory,
+    ensure_tasks_completion: Callable[[], Awaitable[None]],
     uow_check: Callable[
         [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
     ],
@@ -67,7 +37,7 @@ async def test_background_tasks_real(
         uow.get_resorces().put(Task, task)
         uow.mark_commit()
 
-    await application_task_sender.send(task)
+    await ensure_tasks_completion()
 
     await asyncio.sleep(1)
 

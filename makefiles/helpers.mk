@@ -19,6 +19,11 @@ define ask_confirmation
 	esac
 endef
 
+define load_env
+$(shell \
+  awk -F= '/^[^#]/ && NF { gsub(/^[ \t]+|[ \t]+$$/, "", $$1); gsub(/^[ \t]+|[ \t]+$$/, "", $$2); print $$1"="$$2 }' $(1) \
+)
+endef
 
 define newline
 

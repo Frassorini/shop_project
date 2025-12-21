@@ -5,7 +5,7 @@
       "label": "Run Unit Tests",
       "type": "shell",
       "command": "bash",
-      "args": ["-ic", "make unit-tests"],
+      "args": ["-ic", "make tests-unit"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -13,10 +13,10 @@
       "problemMatcher": []
     },
     {
-      "label": "Run only Integration Tests",
+      "label": "Run Integration Tests only integration",
       "type": "shell",
       "command": "bash",
-      "args": ["-ic", "make integration-tests"],
+      "args": ["-ic", "make tests-integraiton-only"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -24,7 +24,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Run tests with integration",
+      "label": "Run integration Tests all",
       "type": "shell",
       "command": "bash",
       "args": ["-ic", "make tests-with-integration"],

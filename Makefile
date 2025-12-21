@@ -5,6 +5,7 @@ include makefiles/background.mk
 include makefiles/tests.mk
 include makefiles/docker-compose.mk
 include makefiles/utils.mk
+include makefiles/database.mk
 
 .DEFAULT_GOAL := help
 
