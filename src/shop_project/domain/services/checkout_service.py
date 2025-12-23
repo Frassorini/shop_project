@@ -31,6 +31,6 @@ class CheckoutService:
         if total_price <= 0:
             raise DomainException("Total price must be > 0")
 
-        escrow_account = EscrowAccount(uuid4(), total_price)
+        escrow_account = EscrowAccount(uuid4(), purchase_draft.customer_id, total_price)
 
         return escrow_account

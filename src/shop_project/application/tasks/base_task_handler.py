@@ -31,7 +31,11 @@ class BaseTaskParams(BaseModel):
     pass
 
 
-T = TypeVar("T", bound=BaseTaskParams)
+class NullTaskParams(BaseTaskParams):
+    pass
+
+
+T = TypeVar("T", bound=BaseTaskParams | None)
 
 
 class BaseTaskHandler(Generic[T], ABC):

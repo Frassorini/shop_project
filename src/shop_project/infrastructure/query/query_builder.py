@@ -84,10 +84,19 @@ class QueryBuilder(IQueryBuilder):
 
         return self
 
-    def greater_than(self, attribute_name: str, value: str) -> Self:
+    def greater_than(self, attribute_name: str, value: Any) -> Self:
         provider = ValueContainer([value])
 
         self._current_query_data.criteria.criterion_greater_than(
+            attribute_name, provider
+        )
+
+        return self
+
+    def lesser_than(self, attribute_name: str, value: Any) -> Self:
+        provider = ValueContainer([value])
+
+        self._current_query_data.criteria.criterion_lesser_than(
             attribute_name, provider
         )
 

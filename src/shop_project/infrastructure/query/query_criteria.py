@@ -21,6 +21,7 @@ from shop_project.infrastructure.query.p_value_provider import PValueProvider
 class QueryCriterionOperator(Enum):
     IN = "IN"
     GREATER_THAN = "GREATER_THAN"
+    LESSER_THAN = "LESSER_THAN"
 
 
 class QueryCriteriaOperator(Enum):
@@ -51,6 +52,15 @@ class QueryCriterion:
         obj = cls.__new__(cls)
         cls.__init__(
             obj, project_by, QueryCriterionOperator.GREATER_THAN, value_provider
+        )
+
+        return obj
+
+    @classmethod
+    def lesser_than(cls, project_by: str, value_provider: PValueProvider) -> Self:
+        obj = cls.__new__(cls)
+        cls.__init__(
+            obj, project_by, QueryCriterionOperator.LESSER_THAN, value_provider
         )
 
         return obj
@@ -110,6 +120,8 @@ class QueryCriterion:
             return column.in_(values)
         elif self.operator == QueryCriterionOperator.GREATER_THAN:
             return column > values[0]
+        elif self.operator == QueryCriterionOperator.LESSER_THAN:
+            return column < values[0]
         else:
             raise QueryPlanException(f"Unknown operator: {self.operator}")
 
@@ -158,6 +170,9 @@ class QueryCriteria:
 
     def criterion_greater_than(self, project_by: str, value: PValueProvider) -> Self:
         return self.criterion(QueryCriterion.greater_than(project_by, value))
+
+    def criterion_lesser_than(self, project_by: str, value: PValueProvider) -> Self:
+        return self.criterion(QueryCriterion.lesser_than(project_by, value))
 
     def and_(self) -> Self:
         self._validate_can_add_operator()

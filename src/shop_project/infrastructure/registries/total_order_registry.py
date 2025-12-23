@@ -13,21 +13,23 @@ from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.entities.task import Task
 
 _REGISTRY: list[Type[PersistableEntity]] = [
     Task,
+    ClaimToken,
     Account,
     ExternalIdTotp,
     AuthSession,
     Manager,
     Employee,
     Customer,
+    EscrowAccount,
     PurchaseDraft,
     PurchaseActive,
     PurchaseSummary,
-    EscrowAccount,
     Shipment,
     ShipmentSummary,
     Product,

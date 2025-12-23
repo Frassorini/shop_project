@@ -44,6 +44,14 @@ class AggregateContainer:
             self.dependencies.dependencies.setdefault(dependency_type, []).extend(
                 dependencies
             )
+
+        if other.aggregate not in self.dependencies.dependencies.setdefault(
+            type(other.aggregate), []
+        ):
+            self.dependencies.dependencies.setdefault(type(other.aggregate), []).append(
+                other.aggregate
+            )
+
         return self
 
 

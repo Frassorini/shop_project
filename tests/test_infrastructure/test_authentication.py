@@ -4,6 +4,9 @@ from uuid import uuid4
 import pytest
 from dishka.async_container import AsyncContainer
 
+from shop_project.application.interfaces.interface_claim_token_service import (
+    IClaimTokenService,
+)
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.interfaces.subject import (
     Subject,
@@ -17,6 +20,7 @@ from shop_project.infrastructure.authentication.services.session_service import 
 )
 from shop_project.infrastructure.entities.account import Account, SubjectEnum
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 from tests.fixtures.infrastructure.account import AccountService
 
 
@@ -96,3 +100,19 @@ async def test_access_token(
     assert token_payload.account_id == account.entity_id
 
     assert not session_service.verify_access_token(uuid4().hex)
+
+
+@pytest.mark.asyncio
+async def test_claim_token(
+    async_container: AsyncContainer,
+    customer_andrew: Callable[[], Customer],
+):
+    session_service = await async_container.get(IClaimTokenService)
+    customer = customer_andrew()
+
+    claim_token, raw_token = session_service.create(customer.entity_id)
+
+    assert isinstance(claim_token, ClaimToken)
+    assert isinstance(raw_token, str)
+
+    assert session_service.verify(claim_token, raw_token)

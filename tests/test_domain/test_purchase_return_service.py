@@ -25,16 +25,16 @@ def test_purchase_cancel_payment(
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
 
-    escrow.cancel()
+    escrow.cancel_payment()
 
-    purchase_summary = purchase_return_service.payment_cancel(
+    purchase_summary = purchase_return_service.handle_cancelled_payment(
         product_inventory=product_inventory,
         purchase_active=purchase,
         escrow_account=escrow,
     )
 
     with pytest.raises(DomainException):
-        purchase_summary = purchase_return_service.payment_cancel(
+        purchase_summary = purchase_return_service.handle_cancelled_payment(
             product_inventory=product_inventory,
             purchase_active=purchase,
             escrow_account=escrow,
@@ -61,7 +61,7 @@ def test_purchase_paid_cancel_payment(
     escrow.mark_as_paid()
 
     with pytest.raises(DomainException):
-        purchase_summary = purchase_return_service.payment_cancel(
+        purchase_summary = purchase_return_service.handle_cancelled_payment(
             product_inventory=product_inventory,
             purchase_active=purchase,
             escrow_account=escrow,
@@ -84,7 +84,6 @@ def test_purchase_unclaim(
     products: list[Product] = container.dependencies[Product]
 
     escrow.mark_as_paid()
-    escrow.mark_as_ready_for_refund()
 
     purchase_summary = purchase_return_service.unclaim(
         product_inventory=product_inventory,

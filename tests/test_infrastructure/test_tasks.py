@@ -1,18 +1,13 @@
-import asyncio
 from typing import AsyncContextManager, Awaitable, Callable, Type
 
 import pytest
 from dishka.async_container import AsyncContainer
 
+from shop_project.application.interfaces.interface_task_factory import ITaskFactory
+from shop_project.application.interfaces.interface_task_sender import ITaskSender
 from shop_project.application.tasks.implementations.example_task_handler import (
     ExampleTaskHandler,
     ExampleTaskParams,
-)
-from shop_project.infrastructure.background_tasks.application_task_factory import (
-    TaskFactory,
-)
-from shop_project.infrastructure.background_tasks.application_task_sender_service import (
-    TaskSender,
 )
 from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.query.query_builder import QueryBuilder
@@ -29,17 +24,16 @@ async def test_background_tasks(
         [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
     ],
 ) -> None:
-    application_task_sender = await async_container.get(TaskSender)
+    application_task_sender = await async_container.get(ITaskSender)
+    task_factory = await async_container.get(ITaskFactory)
 
-    task = TaskFactory.create(ExampleTaskHandler, ExampleTaskParams(message="test"))
+    task = task_factory.create(ExampleTaskHandler, ExampleTaskParams(message="test"))
 
     async with uow_factory.create(QueryBuilder(mutating=True).build()) as uow:
         uow.get_resorces().put(Task, task)
         uow.mark_commit()
 
     await ensure_tasks_completion()
-
-    await asyncio.sleep(1)
 
     async with uow_check(Task, task) as uow:
         resources = uow.get_resorces()

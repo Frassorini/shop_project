@@ -3,6 +3,7 @@ from typing import TypeVar, overload
 from shop_project.application.dto.account_dto import AccountDTO
 from shop_project.application.dto.auth_session_dto import AuthSessionDTO
 from shop_project.application.dto.base_dto import BaseDTO, DTODynamicRegistry
+from shop_project.application.dto.claim_token_dto import ClaimTokenDTO
 from shop_project.application.dto.customer_dto import CustomerDTO
 from shop_project.application.dto.employee_dto import EmployeeDTO
 from shop_project.application.dto.escrow_account_dto import EscrowAccountDTO
@@ -46,6 +47,7 @@ from shop_project.domain.entities.shipment_summary import (
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.entities.task import Task
 
@@ -54,6 +56,8 @@ T = TypeVar("T", bound=PersistableEntity)
 
 @overload
 def to_dto(entity: Task) -> TaskDTO: ...
+@overload
+def to_dto(entity: ClaimToken) -> ClaimTokenDTO: ...
 @overload
 def to_dto(entity: ExternalIdTotp) -> ExternalIdTotpDTO: ...
 @overload

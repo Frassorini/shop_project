@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from typing import (
+    Any,
     AsyncContextManager,
     AsyncIterator,
     Awaitable,
@@ -98,9 +99,9 @@ def uow_get_all_single_model(
 @pytest.fixture
 def uow_get_one_single_model(
     uow_factory: UnitOfWorkFactory,
-) -> Callable[[Type[PersistableEntity], str, str], Awaitable[PersistableEntity]]:
+) -> Callable[[Type[PersistableEntity], str, Any], Awaitable[PersistableEntity]]:
     async def _inner(
-        model_type: Type[PersistableEntity], attribute_name: str, attribute_value: str
+        model_type: Type[PersistableEntity], attribute_name: str, attribute_value: Any
     ) -> PersistableEntity:
         async with uow_factory.create(
             QueryBuilder(mutating=False)
@@ -158,6 +159,25 @@ def prepare_container(
         await fill_database(to_fill)
 
         return domain_container
+
+    return _inner
+
+
+@pytest.fixture
+def save_container(
+    fill_database: Callable[
+        [dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]
+    ],
+) -> Callable[[AggregateContainer], Coroutine[None, None, None]]:
+    async def _inner(
+        aggregate_container: AggregateContainer,
+    ) -> None:
+        to_fill = aggregate_container.dependencies.dependencies.copy()
+        to_fill.setdefault(aggregate_container.aggregate.__class__, []).append(
+            aggregate_container.aggregate
+        )
+
+        await fill_database(to_fill)
 
     return _inner
 

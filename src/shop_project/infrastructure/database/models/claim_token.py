@@ -10,18 +10,18 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shop_project.infrastructure.database.models.base import Base
+from shop_project.infrastructure.database.models.customer import Customer
 from shop_project.infrastructure.database.utc_datetime import UTCDateTime
 
 if TYPE_CHECKING:
-    from shop_project.infrastructure.database.models.account import Account
+    pass
 
 
-class AuthSession(Base):
-    __tablename__ = "auth_session"
+class ClaimToken(Base):
+    __tablename__ = "claim_token"
 
     entity_id: Mapped[UUID] = mapped_column(nullable=False)
-    account_id: Mapped[UUID] = mapped_column(nullable=False)
-    refresh_token_fingerprint: Mapped[str] = mapped_column(String(255), nullable=False)
+    token_fingerprint: Mapped[str] = mapped_column(String(255), nullable=False)
     issued_at: Mapped[datetime] = mapped_column(
         UTCDateTime(timezone=True), nullable=False
     )
@@ -29,27 +29,25 @@ class AuthSession(Base):
         UTCDateTime(timezone=True), nullable=False
     )
 
-    account: Mapped["Account"] = relationship(
+    customer: Mapped["Customer"] = relationship(
         lazy="raise",
     )
 
     __table_args__ = (
         PrimaryKeyConstraint("entity_id"),
-        ForeignKeyConstraint(["account_id"], ["account.entity_id"]),
+        ForeignKeyConstraint(["entity_id"], ["customer.entity_id"]),
     )
 
     def repopulate(
         self,
         entity_id: UUID,
-        account_id: UUID,
-        refresh_token_fingerprint: str,
+        token_fingerprint: str,
         issued_at: datetime,
         expiration: datetime,
         **kw: Any,
     ) -> None:
         self.entity_id = entity_id
-        self.account_id = account_id
-        self.refresh_token_fingerprint = refresh_token_fingerprint
+        self.token_fingerprint = token_fingerprint
         self.issued_at = issued_at
         self.expiration = expiration
 

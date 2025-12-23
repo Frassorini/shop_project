@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Callable
 
 import pytest
@@ -29,6 +30,7 @@ def test_activate(
     assert potatoes.amount == 8
     assert activation.escrow_account.is_pending()
     assert activation.purchase_active.get_items()[0].amount == 2
+    assert activation.purchase_active.reserved_until > datetime.now(tz=timezone.utc)
 
 
 def test_activate_twice(

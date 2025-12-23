@@ -1,4 +1,5 @@
 from typing import Coroutine, Type
+from uuid import UUID
 
 from plum import dispatch, overload
 
@@ -8,6 +9,9 @@ from shop_project.application.exceptions import (
 from shop_project.application.interfaces.interface_account_service import (
     IAccountService,
 )
+from shop_project.application.interfaces.interface_claim_token_service import (
+    IClaimTokenService,
+)
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
 from shop_project.application.interfaces.interface_session_service import (
     ISessionService,
@@ -16,6 +20,7 @@ from shop_project.application.interfaces.interface_totp_service import ITotpServ
 from shop_project.application.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.schemas.claim_token_schema import ClaimTokenSchema
 from shop_project.application.schemas.credential_schema import (
     CredentialSchema,
     EmailPasswordCredentialSchema,
@@ -33,6 +38,7 @@ from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 
 
@@ -44,12 +50,14 @@ class AuthenticationService:
         account_service: IAccountService,
         totp_service: ITotpService,
         session_service: ISessionService,
+        claim_token_service: IClaimTokenService,
     ) -> None:
         self._unit_of_work_factory: IUnitOfWorkFactory = unit_of_work_factory
         self._query_builder_type: Type[IQueryBuilder] = query_builder_type
         self._account_service: IAccountService = account_service
         self._totp_service: ITotpService = totp_service
         self._session_service: ISessionService = session_service
+        self._claim_token_service: IClaimTokenService = claim_token_service
 
     async def login_customer(self, credential: CredentialSchema):
         return await self._login_subject(Customer, credential)
@@ -191,6 +199,29 @@ class AuthenticationService:
         return SessionRefreshSchema.model_validate(
             session_refresh, from_attributes=True
         )
+
+    async def get_claim_token(self, customer_id: UUID) -> ClaimTokenSchema:
+        async with self._unit_of_work_factory.create(
+            self._query_builder_type(mutating=True)
+            .load(ClaimToken)
+            .from_id([customer_id])
+            .for_update()
+            .build()
+        ) as uow:
+            resources = uow.get_resorces()
+            maybe_claim_token_lst = resources.get_all(ClaimToken)
+
+            if maybe_claim_token_lst:
+                claim_token = maybe_claim_token_lst[0]
+                token_raw = self._claim_token_service.refresh()
+            else:
+                claim_token, token_raw = self._claim_token_service.create(customer_id)
+
+            resources.put(ClaimToken, claim_token)
+
+            uow.mark_commit()
+
+        return ClaimTokenSchema(claim_token=token_raw)
 
     @overload
     def _login_subject(

@@ -11,8 +11,7 @@ from shop_project.shared.base_state_machine import BaseStateMachine
 class EscrowAccountState(Enum):
     PENDING = "PENDING"
     PAID = "PAID"
-    PAYMENT_CANCELLED = "CANCELLED"
-    READY_FOR_REFUND = "READY_FOR_REFUND"
+    PAYMENT_CANCELLED = "PAYMENT_CANCELLED"
     REFUNDING = "REFUNDING"
     FINALIZED = "FINALIZED"
 
@@ -23,12 +22,11 @@ class EscrowAccountStateMachine(BaseStateMachine[EscrowAccountState]):
             EscrowAccountState.PAID,
             EscrowAccountState.PAYMENT_CANCELLED,
         ],
-        EscrowAccountState.PAID: [
-            EscrowAccountState.READY_FOR_REFUND,
-            EscrowAccountState.FINALIZED,
-        ],
         EscrowAccountState.PAYMENT_CANCELLED: [EscrowAccountState.FINALIZED],
-        EscrowAccountState.READY_FOR_REFUND: [EscrowAccountState.REFUNDING],
+        EscrowAccountState.PAID: [
+            EscrowAccountState.FINALIZED,
+            EscrowAccountState.REFUNDING,
+        ],
         EscrowAccountState.REFUNDING: [EscrowAccountState.FINALIZED],
         EscrowAccountState.FINALIZED: [],
     }
@@ -37,23 +35,32 @@ class EscrowAccountStateMachine(BaseStateMachine[EscrowAccountState]):
 class EscrowAccount(PersistableEntity):
     entity_id: UUID
     total_amount: Decimal
+    customer_id: UUID
     _state_machine: EscrowAccountStateMachine
 
-    def __init__(self, entity_id: UUID, total_amount: Decimal) -> None:
+    def __init__(
+        self, entity_id: UUID, customer_id: UUID, total_amount: Decimal
+    ) -> None:
         if total_amount <= 0:
             raise DomainException("Total amount must be positive")
         self.entity_id = entity_id
+        self.customer_id = customer_id
         self.total_amount: Decimal = total_amount
         self._state_machine = EscrowAccountStateMachine(EscrowAccountState.PENDING)
 
     @classmethod
     def load(
-        cls, entity_id: UUID, total_amount: Decimal, state: EscrowAccountState
+        cls,
+        entity_id: UUID,
+        customer_id: UUID,
+        total_amount: Decimal,
+        state: EscrowAccountState,
     ) -> Self:
         obj = cls.__new__(cls)
 
         obj.entity_id = entity_id
         obj.total_amount = total_amount
+        obj.customer_id = customer_id
         obj._state_machine = EscrowAccountStateMachine(state)
 
         return obj
@@ -65,11 +72,8 @@ class EscrowAccount(PersistableEntity):
     def mark_as_paid(self) -> None:
         self._state_machine.try_transition_to(EscrowAccountState.PAID)
 
-    def cancel(self) -> None:
+    def cancel_payment(self) -> None:
         self._state_machine.try_transition_to(EscrowAccountState.PAYMENT_CANCELLED)
-
-    def mark_as_ready_for_refund(self) -> None:
-        self._state_machine.try_transition_to(EscrowAccountState.READY_FOR_REFUND)
 
     def begin_refund(self) -> None:
         self._state_machine.try_transition_to(EscrowAccountState.REFUNDING)
@@ -83,11 +87,8 @@ class EscrowAccount(PersistableEntity):
     def is_paid(self) -> bool:
         return self.state == EscrowAccountState.PAID
 
-    def is_cancelled(self) -> bool:
+    def is_payment_cancelled(self) -> bool:
         return self.state == EscrowAccountState.PAYMENT_CANCELLED
-
-    def is_ready_for_refund(self) -> bool:
-        return self.state == EscrowAccountState.READY_FOR_REFUND
 
     def is_refunding(self) -> bool:
         return self.state == EscrowAccountState.REFUNDING

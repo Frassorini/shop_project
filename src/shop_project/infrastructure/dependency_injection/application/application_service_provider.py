@@ -1,10 +1,15 @@
 from typing import Type
 
 from dishka import Provider, Scope, provide
-from taskiq import AsyncBroker
 
 from shop_project.application.interfaces.interface_account_service import (
     IAccountService,
+)
+from shop_project.application.interfaces.interface_claim_token_service import (
+    IClaimTokenService,
+)
+from shop_project.application.interfaces.interface_payment_gateway import (
+    IPaymentGateway,
 )
 from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
 from shop_project.application.interfaces.interface_session_service import (
@@ -18,16 +23,16 @@ from shop_project.application.services.authentication_service import (
     AuthenticationService,
 )
 from shop_project.application.services.customer_service import CustomerService
+from shop_project.application.services.purchase_service import PurchaseService
 from shop_project.application.services.registration_service import RegistrationService
 from shop_project.application.services.totp_challenge_service import (
     TotpChallengeService,
 )
-from shop_project.application.tasks.implementations.example_task_handler import (
-    ExampleTaskHandler,
+from shop_project.domain.services.purchase_activation_service import (
+    PurchaseActivationService,
 )
-from shop_project.infrastructure.background_tasks.application_task_sender_service import (
-    TaskSender,
-)
+from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
+from shop_project.domain.services.purchase_return_service import PurchaseReturnService
 
 
 class ApplicationServiceProvider(Provider):
@@ -69,6 +74,7 @@ class ApplicationServiceProvider(Provider):
         account_service: IAccountService,
         totp_service: ITotpService,
         session_service: ISessionService,
+        claim_token_service: IClaimTokenService,
     ) -> AuthenticationService:
         return AuthenticationService(
             unit_of_work_factory=unit_of_work_factory,
@@ -76,6 +82,7 @@ class ApplicationServiceProvider(Provider):
             account_service=account_service,
             totp_service=totp_service,
             session_service=session_service,
+            claim_token_service=claim_token_service,
         )
 
     @provide
@@ -92,16 +99,22 @@ class ApplicationServiceProvider(Provider):
         )
 
     @provide
-    async def example_background_service(
+    async def purchase_service(
         self,
         unit_of_work_factory: IUnitOfWorkFactory,
         query_builder_type: Type[IQueryBuilder],
-    ) -> ExampleTaskHandler:
-        return ExampleTaskHandler(
+        purchase_activation_service: PurchaseActivationService,
+        purchase_claim_service: PurchaseClaimService,
+        purchase_return_service: PurchaseReturnService,
+        payment_gateway: IPaymentGateway,
+        claim_token_service: IClaimTokenService,
+    ) -> PurchaseService:
+        return PurchaseService(
             unit_of_work_factory=unit_of_work_factory,
             query_builder_type=query_builder_type,
+            purchase_activation_service=purchase_activation_service,
+            purchase_claim_service=purchase_claim_service,
+            purchase_return_service=purchase_return_service,
+            payment_gateway=payment_gateway,
+            claim_token_service=claim_token_service,
         )
-
-    @provide
-    async def application_task_sender_service(self, broker: AsyncBroker) -> TaskSender:
-        return TaskSender(broker)

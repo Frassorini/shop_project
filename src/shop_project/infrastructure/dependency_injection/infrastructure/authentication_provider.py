@@ -5,6 +5,9 @@ from dishka import Provider, Scope, alias, provide
 from shop_project.application.interfaces.interface_account_service import (
     IAccountService,
 )
+from shop_project.application.interfaces.interface_claim_token_service import (
+    IClaimTokenService,
+)
 from shop_project.application.interfaces.interface_notification import (
     EmailNotificationService,
     SMSNotificationService,
@@ -15,6 +18,9 @@ from shop_project.application.interfaces.interface_session_service import (
 from shop_project.application.interfaces.interface_totp_service import ITotpService
 from shop_project.infrastructure.authentication.services.account_service import (
     AccountService,
+)
+from shop_project.infrastructure.authentication.services.claim_token_service import (
+    ClaimTokenService,
 )
 from shop_project.infrastructure.authentication.services.session_service import (
     SessionService,
@@ -76,6 +82,19 @@ class AuthenticationProvider(Provider):
             sms_sender=get_env("TOTP_SMS_SENDER"),
         )
 
+    @provide
+    def claim_token_service(
+        self,
+        token_fingerprint_calculator: TokenFingerprintCalculator,
+        rand_datagen: TokenGenerator,
+    ) -> ClaimTokenService:
+        return ClaimTokenService(
+            token_fingerprint_calculator=token_fingerprint_calculator,
+            rand_datagen=rand_datagen,
+            token_ttl=timedelta(seconds=int(get_env("CLAIM_TOKEN_TTL"))),
+        )
+
     account_service_proto = alias(AccountService, provides=IAccountService)
     totp_service_proto = alias(TotpService, provides=ITotpService)
     session_service_proto = alias(SessionService, provides=ISessionService)
+    claim_token_service_proto = alias(ClaimTokenService, provides=IClaimTokenService)

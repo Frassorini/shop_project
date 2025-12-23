@@ -13,6 +13,7 @@ from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 
 SourceType = TypeVar("SourceType")
 TargetType = TypeVar("TargetType")
@@ -25,6 +26,12 @@ class LoadResolutionDescriptor(Generic[SourceType]):
 
 
 _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
+    ClaimToken: {
+        Customer: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda claim_token: [claim_token.entity_id],
+        ),
+    },
     Account: {
         Customer: LoadResolutionDescriptor(
             attribute_name="entity_id",
@@ -82,10 +89,6 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
             attribute_name="entity_id",
             strategy=lambda order: [item.product_id for item in order.get_items()],
         ),
-        EscrowAccount: LoadResolutionDescriptor(
-            attribute_name="entity_id",
-            strategy=lambda order: [order.escrow_account_id],
-        ),
     },
     PurchaseSummary: {
         Product: LoadResolutionDescriptor(
@@ -94,6 +97,10 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
         ),
     },
     EscrowAccount: {
+        PurchaseActive: LoadResolutionDescriptor(
+            attribute_name="escrow_account_id",
+            strategy=lambda escrow_account: [escrow_account.entity_id],
+        ),
         PurchaseSummary: LoadResolutionDescriptor(
             attribute_name="escrow_account_id",
             strategy=lambda escrow_account: [escrow_account.entity_id],

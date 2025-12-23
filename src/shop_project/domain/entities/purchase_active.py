@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Self
 from uuid import UUID
@@ -47,15 +48,14 @@ class PurchaseActive(PersistableEntity):
         customer_id: UUID,
         escrow_account_id: UUID,
         items: list[PurchaseActiveItem],
+        reserved_until: datetime,
     ) -> None:
         self.entity_id: UUID = entity_id
-
         self.customer_id: UUID = customer_id
         self.escrow_account_id: UUID = escrow_account_id
-
         self._items: dict[UUID, PurchaseActiveItem] = {}
-
         self._state_machine = PurchaseActiveStateMachine(PurchaseActiveState.ACTIVE)
+        self.reserved_until = reserved_until
 
         for item in items:
             self._validate_item(item)
@@ -68,6 +68,7 @@ class PurchaseActive(PersistableEntity):
         customer_id: UUID,
         escrow_account_id: UUID,
         items: list[PurchaseActiveItem],
+        reserved_until: datetime,
         state: PurchaseActiveState,
     ) -> Self:
         obj = cls.__new__(cls)
@@ -77,6 +78,7 @@ class PurchaseActive(PersistableEntity):
         obj.escrow_account_id = escrow_account_id
         obj._items = {item.product_id: item for item in items}
         obj._state_machine = PurchaseActiveStateMachine(state)
+        obj.reserved_until = reserved_until
 
         return obj
 

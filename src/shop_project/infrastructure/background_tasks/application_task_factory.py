@@ -1,6 +1,7 @@
 from typing import Type, TypeVar
 from uuid import uuid4
 
+from shop_project.application.interfaces.interface_task_factory import ITaskFactory
 from shop_project.application.tasks.base_task_handler import (
     BaseTaskHandler,
     BaseTaskParams,
@@ -10,7 +11,7 @@ from shop_project.infrastructure.entities.task import Task
 T = TypeVar("T", bound=BaseTaskParams)
 
 
-class TaskFactory:
+class TaskFactory(ITaskFactory):
     @classmethod
     def create(cls, use_case_type: Type[BaseTaskHandler[T]], params: T) -> Task:
         params_json = params.model_dump_json()

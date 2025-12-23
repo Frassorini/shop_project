@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Self
 from uuid import UUID
 
@@ -20,6 +21,7 @@ class PurchaseActiveDTO(BaseDTO[PurchaseActive]):
     customer_id: UUID
     escrow_account_id: UUID
     items: list[PurchaseActiveItemDTO]
+    reserved_until: datetime
 
     @classmethod
     def to_dto(cls, domain_object: PurchaseActive) -> Self:
@@ -28,6 +30,7 @@ class PurchaseActiveDTO(BaseDTO[PurchaseActive]):
             state=domain_object.state.value,
             customer_id=domain_object.customer_id,
             escrow_account_id=domain_object.escrow_account_id,
+            reserved_until=domain_object.reserved_until,
             items=[
                 PurchaseActiveItemDTO.model_validate(item)
                 for item in domain_object.items
@@ -41,4 +44,5 @@ class PurchaseActiveDTO(BaseDTO[PurchaseActive]):
             customer_id=self.customer_id,
             escrow_account_id=self.escrow_account_id,
             items=[PurchaseActiveItem(**item.model_dump()) for item in self.items],
+            reserved_until=self.reserved_until,
         )

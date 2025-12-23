@@ -12,7 +12,7 @@ class PurchaseReturnService:
             purchase_summary_service
         )
 
-    def payment_cancel(
+    def handle_cancelled_payment(
         self,
         product_inventory: ProductInventory,
         purchase_active: PurchaseActive,
@@ -21,7 +21,7 @@ class PurchaseReturnService:
         if purchase_active.is_finalized():
             raise DomainException("Cannot cancel finalized purchase")
 
-        if not escrow_account.is_cancelled():
+        if not escrow_account.is_payment_cancelled():
             raise DomainException("Escrow account is not cancelled")
 
         escrow_account.finalize()
@@ -39,8 +39,8 @@ class PurchaseReturnService:
         if purchase_active.is_finalized():
             raise DomainException("Cannot unclaim finalized purchase")
 
-        if not escrow_account.is_ready_for_refund():
-            raise DomainException("Escrow account is not ready for refund")
+        if not escrow_account.is_paid():
+            raise DomainException("Escrow account is not paid")
 
         escrow_account.begin_refund()
 

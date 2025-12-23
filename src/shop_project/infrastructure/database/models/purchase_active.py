@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shop_project.infrastructure.database.models.base import Base
+from shop_project.infrastructure.database.utc_datetime import UTCDateTime
 
 if TYPE_CHECKING:
     from shop_project.infrastructure.database.models.customer import Customer
@@ -23,6 +25,9 @@ class PurchaseActive(Base):
     customer_id: Mapped[UUID] = mapped_column(nullable=False)
     escrow_account_id: Mapped[UUID] = mapped_column(nullable=False)
     state: Mapped[str] = mapped_column(String(50), nullable=False)
+    reserved_until: Mapped[datetime] = mapped_column(
+        UTCDateTime(timezone=True), nullable=False
+    )
 
     items: Mapped[list["PurchaseActiveItem"]] = relationship(
         back_populates="parent",
@@ -50,12 +55,14 @@ class PurchaseActive(Base):
         customer_id: UUID,
         escrow_account_id: UUID,
         state: str,
+        reserved_until: datetime,
         **kw: Any,
     ) -> None:
         self.entity_id = entity_id
         self.customer_id = customer_id
         self.escrow_account_id = escrow_account_id
         self.state = state
+        self.reserved_until = reserved_until
 
     def __init__(self, **kw: Any) -> None:
         super().__init__()

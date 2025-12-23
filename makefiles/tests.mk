@@ -12,9 +12,9 @@ tests-unit: ## Run unit tests only
 	$(call RUN_TESTS,-m "not integration")
 
 tests-integraiton-only: ## Run integration tests only
-	$(call RUN_TESTS,-m "integration" --real-db --real-broker)
+	$(call RUN_TESTS,-m "integration and not inmemory" --real-db --real-broker)
 
 tests-with-integration: ## Run all tests including integration
-	$(call RUN_TESTS,--real-db --real-broker)
+	$(call RUN_TESTS, -m "not inmemory" --real-db --real-broker)
 
 endif

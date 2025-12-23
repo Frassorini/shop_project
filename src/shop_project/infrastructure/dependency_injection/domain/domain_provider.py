@@ -1,4 +1,6 @@
 # shop_project/containers/domain_container.py
+from datetime import timedelta
+
 from dishka import Provider, Scope, provide
 
 from shop_project.domain.services.checkout_service import CheckoutService
@@ -17,6 +19,7 @@ from shop_project.domain.services.shipment_activation_service import (
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
 from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
 from shop_project.domain.services.shipment_summary_service import ShipmentSummaryService
+from shop_project.infrastructure.env_loader import get_env
 
 
 class DomainProvider(Provider):
@@ -24,12 +27,19 @@ class DomainProvider(Provider):
 
     # Простые фабрики
     checkout_service = provide(CheckoutService)
-    purchase_reservation_service = provide(PurchaseReservationService)
     purchase_summary_service = provide(PurchaseSummaryService)
     shipment_summary_service = provide(ShipmentSummaryService)
     shipment_activation_service = provide(ShipmentActivationService)
 
     # Фабрики с зависимостями
+    @provide
+    def purchase_reservation_service(
+        self,
+    ) -> PurchaseReservationService:
+        return PurchaseReservationService(
+            timedelta(seconds=int(get_env("PURCHASE_RESERVATION_TTL")))
+        )
+
     @provide
     def purchase_activation_service(
         self,

@@ -15,6 +15,9 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.authentication.helpers.access_token_payload import (
+    AccessTokenPayload,
+)
 from shop_project.infrastructure.entities.auth_session import AuthSession
 from shop_project.shared.phone_str import validate_phone_number
 
@@ -205,3 +208,26 @@ async def test_customer_session_refresh(
         auth_session_snapshot_before.account_id
         == auth_session_snapshot_after.account_id
     )
+
+
+@pytest.mark.asyncio
+async def test_customer_get_claim_token(
+    async_container: AsyncContainer,
+    register_subject: Callable[..., Awaitable[SessionRefreshSchema]],
+) -> None:
+    session_service = await async_container.get(ISessionService)
+    authentication_service = await async_container.get(AuthenticationService)
+    phone_number = validate_phone_number("+79991234567")
+    refresh = await register_subject(Customer, phone_number=phone_number)
+    access = refresh.access_token
+
+    token_payload: AccessTokenPayload | None = session_service.verify_access_token(
+        access.get_secret_value()
+    )
+    assert token_payload
+    claim_token = await authentication_service.get_claim_token(token_payload.account_id)
+    claim_token2 = await authentication_service.get_claim_token(
+        token_payload.account_id
+    )
+
+    assert claim_token != claim_token2

@@ -12,6 +12,7 @@ from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.entities.task import Task
 from tests.helpers import AggregateContainer
@@ -20,6 +21,7 @@ from tests.helpers import AggregateContainer
 @pytest.fixture
 def domain_object_factory(
     task_container_factory: Callable[..., AggregateContainer],
+    claim_token_container_factory: Callable[..., AggregateContainer],
     account_container_factory: Callable[..., AggregateContainer],
     external_id_totp_container_factory: Callable[..., AggregateContainer],
     auth_session_container_factory: Callable[..., AggregateContainer],
@@ -34,6 +36,8 @@ def domain_object_factory(
     def factory(model_type: Type[PersistableEntity]) -> AggregateContainer:
         if model_type is Task:
             return task_container_factory()
+        if model_type is ClaimToken:
+            return claim_token_container_factory()
         if model_type is Account:
             return account_container_factory()
         if model_type is ExternalIdTotp:

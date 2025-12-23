@@ -20,12 +20,70 @@ from shop_project.domain.services.purchase_claim_service import PurchaseClaimSer
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
 from shop_project.infrastructure.entities.account import Account, SubjectEnum
 from shop_project.infrastructure.entities.auth_session import AuthSession
+from shop_project.infrastructure.entities.claim_token import ClaimToken
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.query.query_builder import QueryBuilder
 from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
 from tests.helpers import AggregateContainer
+
+
+@pytest.mark.asyncio
+async def test_claim_token(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = ClaimToken
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.expiration = domain_obj.expiration + timedelta(days=1)
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resorces()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resorces()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
 
 @pytest.mark.asyncio
@@ -509,14 +567,14 @@ async def test_uow_purchase_claim(
         .load(Customer)
         .from_id([aggregate.customer_id])
         .for_update()
-        .load(PurchaseActive)
+        .load(EscrowAccount)
         .from_id([aggregate.entity_id])
         .for_update()
-        .load(EscrowAccount)
+        .load(PurchaseActive)
         .from_previous()
         .for_update()
         .load(Product)
-        .from_previous(1)
+        .from_previous()
         .for_update()
         .build()
     ) as uow:
@@ -665,7 +723,7 @@ async def test_shipment(
 
 
 @pytest.mark.asyncio
-async def xtest_load_by_chlidren(
+async def test_load_by_chlidren(
     uow_factory: UnitOfWorkFactory,
     prepare_container: Callable[
         [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]

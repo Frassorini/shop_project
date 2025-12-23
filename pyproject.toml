@@ -35,6 +35,7 @@ dependencies = [
 pytest = "^8.4.1"
 pytest-asyncio = "^1.1.0"
 pre-commit = "^4.4.0"
+freezegun = "^1.5.5"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -47,6 +48,7 @@ pythonpath = "src"
 asyncio_mode = "strict"
 markers = [
     "integration: mark test as integration",
+    "inmemory: mark test as inmemory only",
     "unit: mark test as unit"
 ]
 
