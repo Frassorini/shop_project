@@ -4,7 +4,7 @@ from sqlite3.dbapi2 import IntegrityError
 import pytest
 from sqlalchemy import select
 
-from shop_project.infrastructure.database.core import Database
+from shop_project.infrastructure.persistence.database.core import Database
 
 
 @pytest.mark.asyncio

@@ -16,8 +16,11 @@ from dishka.async_container import AsyncContainer
 
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import ResourcesException
-from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
+from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
+from shop_project.infrastructure.persistence.unit_of_work import (
+    UnitOfWork,
+    UnitOfWorkFactory,
+)
 from tests.helpers import AggregateContainer
 
 
@@ -175,6 +178,27 @@ def save_container(
         to_fill = aggregate_container.dependencies.dependencies.copy()
         to_fill.setdefault(aggregate_container.aggregate.__class__, []).append(
             aggregate_container.aggregate
+        )
+
+        await fill_database(to_fill)
+
+    return _inner
+
+
+@pytest.fixture
+def save_entity(
+    fill_database: Callable[
+        [dict[Type[PersistableEntity], list[PersistableEntity]]], Awaitable[None]
+    ],
+) -> Callable[[PersistableEntity], Coroutine[None, None, None]]:
+    async def _inner(
+        entity: PersistableEntity,
+    ) -> None:
+        container = AggregateContainer(aggregate=entity, dependencies={})
+
+        to_fill = container.dependencies.dependencies.copy()
+        to_fill.setdefault(container.aggregate.__class__, []).append(
+            container.aggregate
         )
 
         await fill_database(to_fill)

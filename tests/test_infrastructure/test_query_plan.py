@@ -7,15 +7,18 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.exceptions import QueryPlanException
-from shop_project.infrastructure.query.composed_query import ComposedQuery, QueryLock
-from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.query.query_criteria import QueryCriteria
-from shop_project.infrastructure.query.query_plan import QueryPlan
-from shop_project.infrastructure.query.value_container import ValueContainer
-from shop_project.infrastructure.query.value_extractor import ValueExtractor
-from shop_project.infrastructure.registries.custom_queries_registry import (
+from shop_project.infrastructure.persistence.custom_queries import (
     CountProductsQuery,
 )
+from shop_project.infrastructure.persistence.query.composed_query import (
+    ComposedQuery,
+    QueryLock,
+)
+from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
+from shop_project.infrastructure.persistence.query.query_criteria import QueryCriteria
+from shop_project.infrastructure.persistence.query.query_plan import QueryPlan
+from shop_project.infrastructure.persistence.query.value_container import ValueContainer
+from shop_project.infrastructure.persistence.query.value_extractor import ValueExtractor
 
 
 def test_empty_source():

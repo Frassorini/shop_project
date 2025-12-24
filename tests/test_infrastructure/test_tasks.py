@@ -10,8 +10,11 @@ from shop_project.application.tasks.implementations.example_task_handler import 
     ExampleTaskParams,
 )
 from shop_project.infrastructure.entities.task import Task
-from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
+from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
+from shop_project.infrastructure.persistence.unit_of_work import (
+    UnitOfWork,
+    UnitOfWorkFactory,
+)
 from tests.test_infrastructure.test_unit_of_work import PersistableEntity
 
 

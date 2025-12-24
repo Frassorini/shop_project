@@ -1,7 +1,7 @@
 import pytest
 
-from shop_project.infrastructure.query.query_criteria import QueryCriteria
-from shop_project.infrastructure.query.value_container import ValueContainer
+from shop_project.infrastructure.persistence.query.query_criteria import QueryCriteria
+from shop_project.infrastructure.persistence.query.value_container import ValueContainer
 
 
 def test_correct() -> None:

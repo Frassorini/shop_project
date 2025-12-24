@@ -10,13 +10,13 @@ from shop_project.application.dto.purchase_draft_dto import (
     PurchaseDraftItemDTO,
 )
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
-from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.database.models.purchase_draft import (
+from shop_project.infrastructure.persistence.database.core import Database
+from shop_project.infrastructure.persistence.database.models.purchase_draft import (
     PurchaseDraft as PurchaseDraftORM,
     PurchaseDraftItem as PurchaseDraftItemORM,
 )
-from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.repositories.implementations.purchase_draft_repository import (
+from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
+from shop_project.infrastructure.persistence.repositories.implementations.purchase_draft_repository import (
     PurchaseDraftRepository,
 )
 

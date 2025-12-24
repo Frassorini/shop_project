@@ -9,6 +9,7 @@ from shop_project.application.tasks.base_task_handler import (
     BaseTaskHandler,
     BaseTaskParams,
 )
+from shop_project.application.tasks.exceptions import RetryException
 from shop_project.infrastructure.entities.task import Task
 
 
@@ -33,12 +34,15 @@ class ExampleTaskHandler(BaseTaskHandler[ExampleTaskParams]):
             self._query_builder_type(mutating=True)
             .load(Task)
             .from_attribute("entity_id", [task_id])
-            .for_update()
-            .build()
+            .for_update(no_wait=True)
+            .build(),
+            exception_on_nowait=RetryException,
         ) as uow:
             resources = uow.get_resorces()
 
-            task = resources.get_by_id(Task, task_id)
+            task = resources.get_by_id_or_none(Task, task_id)
+            if task is None:
+                return
 
             params = ExampleTaskParams.model_validate_json(task.params_json)
 

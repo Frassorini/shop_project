@@ -3,7 +3,6 @@ from dishka.async_container import AsyncContainer
 from pydantic import SecretBytes
 from taskiq import AsyncBroker
 
-from shop_project.infrastructure.database.core import Database
 from shop_project.infrastructure.dependency_injection.application.application_service_provider import (
     ApplicationServiceProvider,
 )
@@ -23,15 +22,16 @@ from shop_project.infrastructure.dependency_injection.infrastructure.cryptograph
     CryptographyProvider,
     JwtKeyContainer,
 )
-from shop_project.infrastructure.dependency_injection.infrastructure.database_provider import (
-    DatabaseProvider,
-)
 from shop_project.infrastructure.dependency_injection.infrastructure.notification_provider import (
     NotificationProvider,
 )
 from shop_project.infrastructure.dependency_injection.infrastructure.payment_provider import (
     PaymentProvider,
 )
+from shop_project.infrastructure.dependency_injection.infrastructure.persistence_provider import (
+    PersistenceProvider,
+)
+from shop_project.infrastructure.persistence.database.core import Database
 from shop_project.shared.create_context import create_context_from_value
 from tests.helpers import get_test_jwt_private_key, get_test_jwt_public_key
 
@@ -50,7 +50,7 @@ def container_taskiq_worker_factory(broker: AsyncBroker) -> AsyncContainer:
         ),
         PaymentProvider(),
         AuthenticationProvider(),
-        DatabaseProvider(database_ctx),
+        PersistenceProvider(database_ctx),
         BrokerProvider(broker_ctx),
         ApplicationServiceProvider(),
         ApplicationTaskHandlerProvider(),

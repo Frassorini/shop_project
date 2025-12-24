@@ -5,6 +5,9 @@ import pytest
 from dishka.container import Container
 
 from shop_project.application.dto.mapper import to_dto
+from shop_project.application.interfaces.interface_unit_of_work import (
+    LockTimeoutException,
+)
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
@@ -24,8 +27,11 @@ from shop_project.infrastructure.entities.claim_token import ClaimToken
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.exceptions import ResourcesException
-from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.unit_of_work import UnitOfWork, UnitOfWorkFactory
+from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
+from shop_project.infrastructure.persistence.unit_of_work import (
+    UnitOfWork,
+    UnitOfWorkFactory,
+)
 from tests.helpers import AggregateContainer
 
 
@@ -779,3 +785,68 @@ async def test_load_by_chlidren(
         assert len(snapshot_after.items) == 2
 
     await uow_delete_and_check(model_type, domain_container.aggregate)
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_nowait(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+) -> None:
+
+    model_type: Type[PersistableEntity] = PurchaseDraft
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    class MyExc(Exception):
+        pass
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow1:
+        with pytest.raises(MyExc):
+            async with uow_factory.create(
+                QueryBuilder(mutating=True)
+                .load(model_type)
+                .from_id([domain_container.aggregate.entity_id])
+                .for_update(no_wait=True)
+                .build(),
+                exception_on_nowait=MyExc,
+            ) as uow2:
+                pass
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_timeout(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+) -> None:
+
+    model_type: Type[PersistableEntity] = PurchaseDraft
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow1:
+        with pytest.raises(LockTimeoutException):
+            async with uow_factory.create(
+                QueryBuilder(mutating=True)
+                .load(model_type)
+                .from_id([domain_container.aggregate.entity_id])
+                .for_update()
+                .build(),
+                wait_timeout_ms=300,
+            ) as uow2:
+                pass

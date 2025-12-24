@@ -16,7 +16,7 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject
-from shop_project.infrastructure.unit_of_work import UnitOfWorkFactory
+from shop_project.infrastructure.persistence.unit_of_work import UnitOfWorkFactory
 
 
 @pytest.fixture

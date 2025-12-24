@@ -41,6 +41,7 @@ from shop_project.domain.entities.purchase_summary import (
     PurchaseSummaryReason,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
+from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.payments.inmemory_payment_gateway import (
     InMemoryPaymentGateway,
 )
@@ -76,6 +77,7 @@ async def test_purchase_flow_cancel_payment(
     uow_get_one_single_model: Callable[
         [Type[PersistableEntity], str, Any], Awaitable[PersistableEntity]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -84,7 +86,8 @@ async def test_purchase_flow_cancel_payment(
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
 
     payment_gateway.cancel_pending()
-    await task_sender.send(
+
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 
@@ -110,6 +113,7 @@ async def test_purchase_flow_finalize_cancelled(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -117,11 +121,11 @@ async def test_purchase_flow_finalize_cancelled(
     purchase_activation: PurchaseActivationSchema = await purchase_activation()
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.cancel_pending()
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchFinalizeNotPaidTasksHandler, NullTaskParams())
     )
 
@@ -144,6 +148,7 @@ async def test_purchase_flow_confirm_payment(
     uow_get_one_single_model: Callable[
         [Type[PersistableEntity], str, Any], Awaitable[PersistableEntity]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -152,7 +157,7 @@ async def test_purchase_flow_confirm_payment(
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
 
     payment_gateway.pay_pending()
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 
@@ -178,6 +183,7 @@ async def test_purchase_flow_manual_unclaim(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -186,7 +192,7 @@ async def test_purchase_flow_manual_unclaim(
     purchase_service = await async_container.get(PurchaseService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 
@@ -216,6 +222,7 @@ async def test_purchase_flow_auto_unclaim(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -224,12 +231,12 @@ async def test_purchase_flow_auto_unclaim(
     purchase_service = await async_container.get(PurchaseService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 
     with freeze_time(datetime.now(tz=timezone.utc) + timedelta(weeks=10)):
-        await task_sender.send(
+        await inmem_save_and_send_task(
             task_factory.create(
                 BatchPaidReservationTimeOutTaskHandler, NullTaskParams()
             )
@@ -257,6 +264,7 @@ async def test_purchase_flow_confirm_refund(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -265,7 +273,7 @@ async def test_purchase_flow_confirm_refund(
     purchase_service = await async_container.get(PurchaseService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
     await purchase_service.unclaim(
@@ -273,7 +281,7 @@ async def test_purchase_flow_confirm_refund(
     )
     payment_gateway.complete_refunding()
 
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitRefundTaskHandler, NullTaskParams())
     )
 
@@ -299,6 +307,7 @@ async def test_purchase_flow_claim(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
 ) -> None:
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
@@ -308,7 +317,7 @@ async def test_purchase_flow_claim(
     purchase_service = await async_container.get(PurchaseService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
-    await task_sender.send(
+    await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 

@@ -1,10 +1,13 @@
-from typing import Awaitable, Callable
+import asyncio
+from typing import Awaitable, Callable, Coroutine
 from uuid import uuid4
 
 import pytest
 from dishka import AsyncContainer
 from dishka.container import Container
 
+from shop_project.application.interfaces.interface_task_factory import ITaskFactory
+from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.authentication.services.session_service import (
     SessionService,
 )
@@ -12,9 +15,10 @@ from shop_project.infrastructure.background_tasks.application_task_sender_servic
     TaskSender,
 )
 from shop_project.infrastructure.entities.task import Task
-from shop_project.infrastructure.query.query_builder import QueryBuilder
-from shop_project.infrastructure.unit_of_work import UnitOfWorkFactory
+from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
+from shop_project.infrastructure.persistence.unit_of_work import UnitOfWorkFactory
 from tests.helpers import AggregateContainer
+from tests.test_application.test_purchase_flow import ITaskSender
 
 
 @pytest.fixture
@@ -37,6 +41,20 @@ def task_container_factory(
 
 
 @pytest.fixture
+def inmem_save_and_send_task(
+    save_entity: Callable[[PersistableEntity], Coroutine[None, None, None]],
+    async_container: AsyncContainer,
+) -> Callable[[Task], Awaitable[None]]:
+    async def _inner(task: Task) -> None:
+        task_sender = await async_container.get(ITaskSender)
+        task_factory = await async_container.get(ITaskFactory)
+        await save_entity(task)
+        await task_sender.send(task)
+
+    return _inner
+
+
+@pytest.fixture
 def ensure_tasks_completion(
     request: pytest.FixtureRequest,
     async_container: AsyncContainer,
@@ -44,7 +62,7 @@ def ensure_tasks_completion(
 ) -> Callable[[], Awaitable[None]]:
     async def _inner(max_tries: int = 10) -> None:
         if request.config.getoption("--real-broker"):
-            return
+            await asyncio.sleep(1)
 
         task_sender = await async_container.get(TaskSender)
 

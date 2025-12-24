@@ -16,6 +16,7 @@ from shop_project.application.tasks.base_task_handler import (
     BaseTaskHandler,
     NullTaskParams,
 )
+from shop_project.application.tasks.exceptions import RetryException
 from shop_project.domain.entities.escrow_account import (
     EscrowAccount,
     EscrowAccountState,
@@ -73,13 +74,19 @@ class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
             self._query_builder_type(mutating=True)
             .load(Task)
             .from_attribute("entity_id", [task_id])
-            .for_update()
+            .for_update(no_wait=True)
             .load(EscrowAccount)
             .from_attribute("state", [EscrowAccountState.PENDING.value])
             .for_update()
-            .build()
+            .build(),
+            exception_on_nowait=RetryException,
         ) as uow:
             resources = uow.get_resorces()
+
+            task = resources.get_by_id_or_none(Task, task_id)
+            if task is None:
+                return
+
             state_map = await _get_state_map(
                 self._payment_gateway, resources.get_all(EscrowAccount)
             )
@@ -138,7 +145,7 @@ class BatchFinalizeNotPaidTasksHandler(BaseTaskHandler[NullTaskParams]):
             self._query_builder_type(mutating=True)
             .load(Task)
             .from_attribute("entity_id", [task_id])
-            .for_update()
+            .for_update(no_wait=True)
             .load(EscrowAccount)
             .from_attribute("state", [EscrowAccountState.PAYMENT_CANCELLED.value])
             .for_update()
@@ -148,9 +155,15 @@ class BatchFinalizeNotPaidTasksHandler(BaseTaskHandler[NullTaskParams]):
             .load(Product)
             .from_previous()
             .for_update()
-            .build()
+            .build(),
+            exception_on_nowait=RetryException,
         ) as uow:
             resources = uow.get_resorces()
+
+            task = resources.get_by_id_or_none(Task, task_id)
+            if task is None:
+                return
+
             escrow_accounts = resources.get_all(EscrowAccount)
             purchases = resources.get_all(PurchaseActive)
             product_inventory = ProductInventory(resources.get_all(Product))
@@ -207,7 +220,7 @@ class BatchPaidReservationTimeOutTaskHandler(BaseTaskHandler[NullTaskParams]):
             self._query_builder_type(mutating=True)
             .load(Task)
             .from_attribute("entity_id", [task_id])
-            .for_update()
+            .for_update(no_wait=True)
             .load(EscrowAccount)
             .from_attribute("state", [EscrowAccountState.PAID.value])
             .for_update()
@@ -219,9 +232,15 @@ class BatchPaidReservationTimeOutTaskHandler(BaseTaskHandler[NullTaskParams]):
             .load(Product)
             .from_previous()
             .for_update()
-            .build()
+            .build(),
+            exception_on_nowait=RetryException,
         ) as uow:
             resources = uow.get_resorces()
+
+            task = resources.get_by_id_or_none(Task, task_id)
+            if task is None:
+                return
+
             escrow_accounts = resources.get_all(EscrowAccount)
             purchases = resources.get_all(PurchaseActive)
             product_inventory = ProductInventory(resources.get_all(Product))
@@ -285,13 +304,19 @@ class BatchWaitRefundTaskHandler(BaseTaskHandler[NullTaskParams]):
             self._query_builder_type(mutating=True)
             .load(Task)
             .from_attribute("entity_id", [task_id])
-            .for_update()
+            .for_update(no_wait=True)
             .load(EscrowAccount)
             .from_attribute("state", [EscrowAccountState.REFUNDING.value])
             .for_update()
-            .build()
+            .build(),
+            exception_on_nowait=RetryException,
         ) as uow:
             resources = uow.get_resorces()
+
+            task = resources.get_by_id_or_none(Task, task_id)
+            if task is None:
+                return
+
             state_map = await _get_state_map(
                 self._payment_gateway, resources.get_all(EscrowAccount)
             )

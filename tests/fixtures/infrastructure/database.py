@@ -6,8 +6,8 @@ import pytest
 import pytest_asyncio
 from dishka import AsyncContainer
 
-from shop_project.infrastructure.database.core import Database
-from shop_project.infrastructure.database.models.base import Base
+from shop_project.infrastructure.persistence.database.core import Database
+from shop_project.infrastructure.persistence.database.models.base import Base
 
 
 @pytest_asyncio.fixture

@@ -6,10 +6,10 @@ import pytest
 from shop_project.application.dto.mapper import to_dto
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.exceptions import ResourcesException
-from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
-from shop_project.infrastructure.resource_manager.resource_manager import (
+from shop_project.infrastructure.persistence.resource_manager.resource_manager import (
     ResourceContainer,
 )
+from shop_project.infrastructure.registries.resources_registry import ResourcesRegistry
 
 
 def test_get_by_id(purchase_draft_factory: Callable[[], PurchaseDraft]) -> None:
