@@ -31,6 +31,8 @@ from shop_project.infrastructure.cryptography.secrets_entropy_source import (
 from shop_project.infrastructure.cryptography.sha256_token_fingerprint_calculator import (
     Sha256TokenFingerprintCalculator,
 )
+from shop_project.infrastructure.cryptography.stub_hasher import StubHasher
+from shop_project.infrastructure.cryptography.stub_jwt_signer import StubJWTSigner
 from shop_project.infrastructure.env_loader import get_env
 
 
@@ -45,12 +47,12 @@ class CryptographyProvider(Provider):
     def __init__(
         self,
         jwt_keys: JwtKeyContainer,
+        use_stubs: bool = False,
         *,
         scope: BaseScope | None = None,
         component: Component | None = None,
     ):
         super().__init__(scope, component)
-
         self.jwt_keys = jwt_keys
 
     @provide
@@ -66,11 +68,31 @@ class CryptographyProvider(Provider):
         return BcryptPasswordHasher(rounds=int(get_env("BCRYPT_ROUNDS")))
 
     @provide
+    def stub_password_hasher(self) -> StubHasher:
+        return StubHasher()
+
+    @provide
+    def password_hasher_proto(self) -> PasswordHasher:
+        if get_env("CRYPTO_USE_STUBS") == "true":
+            return self.stub_password_hasher()
+        return self.bcrypt_password_hasher()
+
+    @provide
+    def stub_jwt_signer(self) -> StubJWTSigner:
+        return StubJWTSigner()
+
+    @provide
     def pyjwt_signer(self) -> PyJWTSigner:
         return PyJWTSigner(
             private_key=self.jwt_keys.private_key.get_secret_value(),
             public_key=self.jwt_keys.public_key.get_secret_value(),
         )
+
+    @provide
+    def jwt_signer_proto(self) -> JWTSigner:
+        if get_env("CRYPTO_USE_STUBS") == "true":
+            return self.stub_jwt_signer()
+        return self.pyjwt_signer()
 
     @provide
     def base64_32byte_token_generator(
@@ -85,11 +107,9 @@ class CryptographyProvider(Provider):
         return Digits4RandomCodegen(entropy_source=entropy_source)
 
     entropy_source_proto = alias(SecretsEntropySource, provides=EntropySource)
-    jwt_signer_proto = alias(PyJWTSigner, provides=JWTSigner)
     token_fingerprint_calculator_proto = alias(
         Sha256TokenFingerprintCalculator, provides=TokenFingerprintCalculator
     )
-    password_hasher_proto = alias(BcryptPasswordHasher, provides=PasswordHasher)
     random_data_generator_proto = alias(
         Base64_32ByteTokenGenerator, provides=TokenGenerator
     )

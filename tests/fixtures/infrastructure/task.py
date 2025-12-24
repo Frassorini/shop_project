@@ -61,9 +61,6 @@ def ensure_tasks_completion(
     uow_factory: UnitOfWorkFactory,
 ) -> Callable[[], Awaitable[None]]:
     async def _inner(max_tries: int = 10) -> None:
-        if request.config.getoption("--real-broker"):
-            await asyncio.sleep(1)
-
         task_sender = await async_container.get(TaskSender)
 
         for i in range(max_tries):
@@ -79,6 +76,9 @@ def ensure_tasks_completion(
 
             for task in tasks:
                 await task_sender.send(task)
+
+            if request.config.getoption("--real-broker"):
+                await asyncio.sleep(1)
         raise RuntimeError("Attempts to complete tasks exceeded max_tries")
 
     return _inner

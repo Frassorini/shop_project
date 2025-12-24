@@ -19,14 +19,14 @@ class BrokerProvider(Provider):
 
     def __init__(
         self,
-        database_ctx: Callable[[], AbstractAsyncContextManager[AsyncBroker]],
+        broker_ctx: Callable[[], AbstractAsyncContextManager[AsyncBroker]],
         *,
         scope: BaseScope | None = None,
         component: Component | None = None,
     ):
         super().__init__(scope, component)
 
-        self.broker_ctx = database_ctx
+        self.broker_ctx = broker_ctx
 
     @provide(scope=Scope.APP)
     async def broker(self) -> AsyncGenerator[AsyncBroker, None]:
@@ -37,11 +37,11 @@ class BrokerProvider(Provider):
         finally:
             await ctx.__aexit__(None, None, None)
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     async def task_sender(self, broker: AsyncBroker) -> TaskSender:
         return TaskSender(broker)
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     async def task_factory(self) -> TaskFactory:
         return TaskFactory()
 

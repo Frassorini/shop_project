@@ -189,3 +189,6 @@ tach.toml
 
 # process ids for make bash
 .pids
+
+# profiling
+prof/

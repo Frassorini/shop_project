@@ -29,25 +29,40 @@ def test_db_factory(
         return test_db_in_memory
 
 
+@pytest_asyncio.fixture(autouse=True, scope="session")
+async def session_docker_db(
+    request: pytest.FixtureRequest,
+) -> AsyncGenerator[Database | None, None]:
+    if not request.config.getoption("--real-db"):
+        yield None
+    else:
+        db = Database.from_env()
+        async with db.get_engine().begin() as conn:
+            # Создаем схему один раз на всю сессию тестов
+            await conn.run_sync(Base.metadata.create_all)
+        yield db
+        # Очистка схемы после всех тестов (опционально)
+        async with db.get_engine().begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await db.close()
+
+
 @pytest.fixture
-def test_db_docker() -> Callable[[], Any]:
+def test_db_docker() -> Callable[[], AbstractAsyncContextManager[Database]]:
     @asynccontextmanager
     async def fact() -> AsyncGenerator[Database, None]:
         db = Database.from_env()
-
         async with db.get_engine().begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            # await conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
-            # await conn.commit()
-
+            # Очистка данных из всех таблиц перед тестом
+            for table in reversed(Base.metadata.sorted_tables):
+                await conn.execute(table.delete())
         try:
-            # print("yield db before")
             yield db
-
         finally:
-            # print("yield db after")
             async with db.get_engine().begin() as conn:
-                await conn.run_sync(Base.metadata.drop_all)
+                # Очистка данных после теста
+                for table in reversed(Base.metadata.sorted_tables):
+                    await conn.execute(table.delete())
             await db.close()
 
     return fact
@@ -77,10 +92,8 @@ def test_db_in_memory(base_db_in_memory: sqlite3.Connection) -> Callable[[], Any
         db = Database.from_sync_conn(clone_conn)
 
         try:
-            # print("yield db before")
             yield db
         finally:
             await db.close()
-            # print("yield db after")
 
     return fact
