@@ -4,14 +4,18 @@ import pytest
 from dishka.async_container import AsyncContainer
 from pydantic import SecretStr
 
-from shop_project.application.schemas.credential_schema import (
+from shop_project.application.authentication.commands.registration_service import (
+    RegistrationService,
+)
+from shop_project.application.authentication.schemas.credential_schema import (
     CredentialSchema,
     EmailTotpCredentialSchema,
     LoginPasswordCredentialSchema,
     PhoneTotpCredentialSchema,
 )
-from shop_project.application.schemas.session_refresh_schema import SessionRefreshSchema
-from shop_project.application.services.registration_service import RegistrationService
+from shop_project.application.authentication.schemas.session_refresh_schema import (
+    SessionRefreshSchema,
+)
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager

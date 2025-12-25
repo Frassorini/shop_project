@@ -4,8 +4,8 @@ from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type, ca
 import pytest
 from dishka.container import Container
 
-from shop_project.application.dto.mapper import to_dto
-from shop_project.application.interfaces.interface_unit_of_work import (
+from shop_project.application.shared.dto.mapper import to_dto
+from shop_project.application.shared.interfaces.interface_unit_of_work import (
     LockTimeoutException,
 )
 from shop_project.domain.entities.customer import Customer

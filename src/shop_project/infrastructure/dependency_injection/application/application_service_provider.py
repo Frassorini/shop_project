@@ -2,31 +2,39 @@ from typing import Type
 
 from dishka import Provider, Scope, provide
 
-from shop_project.application.interfaces.interface_account_service import (
-    IAccountService,
-)
-from shop_project.application.interfaces.interface_claim_token_service import (
-    IClaimTokenService,
-)
-from shop_project.application.interfaces.interface_payment_gateway import (
-    IPaymentGateway,
-)
-from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
-from shop_project.application.interfaces.interface_session_service import (
-    ISessionService,
-)
-from shop_project.application.interfaces.interface_totp_service import ITotpService
-from shop_project.application.interfaces.interface_unit_of_work import (
-    IUnitOfWorkFactory,
-)
-from shop_project.application.services.authentication_service import (
+from shop_project.application.authentication.commands.authentication_service import (
     AuthenticationService,
 )
-from shop_project.application.services.customer_service import CustomerService
-from shop_project.application.services.purchase_service import PurchaseService
-from shop_project.application.services.registration_service import RegistrationService
-from shop_project.application.services.totp_challenge_service import (
+from shop_project.application.authentication.commands.registration_service import (
+    RegistrationService,
+)
+from shop_project.application.authentication.commands.totp_challenge_service import (
     TotpChallengeService,
+)
+from shop_project.application.customer.commands.customer_service import CustomerService
+from shop_project.application.customer.commands.purchase_flow_service import (
+    PurchaseFlowService,
+)
+from shop_project.application.shared.interfaces.interface_account_service import (
+    IAccountService,
+)
+from shop_project.application.shared.interfaces.interface_claim_token_service import (
+    IClaimTokenService,
+)
+from shop_project.application.shared.interfaces.interface_payment_gateway import (
+    IPaymentGateway,
+)
+from shop_project.application.shared.interfaces.interface_query_builder import (
+    IQueryBuilder,
+)
+from shop_project.application.shared.interfaces.interface_session_service import (
+    ISessionService,
+)
+from shop_project.application.shared.interfaces.interface_totp_service import (
+    ITotpService,
+)
+from shop_project.application.shared.interfaces.interface_unit_of_work import (
+    IUnitOfWorkFactory,
 )
 from shop_project.domain.services.purchase_activation_service import (
     PurchaseActivationService,
@@ -74,7 +82,6 @@ class ApplicationServiceProvider(Provider):
         account_service: IAccountService,
         totp_service: ITotpService,
         session_service: ISessionService,
-        claim_token_service: IClaimTokenService,
     ) -> AuthenticationService:
         return AuthenticationService(
             unit_of_work_factory=unit_of_work_factory,
@@ -82,7 +89,6 @@ class ApplicationServiceProvider(Provider):
             account_service=account_service,
             totp_service=totp_service,
             session_service=session_service,
-            claim_token_service=claim_token_service,
         )
 
     @provide
@@ -108,8 +114,8 @@ class ApplicationServiceProvider(Provider):
         purchase_return_service: PurchaseReturnService,
         payment_gateway: IPaymentGateway,
         claim_token_service: IClaimTokenService,
-    ) -> PurchaseService:
-        return PurchaseService(
+    ) -> PurchaseFlowService:
+        return PurchaseFlowService(
             unit_of_work_factory=unit_of_work_factory,
             query_builder_type=query_builder_type,
             purchase_activation_service=purchase_activation_service,

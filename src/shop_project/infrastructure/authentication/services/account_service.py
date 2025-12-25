@@ -1,7 +1,7 @@
 from plum import dispatch, overload
 from pydantic import SecretStr
 
-from shop_project.application.interfaces.interface_account_service import (
+from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
 )
 from shop_project.domain.entities.customer import Customer

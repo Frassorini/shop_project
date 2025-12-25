@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Literal, Type, TypeVar
 
-from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.application.interfaces.interface_query_plan import IQueryPlan
+from shop_project.application.shared.base_dto import BaseDTO
+from shop_project.application.shared.interfaces.interface_query_plan import IQueryPlan
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.exceptions import QueryPlanException
 from shop_project.infrastructure.persistence.query.base_query import BaseQuery

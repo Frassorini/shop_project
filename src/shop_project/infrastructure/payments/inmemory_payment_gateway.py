@@ -1,4 +1,4 @@
-from shop_project.application.interfaces.interface_payment_gateway import (
+from shop_project.application.shared.interfaces.interface_payment_gateway import (
     CreatePaymentRequest,
     IPaymentGateway,
     PaymentNotExistsException,

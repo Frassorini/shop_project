@@ -3,8 +3,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
-from shop_project.application.dto.base_dto import BaseDTO, DTODynamicRegistry
-from shop_project.application.dto.mapper import to_domain, to_dto
+from shop_project.application.shared.base_dto import BaseDTO, DTODynamicRegistry
+from shop_project.application.shared.dto.mapper import to_domain, to_dto
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity

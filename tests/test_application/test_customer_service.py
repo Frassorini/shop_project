@@ -3,11 +3,11 @@ from typing import Callable, Coroutine, Type, cast
 import pytest
 from dishka.async_container import AsyncContainer
 
-from shop_project.application.dto.mapper import to_dto
-from shop_project.application.schemas.customer_schema_default import (
+from shop_project.application.customer.commands.customer_service import CustomerService
+from shop_project.application.customer.schemas.customer_schema_default import (
     CustomerSchemaDefault,
 )
-from shop_project.application.services.customer_service import CustomerService
+from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from tests.helpers import AggregateContainer

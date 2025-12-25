@@ -3,7 +3,7 @@ from typing import Callable
 import pytest
 from dishka.container import Container
 
-from shop_project.application.interfaces.interface_claim_token_service import (
+from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
 )
 from shop_project.domain.entities.customer import Customer

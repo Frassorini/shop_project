@@ -2,21 +2,23 @@ from typing import Type
 
 from dishka import Provider, Scope, provide
 
-from shop_project.application.interfaces.interface_payment_gateway import (
-    IPaymentGateway,
-)
-from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
-from shop_project.application.interfaces.interface_unit_of_work import (
-    IUnitOfWorkFactory,
-)
-from shop_project.application.tasks.implementations.example_task_handler import (
+from shop_project.application.background.implementations.example_task_handler import (
     ExampleTaskHandler,
 )
-from shop_project.application.tasks.implementations.purchase_flow_handler import (
+from shop_project.application.background.implementations.purchase_flow_handler import (
     BatchFinalizeNotPaidTasksHandler,
     BatchPaidReservationTimeOutTaskHandler,
     BatchWaitPaymentTaskHandler,
     BatchWaitRefundTaskHandler,
+)
+from shop_project.application.shared.interfaces.interface_payment_gateway import (
+    IPaymentGateway,
+)
+from shop_project.application.shared.interfaces.interface_query_builder import (
+    IQueryBuilder,
+)
+from shop_project.application.shared.interfaces.interface_unit_of_work import (
+    IUnitOfWorkFactory,
 )
 from shop_project.domain.services.purchase_activation_service import (
     PurchaseActivationService,

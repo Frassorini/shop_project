@@ -1,6 +1,6 @@
 from typing import Callable, Type
 
-from shop_project.application.dto.mapper import to_dto
+from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.persistence.resource_manager.resource_snapshot import (

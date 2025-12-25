@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from dishka.async_container import AsyncContainer
 
-from shop_project.application.interfaces.interface_claim_token_service import (
+from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
 )
 from shop_project.domain.entities.customer import Customer

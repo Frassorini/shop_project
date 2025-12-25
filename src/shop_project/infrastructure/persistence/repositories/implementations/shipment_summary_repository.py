@@ -1,4 +1,4 @@
-from shop_project.application.dto.shipment_summary_dto import ShipmentSummaryDTO
+from shop_project.application.shared.dto.shipment_summary_dto import ShipmentSummaryDTO
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.infrastructure.persistence.database.models.shipment_summary import (
     ShipmentSummary as ShipmentSummaryORM,

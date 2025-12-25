@@ -1,4 +1,4 @@
-from shop_project.application.dto.shipment_dto import ShipmentDTO
+from shop_project.application.shared.dto.shipment_dto import ShipmentDTO
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.infrastructure.persistence.database.models.shipment import (
     Shipment as ShipmentORM,

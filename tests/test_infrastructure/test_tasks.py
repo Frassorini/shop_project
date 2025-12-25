@@ -3,12 +3,14 @@ from typing import AsyncContextManager, Awaitable, Callable, Type
 import pytest
 from dishka.async_container import AsyncContainer
 
-from shop_project.application.interfaces.interface_task_factory import ITaskFactory
-from shop_project.application.interfaces.interface_task_sender import ITaskSender
-from shop_project.application.tasks.implementations.example_task_handler import (
+from shop_project.application.background.implementations.example_task_handler import (
     ExampleTaskHandler,
     ExampleTaskParams,
 )
+from shop_project.application.shared.interfaces.interface_task_factory import (
+    ITaskFactory,
+)
+from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
 from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
 from shop_project.infrastructure.persistence.unit_of_work import (

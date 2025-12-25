@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from sqlalchemy.exc import OperationalError
 
-from shop_project.application.interfaces.interface_unit_of_work import (
+from shop_project.application.shared.interfaces.interface_unit_of_work import (
     DeadlockDetectedException,
     LockTimeoutException,
     NoWaitException,

@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, alias, provide
 
-from shop_project.application.interfaces.interface_payment_gateway import (
+from shop_project.application.shared.interfaces.interface_payment_gateway import (
     IPaymentGateway,
 )
 from shop_project.infrastructure.payments.inmemory_payment_gateway import (

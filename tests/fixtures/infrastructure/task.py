@@ -6,7 +6,9 @@ import pytest
 from dishka import AsyncContainer
 from dishka.container import Container
 
-from shop_project.application.interfaces.interface_task_factory import ITaskFactory
+from shop_project.application.shared.interfaces.interface_task_factory import (
+    ITaskFactory,
+)
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.authentication.services.session_service import (
     SessionService,

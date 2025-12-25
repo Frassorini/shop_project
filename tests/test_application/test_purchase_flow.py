@@ -11,26 +11,27 @@ import pytest
 from dishka.async_container import AsyncContainer
 from freezegun import freeze_time
 
-from shop_project.application.interfaces.interface_task_factory import ITaskFactory
-from shop_project.application.interfaces.interface_task_sender import ITaskSender
-from shop_project.application.schemas.purchase_active_schema import (
-    PurchaseActivationSchema,
-    PurchaseActiveSchema,
-)
-from shop_project.application.schemas.purchase_summary_schema import (
-    PurchaseSummarySchema,
-)
-from shop_project.application.services.authentication_service import (
-    AuthenticationService,
-)
-from shop_project.application.services.purchase_service import PurchaseService
-from shop_project.application.tasks.base_task_handler import NullTaskParams
-from shop_project.application.tasks.implementations.purchase_flow_handler import (
+from shop_project.application.background.base_task_handler import NullTaskParams
+from shop_project.application.background.implementations.purchase_flow_handler import (
     BatchFinalizeNotPaidTasksHandler,
     BatchPaidReservationTimeOutTaskHandler,
     BatchWaitPaymentTaskHandler,
     BatchWaitRefundTaskHandler,
 )
+from shop_project.application.customer.commands.purchase_flow_service import (
+    PurchaseFlowService,
+)
+from shop_project.application.customer.schemas.purchase_active_schema import (
+    PurchaseActivationSchema,
+    PurchaseActiveSchema,
+)
+from shop_project.application.customer.schemas.purchase_summary_schema import (
+    PurchaseSummarySchema,
+)
+from shop_project.application.shared.interfaces.interface_task_factory import (
+    ITaskFactory,
+)
+from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
 from shop_project.domain.entities.escrow_account import (
     EscrowAccount,
     EscrowAccountState,
@@ -189,7 +190,7 @@ async def test_purchase_flow_manual_unclaim(
     task_factory = await async_container.get(ITaskFactory)
     payment_gateway = await async_container.get(InMemoryPaymentGateway)
     purchase_activation: PurchaseActivationSchema = await purchase_activation()
-    purchase_service = await async_container.get(PurchaseService)
+    purchase_service = await async_container.get(PurchaseFlowService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
     await inmem_save_and_send_task(
@@ -228,7 +229,7 @@ async def test_purchase_flow_auto_unclaim(
     task_factory = await async_container.get(ITaskFactory)
     payment_gateway = await async_container.get(InMemoryPaymentGateway)
     purchase_activation: PurchaseActivationSchema = await purchase_activation()
-    purchase_service = await async_container.get(PurchaseService)
+    purchase_service = await async_container.get(PurchaseFlowService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
     await inmem_save_and_send_task(
@@ -270,7 +271,7 @@ async def test_purchase_flow_confirm_refund(
     task_factory = await async_container.get(ITaskFactory)
     payment_gateway = await async_container.get(InMemoryPaymentGateway)
     purchase_activation: PurchaseActivationSchema = await purchase_activation()
-    purchase_service = await async_container.get(PurchaseService)
+    purchase_service = await async_container.get(PurchaseFlowService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
     await inmem_save_and_send_task(
@@ -312,18 +313,15 @@ async def test_purchase_flow_claim(
     task_sender = await async_container.get(ITaskSender)
     task_factory = await async_container.get(ITaskFactory)
     payment_gateway = await async_container.get(InMemoryPaymentGateway)
-    auhentication_service = await async_container.get(AuthenticationService)
     purchase_activation: PurchaseActivationSchema = await purchase_activation()
-    purchase_service = await async_container.get(PurchaseService)
+    purchase_service = await async_container.get(PurchaseFlowService)
     purchase_schema: PurchaseActiveSchema = purchase_activation.purchase_active
     payment_gateway.pay_pending()
     await inmem_save_and_send_task(
         task_factory.create(BatchWaitPaymentTaskHandler, NullTaskParams())
     )
 
-    claim_token = await auhentication_service.get_claim_token(
-        purchase_schema.customer_id
-    )
+    claim_token = await purchase_service.get_claim_token(purchase_schema.customer_id)
     summaries: list[PurchaseSummarySchema] = await purchase_service.claim(
         claim_token.claim_token
     )

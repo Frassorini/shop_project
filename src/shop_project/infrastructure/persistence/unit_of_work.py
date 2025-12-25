@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, Type
 from uuid import UUID
 
-from shop_project.application.interfaces.interface_query_plan import IQueryPlan
-from shop_project.application.interfaces.interface_unit_of_work import (
+from shop_project.application.shared.interfaces.interface_query_plan import IQueryPlan
+from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWork,
     IUnitOfWorkFactory,
     NoWaitException,

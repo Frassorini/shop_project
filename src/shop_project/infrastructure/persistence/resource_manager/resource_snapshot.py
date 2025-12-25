@@ -1,7 +1,7 @@
 from typing import Any, Self, Type
 from uuid import UUID
 
-from shop_project.application.dto.base_dto import BaseDTO
+from shop_project.application.shared.base_dto import BaseDTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 

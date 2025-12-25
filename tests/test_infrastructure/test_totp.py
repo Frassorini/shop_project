@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 import pytest
 from dishka.async_container import AsyncContainer
 
-from shop_project.application.interfaces.interface_totp_service import ITotpService
+from shop_project.application.shared.interfaces.interface_totp_service import (
+    ITotpService,
+)
 from shop_project.infrastructure.notifications.inmemory_email_notification_service import (
     InMemoryEmailNotificationService,
 )

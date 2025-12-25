@@ -4,8 +4,10 @@ from typing import AsyncGenerator, Callable, Type
 from dishka import BaseScope, Component, Provider, Scope, alias, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
-from shop_project.application.interfaces.interface_unit_of_work import (
+from shop_project.application.shared.interfaces.interface_query_builder import (
+    IQueryBuilder,
+)
+from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
 from shop_project.infrastructure.persistence.database.core import Database

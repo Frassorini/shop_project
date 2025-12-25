@@ -9,7 +9,7 @@ from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.orm._typing import _IdentityKeyType  # type: ignore
 from sqlalchemy.sql import select
 
-from shop_project.application.dto.base_dto import BaseDTO, BaseVODTO
+from shop_project.application.shared.base_dto import BaseDTO, BaseVODTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.persistence.database.models.base import Base as BaseORM
 from shop_project.infrastructure.persistence.query.base_query import (

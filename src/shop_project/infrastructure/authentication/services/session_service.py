@@ -4,7 +4,7 @@ from uuid import uuid4
 from plum import dispatch, overload
 from pydantic import SecretStr
 
-from shop_project.application.interfaces.interface_session_service import (
+from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
     SessionRefresh,
 )

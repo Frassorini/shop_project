@@ -1,4 +1,4 @@
-from shop_project.application.dto.product_dto import ProductDTO
+from shop_project.application.shared.dto.product_dto import ProductDTO
 from shop_project.domain.entities.product import Product
 from shop_project.infrastructure.persistence.database.models.product import (
     Product as ProductORM,

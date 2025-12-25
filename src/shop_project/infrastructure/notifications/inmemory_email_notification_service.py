@@ -1,4 +1,4 @@
-from shop_project.application.interfaces.interface_notification import (
+from shop_project.application.shared.interfaces.interface_notification import (
     EmailNotificationService,
 )
 from shop_project.infrastructure.notifications.messages.email_message import (

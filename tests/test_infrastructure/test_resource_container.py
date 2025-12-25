@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from shop_project.application.dto.mapper import to_dto
+from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.persistence.resource_manager.resource_manager import (

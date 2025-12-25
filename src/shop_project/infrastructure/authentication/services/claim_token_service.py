@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from shop_project.application.interfaces.interface_claim_token_service import (
+from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
 )
 from shop_project.infrastructure.cryptography.interfaces.token_fingerprint_calculator import (

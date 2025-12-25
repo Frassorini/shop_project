@@ -4,8 +4,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
-from shop_project.application.dto.mapper import to_dto
-from shop_project.application.dto.purchase_draft_dto import (
+from shop_project.application.shared.dto.mapper import to_dto
+from shop_project.application.shared.dto.purchase_draft_dto import (
     PurchaseDraftDTO,
     PurchaseDraftItemDTO,
 )

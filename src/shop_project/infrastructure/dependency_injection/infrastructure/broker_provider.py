@@ -4,8 +4,10 @@ from typing import AsyncGenerator, Callable
 from dishka import BaseScope, Component, Provider, Scope, alias, provide
 from taskiq import AsyncBroker
 
-from shop_project.application.interfaces.interface_task_factory import ITaskFactory
-from shop_project.application.interfaces.interface_task_sender import ITaskSender
+from shop_project.application.shared.interfaces.interface_task_factory import (
+    ITaskFactory,
+)
+from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
 from shop_project.infrastructure.background_tasks.application_task_factory import (
     TaskFactory,
 )

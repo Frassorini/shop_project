@@ -3,12 +3,12 @@ from typing import Awaitable, Callable
 import pytest
 from dishka.async_container import AsyncContainer
 
-from shop_project.application.schemas.totp_request_schema import (
+from shop_project.application.authentication.commands.totp_challenge_service import (
+    TotpChallengeService,
+)
+from shop_project.application.authentication.schemas.totp_request_schema import (
     EmailTotpRequestSchema,
     SmsTotpRequestSchema,
-)
-from shop_project.application.services.totp_challenge_service import (
-    TotpChallengeService,
 )
 from shop_project.infrastructure.notifications.inmemory_email_notification_service import (
     InMemoryEmailNotificationService,

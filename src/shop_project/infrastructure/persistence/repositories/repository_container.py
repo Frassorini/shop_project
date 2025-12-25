@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shop_project.application.dto.base_dto import BaseDTO
+from shop_project.application.shared.base_dto import BaseDTO
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.persistence.database.models.base import Base as BaseORM
 from shop_project.infrastructure.persistence.query.base_query import BaseQuery

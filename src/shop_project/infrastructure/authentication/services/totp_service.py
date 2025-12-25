@@ -5,11 +5,11 @@ from uuid import uuid4
 from plum import dispatch, overload
 from pydantic import SecretStr
 
-from shop_project.application.interfaces.interface_notification import (
+from shop_project.application.shared.interfaces.interface_notification import (
     EmailNotificationService,
     SMSNotificationService,
 )
-from shop_project.application.interfaces.interface_totp_service import (
+from shop_project.application.shared.interfaces.interface_totp_service import (
     CodeMessagePair,
     ITotpService,
 )

@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, alias, provide
 
-from shop_project.application.interfaces.interface_notification import (
+from shop_project.application.shared.interfaces.interface_notification import (
     EmailNotificationService,
     SMSNotificationService,
 )

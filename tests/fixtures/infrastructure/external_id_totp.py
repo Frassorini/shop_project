@@ -4,7 +4,9 @@ from uuid import UUID
 import pytest
 from dishka.container import Container
 
-from shop_project.application.interfaces.interface_totp_service import ITotpService
+from shop_project.application.shared.interfaces.interface_totp_service import (
+    ITotpService,
+)
 from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from tests.helpers import AggregateContainer
 

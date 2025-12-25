@@ -1,4 +1,4 @@
-from shop_project.application.dto.purchase_draft_dto import PurchaseDraftDTO
+from shop_project.application.shared.dto.purchase_draft_dto import PurchaseDraftDTO
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.infrastructure.persistence.database.models.purchase_draft import (
     PurchaseDraft as PurchaseDraftORM,

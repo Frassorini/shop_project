@@ -1,4 +1,4 @@
-from shop_project.application.dto.employee_dto import EmployeeDTO
+from shop_project.application.shared.dto.employee_dto import EmployeeDTO
 from shop_project.domain.entities.employee import Employee
 from shop_project.infrastructure.persistence.database.models.employee import (
     Employee as EmployeeORM,

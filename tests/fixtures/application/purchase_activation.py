@@ -9,10 +9,12 @@ from typing import (
 import pytest
 from dishka.async_container import AsyncContainer
 
-from shop_project.application.schemas.purchase_active_schema import (
+from shop_project.application.customer.commands.purchase_flow_service import (
+    PurchaseFlowService,
+)
+from shop_project.application.customer.schemas.purchase_active_schema import (
     PurchaseActivationSchema,
 )
-from shop_project.application.services.purchase_service import PurchaseService
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
@@ -42,7 +44,7 @@ def purchase_activation(
 
         await save_container(aggregate_container)
 
-        service = await async_container.get(PurchaseService)
+        service = await async_container.get(PurchaseFlowService)
 
         result: PurchaseActivationSchema = await service.activate_draft(
             customer.entity_id, aggregate.entity_id

@@ -2,9 +2,9 @@ from abc import ABC
 from typing import Any, Literal, Sequence, Type, TypeVar, cast
 from uuid import UUID
 
-from shop_project.application.dto.base_dto import BaseDTO
-from shop_project.application.dto.mapper import to_dto
-from shop_project.application.interfaces.interface_resource_container import (
+from shop_project.application.shared.base_dto import BaseDTO
+from shop_project.application.shared.dto.mapper import to_dto
+from shop_project.application.shared.interfaces.interface_resource_container import (
     IResourceContainer,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity

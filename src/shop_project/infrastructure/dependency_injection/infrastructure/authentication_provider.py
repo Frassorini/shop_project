@@ -2,20 +2,22 @@ from datetime import timedelta
 
 from dishka import Provider, Scope, alias, provide
 
-from shop_project.application.interfaces.interface_account_service import (
+from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
 )
-from shop_project.application.interfaces.interface_claim_token_service import (
+from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
 )
-from shop_project.application.interfaces.interface_notification import (
+from shop_project.application.shared.interfaces.interface_notification import (
     EmailNotificationService,
     SMSNotificationService,
 )
-from shop_project.application.interfaces.interface_session_service import (
+from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
 )
-from shop_project.application.interfaces.interface_totp_service import ITotpService
+from shop_project.application.shared.interfaces.interface_totp_service import (
+    ITotpService,
+)
 from shop_project.infrastructure.authentication.services.account_service import (
     AccountService,
 )

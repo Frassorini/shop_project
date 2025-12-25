@@ -4,7 +4,10 @@ import pytest
 from dishka.async_container import AsyncContainer
 from pydantic import SecretStr
 
-from shop_project.application.schemas.credential_schema import (
+from shop_project.application.authentication.commands.authentication_service import (
+    AuthenticationService,
+)
+from shop_project.application.authentication.schemas.credential_schema import (
     CredentialSchema,
     EmailPasswordCredentialSchema,
     EmailTotpCredentialSchema,
@@ -12,9 +15,8 @@ from shop_project.application.schemas.credential_schema import (
     PhonePasswordCredentialSchema,
     PhoneTotpCredentialSchema,
 )
-from shop_project.application.schemas.session_refresh_schema import SessionRefreshSchema
-from shop_project.application.services.authentication_service import (
-    AuthenticationService,
+from shop_project.application.authentication.schemas.session_refresh_schema import (
+    SessionRefreshSchema,
 )
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee

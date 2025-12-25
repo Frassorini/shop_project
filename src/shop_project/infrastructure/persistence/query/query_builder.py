@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from typing import Any, Self, Type
 from uuid import UUID
 
-from shop_project.application.interfaces.interface_query_builder import IQueryBuilder
+from shop_project.application.shared.interfaces.interface_query_builder import (
+    IQueryBuilder,
+)
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.persistence.query.composed_query import QueryLock
 from shop_project.infrastructure.persistence.query.custom_query import CustomQuery

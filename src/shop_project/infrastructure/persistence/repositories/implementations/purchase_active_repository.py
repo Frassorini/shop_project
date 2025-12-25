@@ -1,4 +1,4 @@
-from shop_project.application.dto.purchase_active_dto import PurchaseActiveDTO
+from shop_project.application.shared.dto.purchase_active_dto import PurchaseActiveDTO
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.infrastructure.persistence.database.models.purchase_active import (
     PurchaseActive as PurchaseActiveORM,

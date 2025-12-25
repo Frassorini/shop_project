@@ -1,4 +1,4 @@
-from shop_project.application.dto.purchase_summary_dto import PurchaseSummaryDTO
+from shop_project.application.shared.dto.purchase_summary_dto import PurchaseSummaryDTO
 from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.infrastructure.persistence.database.models.purchase_summary import (
     PurchaseSummary as PurchaseSummaryORM,

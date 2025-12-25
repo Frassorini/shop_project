@@ -2,7 +2,7 @@ from typing import Any, Callable, cast
 
 from dishka.container import Container
 
-from shop_project.application.dto.mapper import to_dto
+from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import (
