@@ -2,19 +2,21 @@ from typing import Callable, Type
 
 import pytest
 
+from shop_project.application.entities.account import Account
+from shop_project.application.entities.auth_session import AuthSession
+from shop_project.application.entities.claim_token import ClaimToken
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
+from shop_project.application.entities.task import Task
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
+from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
+from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.claim_token import ClaimToken
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
-from shop_project.infrastructure.entities.task import Task
 from tests.helpers import AggregateContainer
 
 
@@ -28,8 +30,10 @@ def domain_object_factory(
     manager_container_factory: Callable[..., AggregateContainer],
     employee_container_factory: Callable[..., AggregateContainer],
     customer_container_factory: Callable[..., AggregateContainer],
+    escrow_account_container_factory: Callable[..., AggregateContainer],
     purchase_active_filled_container_factory: Callable[[], AggregateContainer],
-    shipment_conatiner_factory: Callable[[], AggregateContainer],
+    purchase_summary_filled_container_factory: Callable[[], AggregateContainer],
+    shipment_container_factory: Callable[[], AggregateContainer],
     purchase_draft_container_factory: Callable[[], AggregateContainer],
     product_container_factory: Callable[..., AggregateContainer],
 ) -> Callable[[Type[PersistableEntity]], AggregateContainer]:
@@ -50,10 +54,14 @@ def domain_object_factory(
             return employee_container_factory()
         elif model_type is Customer:
             return customer_container_factory()
+        elif model_type is EscrowAccount:
+            return escrow_account_container_factory()
         elif model_type is PurchaseActive:
             return purchase_active_filled_container_factory()
+        elif model_type is PurchaseSummary:
+            return purchase_summary_filled_container_factory()
         elif model_type is Shipment:
-            return shipment_conatiner_factory()
+            return shipment_container_factory()
         elif model_type is PurchaseDraft:
             return purchase_draft_container_factory()
         elif model_type is Product:

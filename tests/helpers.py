@@ -41,9 +41,12 @@ class AggregateContainer:
 
     def merge(self, other: Self) -> Self:
         for dependency_type, dependencies in other.dependencies.dependencies.items():
-            self.dependencies.dependencies.setdefault(dependency_type, []).extend(
-                dependencies
-            )
+            for dep in dependencies:
+                if self.aggregate == dep:
+                    continue
+                self.dependencies.dependencies.setdefault(dependency_type, []).append(
+                    dep
+                )
 
         if other.aggregate not in self.dependencies.dependencies.setdefault(
             type(other.aggregate), []

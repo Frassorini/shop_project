@@ -2,6 +2,9 @@ from typing import Type
 
 from dishka import Provider, Scope, provide
 
+from shop_project.application.authentication.commands.account_service import (
+    AccountService,
+)
 from shop_project.application.authentication.commands.authentication_service import (
     AuthenticationService,
 )
@@ -12,8 +15,29 @@ from shop_project.application.authentication.commands.totp_challenge_service imp
     TotpChallengeService,
 )
 from shop_project.application.customer.commands.customer_service import CustomerService
-from shop_project.application.customer.commands.purchase_flow_service import (
-    PurchaseFlowService,
+from shop_project.application.customer.commands.purchase_active_customer_service import (
+    PurchaseActiveCustomerService,
+)
+from shop_project.application.customer.commands.purchase_draft_customer_service import (
+    PurchaseDraftCustomerService,
+)
+from shop_project.application.customer.queries.catalogue_customer_read_service import (
+    CatalogueCustomerReadService,
+)
+from shop_project.application.customer.queries.purchase_customer_read_service import (
+    PurchaseCustomerReadService,
+)
+from shop_project.application.employee.commands.purchase_active_employee_service import (
+    PurchaseActiveEmployeeService,
+)
+from shop_project.application.manager.commands.employee_manager_service import (
+    EmployeeManagerService,
+)
+from shop_project.application.manager.commands.product_manager_service import (
+    ProductManagerService,
+)
+from shop_project.application.manager.commands.shipment_manager_service import (
+    ShipmentManagerService,
 )
 from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
@@ -41,6 +65,11 @@ from shop_project.domain.services.purchase_activation_service import (
 )
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.purchase_return_service import PurchaseReturnService
+from shop_project.domain.services.shipment_activation_service import (
+    ShipmentActivationService,
+)
+from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
+from shop_project.domain.services.shipment_receive_service import ShipmentReceiveService
 
 
 class ApplicationServiceProvider(Provider):
@@ -105,7 +134,7 @@ class ApplicationServiceProvider(Provider):
         )
 
     @provide
-    async def purchase_service(
+    async def purchase_active_customer_service(
         self,
         unit_of_work_factory: IUnitOfWorkFactory,
         query_builder_type: Type[IQueryBuilder],
@@ -114,8 +143,8 @@ class ApplicationServiceProvider(Provider):
         purchase_return_service: PurchaseReturnService,
         payment_gateway: IPaymentGateway,
         claim_token_service: IClaimTokenService,
-    ) -> PurchaseFlowService:
-        return PurchaseFlowService(
+    ) -> PurchaseActiveCustomerService:
+        return PurchaseActiveCustomerService(
             unit_of_work_factory=unit_of_work_factory,
             query_builder_type=query_builder_type,
             purchase_activation_service=purchase_activation_service,
@@ -123,4 +152,114 @@ class ApplicationServiceProvider(Provider):
             purchase_return_service=purchase_return_service,
             payment_gateway=payment_gateway,
             claim_token_service=claim_token_service,
+        )
+
+    @provide
+    async def purchase_active_employee_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+        purchase_activation_service: PurchaseActivationService,
+        purchase_claim_service: PurchaseClaimService,
+        purchase_return_service: PurchaseReturnService,
+        payment_gateway: IPaymentGateway,
+        claim_token_service: IClaimTokenService,
+    ) -> PurchaseActiveEmployeeService:
+        return PurchaseActiveEmployeeService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+            purchase_activation_service=purchase_activation_service,
+            purchase_claim_service=purchase_claim_service,
+            purchase_return_service=purchase_return_service,
+            payment_gateway=payment_gateway,
+            claim_token_service=claim_token_service,
+        )
+
+    @provide
+    async def purchase_draft_customer_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> PurchaseDraftCustomerService:
+        return PurchaseDraftCustomerService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+        )
+
+    @provide
+    async def purchase_customer_read_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> PurchaseCustomerReadService:
+        return PurchaseCustomerReadService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+        )
+
+    @provide
+    async def catalogue_customer_read_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> CatalogueCustomerReadService:
+        return CatalogueCustomerReadService(
+            unit_of_work_factory,
+            query_builder_type,
+        )
+
+    @provide
+    async def product_manager_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> ProductManagerService:
+        return ProductManagerService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+        )
+
+    @provide
+    async def shipment_manager_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+        shipment_activation_service: ShipmentActivationService,
+        shipment_cancel_service: ShipmentCancelService,
+        shipment_receive_service: ShipmentReceiveService,
+    ) -> ShipmentManagerService:
+        return ShipmentManagerService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+            shipment_activation_service=shipment_activation_service,
+            shipment_cancel_service=shipment_cancel_service,
+            shipment_receive_service=shipment_receive_service,
+        )
+
+    @provide
+    async def employee_manager_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> EmployeeManagerService:
+        return EmployeeManagerService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+        )
+
+    @provide
+    async def account_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+        account_service: IAccountService,
+        totp_service: ITotpService,
+        session_service: ISessionService,
+    ) -> AccountService:
+        return AccountService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
+            account_service=account_service,
+            totp_service=totp_service,
+            session_service=session_service,
         )

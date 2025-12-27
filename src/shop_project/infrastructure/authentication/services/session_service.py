@@ -4,6 +4,12 @@ from uuid import uuid4
 from plum import dispatch, overload
 from pydantic import SecretStr
 
+from shop_project.application.entities.account import Account
+from shop_project.application.entities.auth_session import (
+    AuthSession,
+)
+from shop_project.application.exceptions import ForbiddenException
+from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
     SessionRefresh,
@@ -14,10 +20,6 @@ from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject, SubjectEnum
 from shop_project.infrastructure.authentication.exceptions import (
     AuthSessionExpiredException,
-    PermissionException,
-)
-from shop_project.infrastructure.authentication.helpers.access_token_payload import (
-    AccessTokenPayload,
 )
 from shop_project.infrastructure.cryptography.exceptions import JWTException
 from shop_project.infrastructure.cryptography.interfaces.jwt_signer import JWTSigner
@@ -26,10 +28,6 @@ from shop_project.infrastructure.cryptography.interfaces.token_fingerprint_calcu
 )
 from shop_project.infrastructure.cryptography.interfaces.token_generator import (
     TokenGenerator,
-)
-from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.auth_session import (
-    AuthSession,
 )
 
 
@@ -61,6 +59,8 @@ class SessionService(ISessionService):
     def create_session(
         self, account: Account, subject: Subject
     ) -> tuple[AuthSession, SessionRefresh]:
+        if account.entity_id != subject.entity_id:
+            raise ForbiddenException
         refresh_token = self.rand_datagen.generate()
         access_token = self.data_signer.sign(
             self._create_access_token_payload(subject).model_dump(mode="json"),
@@ -84,7 +84,7 @@ class SessionService(ISessionService):
 
     def refresh_session(self, subject: Subject, session: AuthSession) -> SessionRefresh:
         if subject.entity_id != session.account_id:
-            raise PermissionException
+            raise ForbiddenException
         if session.expiration < datetime.now(tz=timezone.utc):
             raise AuthSessionExpiredException
 

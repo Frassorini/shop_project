@@ -5,14 +5,14 @@ from shop_project.application.background.base_task_handler import (
     BaseTaskHandler,
     BaseTaskParams,
 )
-from shop_project.application.background.exceptions import RetryException
+from shop_project.application.entities.task import Task
+from shop_project.application.exceptions import RetryException
 from shop_project.application.shared.interfaces.interface_query_builder import (
     IQueryBuilder,
 )
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
-from shop_project.infrastructure.entities.task import Task
 
 
 class ExampleTaskParams(BaseTaskParams):
@@ -40,7 +40,7 @@ class ExampleTaskHandler(BaseTaskHandler[ExampleTaskParams]):
             .build(),
             exception_on_nowait=RetryException,
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
 
             task = resources.get_by_id_or_none(Task, task_id)
             if task is None:

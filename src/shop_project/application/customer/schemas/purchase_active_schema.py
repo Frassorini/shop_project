@@ -22,17 +22,17 @@ class PurchaseActiveSchema(BaseSchema):
     @classmethod
     def create(
         cls,
-        purchase_active_dto: PurchaseActiveDTO,
+        purchase_summary_dto: PurchaseActiveDTO,
         escrow_account_dto: EscrowAccountDTO,
     ) -> Self:
         return cls(
-            entity_id=purchase_active_dto.entity_id,
+            entity_id=purchase_summary_dto.entity_id,
             payment_state=escrow_account_dto.state,
             price=escrow_account_dto.total_amount,
-            customer_id=purchase_active_dto.customer_id,
+            customer_id=purchase_summary_dto.customer_id,
             items=[
                 PurchaseActiveItemSchema.model_validate(item)
-                for item in purchase_active_dto.items
+                for item in purchase_summary_dto.items
             ],
         )
 

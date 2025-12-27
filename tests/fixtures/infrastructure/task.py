@@ -6,21 +6,18 @@ import pytest
 from dishka import AsyncContainer
 from dishka.container import Container
 
-from shop_project.application.shared.interfaces.interface_task_factory import (
-    ITaskFactory,
-)
+from shop_project.application.entities.task import Task
+from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.infrastructure.authentication.services.session_service import (
     SessionService,
 )
-from shop_project.infrastructure.background_tasks.application_task_sender_service import (
+from shop_project.infrastructure.background_tasks.task_sender_service import (
     TaskSender,
 )
-from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
 from shop_project.infrastructure.persistence.unit_of_work import UnitOfWorkFactory
 from tests.helpers import AggregateContainer
-from tests.test_application.test_purchase_flow import ITaskSender
 
 
 @pytest.fixture
@@ -49,7 +46,6 @@ def inmem_save_and_send_task(
 ) -> Callable[[Task], Awaitable[None]]:
     async def _inner(task: Task) -> None:
         task_sender = await async_container.get(ITaskSender)
-        task_factory = await async_container.get(ITaskFactory)
         await save_entity(task)
         await task_sender.send(task)
 
@@ -69,7 +65,7 @@ def ensure_tasks_completion(
             async with uow_factory.create(
                 QueryBuilder(mutating=False).load(Task).no_lock().build()
             ) as uow:
-                resources = uow.get_resorces()
+                resources = uow.get_resources()
 
                 tasks = resources.get_all(Task)
 

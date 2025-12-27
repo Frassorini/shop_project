@@ -39,7 +39,7 @@ class UnitOfWork(IUnitOfWork):
         self.resource_manager: ResourceManager = resource_manager
         self._commit_requested: bool = False
 
-    def get_resorces(self) -> ResourceContainer:
+    def get_resources(self) -> ResourceContainer:
         return self.resource_manager.resource_container
 
     def get_unique_id(self, model_type: type[PersistableEntity]) -> UUID:

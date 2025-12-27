@@ -1,9 +1,14 @@
 from datetime import timedelta
-from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type, cast
+from typing import AsyncContextManager, Awaitable, Callable, Coroutine, Type
 
 import pytest
 from dishka.container import Container
 
+from shop_project.application.entities.account import Account, SubjectEnum
+from shop_project.application.entities.auth_session import AuthSession
+from shop_project.application.entities.claim_token import ClaimToken
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
+from shop_project.application.entities.task import Task
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     LockTimeoutException,
@@ -15,17 +20,14 @@ from shop_project.domain.entities.manager import Manager
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
-from shop_project.domain.entities.purchase_summary import PurchaseSummary
+from shop_project.domain.entities.purchase_summary import (
+    PurchaseSummary,
+    PurchaseSummaryReason,
+)
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.shipment_cancel_service import ShipmentCancelService
-from shop_project.infrastructure.entities.account import Account, SubjectEnum
-from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.claim_token import ClaimToken
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
-from shop_project.infrastructure.entities.task import Task
 from shop_project.infrastructure.exceptions import ResourcesException
 from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
 from shop_project.infrastructure.persistence.unit_of_work import (
@@ -55,7 +57,7 @@ async def test_claim_token(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -66,7 +68,7 @@ async def test_claim_token(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -79,7 +81,7 @@ async def test_claim_token(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -87,7 +89,7 @@ async def test_claim_token(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -112,7 +114,7 @@ async def test_account(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: Task = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -123,7 +125,7 @@ async def test_account(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -136,7 +138,7 @@ async def test_account(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -144,7 +146,7 @@ async def test_account(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -169,7 +171,7 @@ async def test_external_id_totp(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: ExternalIdTotp = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -180,7 +182,7 @@ async def test_external_id_totp(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -193,7 +195,7 @@ async def test_external_id_totp(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -201,7 +203,7 @@ async def test_external_id_totp(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -226,7 +228,7 @@ async def test_auth_session(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -237,7 +239,7 @@ async def test_auth_session(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -250,7 +252,7 @@ async def test_auth_session(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -258,7 +260,7 @@ async def test_auth_session(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -283,7 +285,7 @@ async def test_account(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: Account = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -294,7 +296,7 @@ async def test_account(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -307,7 +309,7 @@ async def test_account(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -315,7 +317,7 @@ async def test_account(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -340,7 +342,7 @@ async def test_manager(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: Manager = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -351,7 +353,7 @@ async def test_manager(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -364,7 +366,7 @@ async def test_manager(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -372,7 +374,7 @@ async def test_manager(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -397,7 +399,7 @@ async def test_employee(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: Employee = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -408,7 +410,7 @@ async def test_employee(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -421,7 +423,7 @@ async def test_employee(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -429,7 +431,7 @@ async def test_employee(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -454,7 +456,7 @@ async def test_customer(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: Customer = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -465,7 +467,7 @@ async def test_customer(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -478,7 +480,7 @@ async def test_customer(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj_from_db: PersistableEntity = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -486,7 +488,64 @@ async def test_customer(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
+        with pytest.raises(ResourcesException):
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+
+
+@pytest.mark.asyncio
+async def test_escrow(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+) -> None:
+    model_type: Type[PersistableEntity] = EscrowAccount
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resources()
+        domain_obj: EscrowAccount = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.mark_as_paid()
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resources()
+        snapshot_after = to_dto(
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
+        )
+        assert snapshot_before == snapshot_after
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resources()
+        domain_obj_from_db: PersistableEntity = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+        resources.delete(model_type, domain_obj_from_db)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resources()
         with pytest.raises(ResourcesException):
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
 
@@ -519,7 +578,7 @@ async def test_purchase_draft(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: PurchaseDraft = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -534,7 +593,7 @@ async def test_purchase_draft(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -544,7 +603,7 @@ async def test_purchase_draft(
 
 
 @pytest.mark.asyncio
-async def test_uow_purchase_claim(
+async def test_purchase_active(
     uow_factory: UnitOfWorkFactory,
     prepare_container: Callable[
         [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
@@ -555,78 +614,85 @@ async def test_uow_purchase_claim(
     uow_delete_and_check: Callable[
         [Type[PersistableEntity], PersistableEntity], Awaitable[None]
     ],
-    domain_container: Container,
 ) -> None:
 
-    purchase_active_container: AggregateContainer = await prepare_container(
-        PurchaseActive
-    )
-
-    # customer = purchase_active_container.dependencies[Customer][0]
-
-    aggregate: PurchaseActive = cast(
-        PurchaseActive, purchase_active_container.aggregate
-    )
+    model_type: Type[PersistableEntity] = PurchaseActive
+    domain_container: AggregateContainer = await prepare_container(model_type)
 
     async with uow_factory.create(
         QueryBuilder(mutating=True)
-        .load(Customer)
-        .from_id([aggregate.customer_id])
-        .for_update()
-        .load(EscrowAccount)
-        .from_id([aggregate.entity_id])
-        .for_update()
-        .load(PurchaseActive)
-        .from_previous()
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
         .for_update()
         .load(Product)
         .from_previous()
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
-        purchase_claim_service = domain_container.get(PurchaseClaimService)
-        customer = resources.get_by_id(Customer, aggregate.customer_id)
-        purchase_active: PurchaseActive = resources.get_by_id(
-            PurchaseActive, purchase_active_container.aggregate.entity_id
+        resources = uow.get_resources()
+        domain_obj: PurchaseActive = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
         )
-        escrow_account = resources.get_by_id(
-            EscrowAccount, purchase_active.escrow_account_id
-        )
+        domain_obj.finalize()
 
-        escrow_account.mark_as_paid()
-        purchase_summary = purchase_claim_service.claim(purchase_active, escrow_account)
-        resources.put(PurchaseSummary, purchase_summary)
-
-        purchase_active_snapshot_before = to_dto(purchase_active)
-        escrow_account_snapshot_before = to_dto(escrow_account)
-        purchase_summary_snapshot_before = to_dto(purchase_summary)
+        snapshot_before = to_dto(domain_obj)
         uow.mark_commit()
 
-    async with uow_check(PurchaseActive, purchase_active) as uow2:
-        resources = uow2.get_resorces()
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
-            resources.get_by_id(PurchaseActive, purchase_active.entity_id)
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
-        assert purchase_active_snapshot_before == snapshot_after
+        assert snapshot_before == snapshot_after
 
-    async with uow_check(EscrowAccount, escrow_account) as uow2:
-        resources = uow2.get_resorces()
+    await uow_delete_and_check(model_type, domain_container.aggregate)
+
+
+@pytest.mark.asyncio
+async def test_purchase_summary(
+    uow_factory: UnitOfWorkFactory,
+    prepare_container: Callable[
+        [Type[PersistableEntity]], Coroutine[None, None, AggregateContainer]
+    ],
+    uow_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], AsyncContextManager[UnitOfWork]
+    ],
+    uow_delete_and_check: Callable[
+        [Type[PersistableEntity], PersistableEntity], Awaitable[None]
+    ],
+) -> None:
+
+    model_type: Type[PersistableEntity] = PurchaseSummary
+    domain_container: AggregateContainer = await prepare_container(model_type)
+
+    async with uow_factory.create(
+        QueryBuilder(mutating=True)
+        .load(model_type)
+        .from_id([domain_container.aggregate.entity_id])
+        .for_update()
+        .load(Product)
+        .from_previous()
+        .for_update()
+        .build()
+    ) as uow:
+        resources = uow.get_resources()
+        domain_obj: PurchaseSummary = resources.get_by_id(
+            model_type, domain_container.aggregate.entity_id
+        )
+
+        domain_obj.reason = PurchaseSummaryReason.PAYMENT_CANCELLED
+
+        snapshot_before = to_dto(domain_obj)
+        uow.mark_commit()
+
+    async with uow_check(model_type, domain_container.aggregate) as uow2:
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
-            resources.get_by_id(EscrowAccount, escrow_account.entity_id)
+            resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
-        assert escrow_account_snapshot_before == snapshot_after
+        assert snapshot_before == snapshot_after
 
-    async with uow_check(PurchaseSummary, purchase_summary) as uow2:
-        resources = uow2.get_resorces()
-        snapshot_after = to_dto(
-            resources.get_by_id(PurchaseSummary, purchase_summary.entity_id)
-        )
-        assert purchase_summary_snapshot_before == snapshot_after
-
-    await uow_delete_and_check(PurchaseActive, purchase_active)
-    await uow_delete_and_check(PurchaseSummary, purchase_summary)
-    await uow_delete_and_check(EscrowAccount, escrow_account)
+    await uow_delete_and_check(model_type, domain_container.aggregate)
 
 
 @pytest.mark.asyncio
@@ -653,7 +719,7 @@ async def test_product(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: Product = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -664,7 +730,7 @@ async def test_product(
         uow.mark_commit()
 
     async with uow_check(model_type, domain_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )
@@ -697,7 +763,7 @@ async def test_shipment(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         shipment_cancel_service = domain_container.get(ShipmentCancelService)
         shipment: Shipment = resources.get_by_id(
             Shipment, shipment_container.aggregate.entity_id
@@ -711,14 +777,14 @@ async def test_shipment(
         uow.mark_commit()
 
     async with uow_check(Shipment, shipment_container.aggregate) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(Shipment, shipment_container.aggregate.entity_id)
         )
         assert shipment_snapshot_before == snapshot_after
 
     async with uow_check(ShipmentSummary, shipment_summary) as uow2:
-        resources = uow2.get_resorces()
+        resources = uow2.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(ShipmentSummary, shipment_summary.entity_id)
         )
@@ -756,7 +822,7 @@ async def test_load_by_chlidren(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         domain_obj: PurchaseDraft = resources.get_by_id(
             model_type, domain_container.aggregate.entity_id
         )
@@ -777,7 +843,7 @@ async def test_load_by_chlidren(
         .for_update()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
         snapshot_after = to_dto(
             resources.get_by_id(model_type, domain_container.aggregate.entity_id)
         )

@@ -3,6 +3,7 @@ from typing import Callable, cast
 import pytest
 from dishka.container import Container
 
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
@@ -16,8 +17,11 @@ from tests.helpers import AggregateContainer
 def test_purchase_claim(
     purchase_active_filled_container_factory: Callable[[], AggregateContainer],
     domain_container: Container,
+    employee_bob: Callable[[], Employee],
 ) -> None:
     purchase_claim_service = domain_container.get(PurchaseClaimService)
+    employee: Employee = employee_bob()
+    employee.authorize()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -25,10 +29,10 @@ def test_purchase_claim(
     escrow: EscrowAccount = container.dependencies[EscrowAccount][0]
     products: list[Product] = container.dependencies[Product]
     escrow.mark_as_paid()
-    purchase_summary = purchase_claim_service.claim(purchase, escrow)
+    purchase_summary = purchase_claim_service.claim(employee, purchase, escrow)
 
     with pytest.raises(DomainException):
-        purchase_summary = purchase_claim_service.claim(purchase, escrow)
+        purchase_summary = purchase_claim_service.claim(employee, purchase, escrow)
 
     assert purchase.is_finalized()
     assert escrow.is_finalized()
@@ -38,8 +42,11 @@ def test_purchase_claim(
 def test_purchase_pending_claim(
     purchase_active_filled_container_factory: Callable[[], AggregateContainer],
     domain_container: Container,
+    employee_bob: Callable[[], Employee],
 ) -> None:
     purchase_claim_service = domain_container.get(PurchaseClaimService)
+    employee: Employee = employee_bob()
+    employee.authorize()
 
     container = purchase_active_filled_container_factory()
     product_inventory = ProductInventory(container.dependencies[Product])
@@ -48,7 +55,7 @@ def test_purchase_pending_claim(
     products: list[Product] = container.dependencies[Product]
 
     with pytest.raises(DomainException):
-        purchase_summary = purchase_claim_service.claim(purchase, escrow)
+        purchase_summary = purchase_claim_service.claim(employee, purchase, escrow)
 
     assert purchase.is_active()
     assert escrow.is_pending()

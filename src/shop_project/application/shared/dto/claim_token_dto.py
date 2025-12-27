@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
+from shop_project.application.entities.claim_token import ClaimToken
 from shop_project.application.shared.base_dto import BaseDTO
-from shop_project.infrastructure.entities.claim_token import ClaimToken
 
 
 class ClaimTokenDTO(BaseDTO[ClaimToken]):

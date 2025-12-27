@@ -4,6 +4,10 @@ from uuid import uuid4
 import pytest
 from dishka.async_container import AsyncContainer
 
+from shop_project.application.entities.account import Account, SubjectEnum
+from shop_project.application.entities.auth_session import AuthSession
+from shop_project.application.entities.claim_token import ClaimToken
+from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
 )
@@ -11,17 +15,13 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.interfaces.subject import (
     Subject,
 )
-from shop_project.infrastructure.authentication.helpers.access_token_payload import (
-    AccessTokenPayload,
+from shop_project.infrastructure.authentication.services.account_service import (
+    AccountService,
 )
 from shop_project.infrastructure.authentication.services.session_service import (
     SessionRefresh,
     SessionService,
 )
-from shop_project.infrastructure.entities.account import Account, SubjectEnum
-from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.claim_token import ClaimToken
-from tests.fixtures.infrastructure.account import AccountService
 
 
 @pytest.mark.asyncio

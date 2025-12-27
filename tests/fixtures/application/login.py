@@ -47,6 +47,11 @@ def login_subject(
         if (email or phone_number) and not password:
             totp = True
 
+        if (email or phone_number) and password:
+            raise ValueError(
+                "Email or phone number and password can't be used together"
+            )
+
         authentication_service = await async_container.get(AuthenticationService)
 
         request: CredentialSchema | None = None
@@ -83,7 +88,7 @@ def login_subject(
             )
 
         if not request:
-            raise ValueError
+            raise ValueError("Request couldn't be created")
 
         if subject_type == Manager:
             refresh = await authentication_service.login_manager(request)
@@ -92,7 +97,7 @@ def login_subject(
         elif subject_type == Customer:
             refresh = await authentication_service.login_customer(request)
         else:
-            raise ValueError
+            raise ValueError("Invalid subject type")
 
         return refresh
 

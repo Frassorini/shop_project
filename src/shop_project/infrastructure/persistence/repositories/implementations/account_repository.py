@@ -1,5 +1,5 @@
+from shop_project.application.entities.account import Account
 from shop_project.application.shared.dto.account_dto import AccountDTO
-from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.persistence.database.models.account import (
     Account as AccountORM,
 )

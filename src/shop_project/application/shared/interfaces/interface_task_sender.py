@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from shop_project.infrastructure.entities.task import Task
+from shop_project.application.entities.task import Task
 
 
 class ITaskSender(Protocol):

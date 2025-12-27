@@ -3,11 +3,11 @@ from uuid import UUID
 
 import pytest
 
+from shop_project.application.entities.account import Account
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import (
     Subject,
 )
-from shop_project.infrastructure.entities.account import Account
 from tests.helpers import AggregateContainer
 
 

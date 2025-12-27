@@ -32,7 +32,7 @@ class CustomerService:
             .no_lock()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
             res: list[Customer] = resources.get_by_ids(Customer, entity_ids)
 
         return [CustomerSchemaDefault.create(to_dto(customer)) for customer in res]

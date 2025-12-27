@@ -1,8 +1,8 @@
 from typing import Self
 from uuid import UUID
 
+from shop_project.application.entities.task import Task
 from shop_project.application.shared.base_dto import BaseDTO
-from shop_project.infrastructure.entities.task import Task
 
 
 class TaskDTO(BaseDTO[Task]):

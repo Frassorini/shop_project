@@ -8,3 +8,19 @@ class AlreadyExistsException(ApplicationException):
 
 class ForbiddenException(ApplicationException):
     pass
+
+
+class NotFoundException(ApplicationException):
+    pass
+
+
+class TaskException(Exception):
+    pass
+
+
+class RetryException(TaskException):
+    pass
+
+
+class AlreadyDoneException(TaskException):
+    pass

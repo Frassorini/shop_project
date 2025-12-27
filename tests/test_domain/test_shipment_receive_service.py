@@ -15,12 +15,12 @@ from tests.helpers import AggregateContainer
 
 
 def test_receive(
-    shipment_conatiner_factory: Callable[[], AggregateContainer],
+    shipment_container_factory: Callable[[], AggregateContainer],
     domain_container: Container,
 ) -> None:
     shipment_receive_service = domain_container.get(ShipmentReceiveService)
 
-    container = shipment_conatiner_factory()
+    container = shipment_container_factory()
     shipment: Shipment = cast(Shipment, container.aggregate)
     products: list[Product] = container.dependencies[Product]
     product_inventory = ProductInventory(products)

@@ -1,6 +1,7 @@
 from plum import dispatch, overload
 from pydantic import SecretStr
 
+from shop_project.application.entities.account import Account
 from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
 )
@@ -12,7 +13,6 @@ from shop_project.infrastructure.authentication.exceptions import AuthException
 from shop_project.infrastructure.cryptography.interfaces.password_hasher import (
     PasswordHasher,
 )
-from shop_project.infrastructure.entities.account import Account
 
 
 class AccountService(IAccountService):

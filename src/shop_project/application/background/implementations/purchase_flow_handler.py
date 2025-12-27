@@ -1,13 +1,13 @@
-from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Any, Sequence, Type
+from typing import Any, Type
 from uuid import UUID
 
 from shop_project.application.background.base_task_handler import (
     BaseTaskHandler,
     NullTaskParams,
 )
-from shop_project.application.background.exceptions import RetryException
+from shop_project.application.entities.task import Task
+from shop_project.application.exceptions import RetryException
 from shop_project.application.shared.interfaces.interface_payment_gateway import (
     CreatePaymentRequest,
     IPaymentGateway,
@@ -19,6 +19,13 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.scenarios.payment import (
+    get_payment_state_map,
+)
+from shop_project.application.shared.scenarios.purchase import (
+    get_escrow_purchase_active_map,
+)
+from shop_project.application.shared.scenarios.task import capture_task
 from shop_project.domain.entities.escrow_account import (
     EscrowAccount,
     EscrowAccountState,
@@ -32,22 +39,6 @@ from shop_project.domain.services.purchase_activation_service import (
 )
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.purchase_return_service import PurchaseReturnService
-from shop_project.infrastructure.entities.task import Task
-
-
-async def _get_state_map(
-    payment_gateway: IPaymentGateway, escrow_accounts: Sequence[EscrowAccount]
-) -> dict[PaymentState, list[EscrowAccount]]:
-    fetched_states = await payment_gateway.get_states(
-        [str(escrow_account.entity_id) for escrow_account in escrow_accounts]
-    )
-
-    state_map: dict[PaymentState, list[EscrowAccount]] = {}
-    for escrow_account in escrow_accounts:
-        state = fetched_states[str(escrow_account.entity_id)]
-        state_map.setdefault(state, []).append(escrow_account)
-
-    return state_map
 
 
 class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
@@ -83,15 +74,9 @@ class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
             .build(),
             exception_on_nowait=RetryException,
         ) as uow:
-            resources = uow.get_resorces()
-
-            task = resources.get_by_id_or_none(Task, task_id)
-            if task is None:
-                return
-
-            state_map = await _get_state_map(
-                self._payment_gateway, resources.get_all(EscrowAccount)
-            )
+            resources = uow.get_resources()
+            capture_task(resources, task_id)
+            state_map = await get_payment_state_map(resources, self._payment_gateway)
 
             for escrow_account in state_map.get(PaymentState.PAID, []):
                 escrow_account.mark_as_paid()
@@ -111,14 +96,14 @@ class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
 
             uow.mark_commit()
 
-        for unexpected_state in set(state_map) - {
-            PaymentState.NONEXISTENT,
-            PaymentState.PAID,
-            PaymentState.CANCELLED,
-        }:
-            raise ValueError(
-                f"Unexpected escrow account state: {unexpected_state}"
-            )  # TODO: alert
+        _handle_unexpected_states(
+            state_map,
+            {
+                PaymentState.PAID,
+                PaymentState.CANCELLED,
+                PaymentState.NONEXISTENT,
+            },
+        )
 
 
 class BatchFinalizeNotPaidTasksHandler(BaseTaskHandler[NullTaskParams]):
@@ -160,36 +145,20 @@ class BatchFinalizeNotPaidTasksHandler(BaseTaskHandler[NullTaskParams]):
             .build(),
             exception_on_nowait=RetryException,
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
+            capture_task(resources, task_id)
 
-            task = resources.get_by_id_or_none(Task, task_id)
-            if task is None:
-                return
-
-            escrow_accounts = resources.get_all(EscrowAccount)
-            purchases = resources.get_all(PurchaseActive)
+            escrow_purchase_map: list[tuple[EscrowAccount, PurchaseActive]] = (
+                get_escrow_purchase_active_map(resources)
+            )
             product_inventory = ProductInventory(resources.get_all(Product))
 
-            escrow_purchase_map: dict[UUID, list[Any]] = defaultdict(
-                lambda: [None, None]
-            )
-
-            for escrow_account in escrow_accounts:
-                escrow_purchase_map[escrow_account.entity_id][0] = escrow_account
-
-            for purchase in purchases:
-                escrow_purchase_map[purchase.entity_id][1] = purchase
-
-            for escrow, purchase in escrow_purchase_map.values():
-                assert isinstance(purchase, PurchaseActive)
-                assert isinstance(escrow, EscrowAccount)
-
+            for escrow, purchase in escrow_purchase_map:
                 summary = self._purchase_return_service.handle_cancelled_payment(
                     product_inventory=product_inventory,
                     purchase_active=purchase,
                     escrow_account=escrow,
                 )
-
                 resources.delete(PurchaseActive, purchase)
                 resources.put(PurchaseSummary, summary)
 
@@ -237,33 +206,15 @@ class BatchPaidReservationTimeOutTaskHandler(BaseTaskHandler[NullTaskParams]):
             .build(),
             exception_on_nowait=RetryException,
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
+            capture_task(resources, task_id)
 
-            task = resources.get_by_id_or_none(Task, task_id)
-            if task is None:
-                return
-
-            escrow_accounts = resources.get_all(EscrowAccount)
-            purchases = resources.get_all(PurchaseActive)
+            escrow_purchase_map: list[tuple[EscrowAccount, PurchaseActive]] = (
+                get_escrow_purchase_active_map(resources)
+            )
             product_inventory = ProductInventory(resources.get_all(Product))
 
-            escrow_purchase_map: dict[UUID, list[Any]] = defaultdict(
-                lambda: [None, None]
-            )
-
-            for escrow_account in escrow_accounts:
-                escrow_purchase_map[escrow_account.entity_id][0] = escrow_account
-
-            for purchase in purchases:
-                escrow_purchase_map[purchase.entity_id][1] = purchase
-
-            for escrow, purchase in escrow_purchase_map.values():
-                if not escrow:
-                    continue
-
-                assert isinstance(purchase, PurchaseActive)
-                assert isinstance(escrow, EscrowAccount)
-
+            for escrow, purchase in escrow_purchase_map:
                 summary = self._purchase_return_service.unclaim(
                     product_inventory=product_inventory,
                     purchase_active=purchase,
@@ -273,11 +224,11 @@ class BatchPaidReservationTimeOutTaskHandler(BaseTaskHandler[NullTaskParams]):
                 resources.delete(PurchaseActive, purchase)
                 resources.put(PurchaseSummary, summary)
 
-            uow.mark_commit()
+            await self._payment_gateway.start_refunds(
+                [str(item[0].entity_id) for item in escrow_purchase_map]
+            )
 
-        await self._payment_gateway.start_refunds(
-            [str(item.entity_id) for item in escrow_accounts if item]
-        )
+            uow.mark_commit()
 
 
 class BatchWaitRefundTaskHandler(BaseTaskHandler[NullTaskParams]):
@@ -313,15 +264,10 @@ class BatchWaitRefundTaskHandler(BaseTaskHandler[NullTaskParams]):
             .build(),
             exception_on_nowait=RetryException,
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
+            capture_task(resources, task_id)
 
-            task = resources.get_by_id_or_none(Task, task_id)
-            if task is None:
-                return
-
-            state_map = await _get_state_map(
-                self._payment_gateway, resources.get_all(EscrowAccount)
-            )
+            state_map = await get_payment_state_map(resources, self._payment_gateway)
 
             for escrow_account in state_map.get(PaymentState.REFUNDED, []):
                 escrow_account.finalize()
@@ -332,11 +278,20 @@ class BatchWaitRefundTaskHandler(BaseTaskHandler[NullTaskParams]):
 
             uow.mark_commit()
 
-        for unexpected_state in set(state_map) - {
-            PaymentState.REFUNDING,
-            PaymentState.REFUNDED,
-            PaymentState.PAID,
-        }:
-            raise ValueError(
-                f"Unexpected escrow account state: {unexpected_state}"
-            )  # TODO: alert
+        _handle_unexpected_states(
+            state_map,
+            {
+                PaymentState.REFUNDED,
+                PaymentState.REFUNDED,
+                PaymentState.PAID,
+            },
+        )
+
+
+def _handle_unexpected_states(
+    state_map: dict[PaymentState, list[Any]], expected_states: set[PaymentState]
+) -> None:
+    for unexpected_state in set(state_map) - expected_states:
+        raise ValueError(
+            f"Unexpected escrow account state: {unexpected_state}"
+        )  # TODO: alert

@@ -1,5 +1,4 @@
-from collections import defaultdict
-from typing import Any, Type
+from typing import Type
 from uuid import UUID
 
 from shop_project.application.customer.schemas.claim_token_schema import (
@@ -12,6 +11,8 @@ from shop_project.application.customer.schemas.purchase_active_schema import (
 from shop_project.application.customer.schemas.purchase_summary_schema import (
     PurchaseSummarySchema,
 )
+from shop_project.application.entities.claim_token import ClaimToken
+from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
@@ -26,22 +27,25 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
-from shop_project.domain.entities.customer import Customer
+from shop_project.application.shared.scenarios.entity import get_one_or_raise_not_found
+from shop_project.application.shared.scenarios.subject import (
+    ensure_subject_type_or_raise_forbidden,
+)
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.entities.purchase_summary import PurchaseSummary
 from shop_project.domain.helpers.product_inventory import ProductInventory
+from shop_project.domain.interfaces.subject import SubjectEnum
 from shop_project.domain.services.purchase_activation_service import (
     PurchaseActivationService,
 )
 from shop_project.domain.services.purchase_claim_service import PurchaseClaimService
 from shop_project.domain.services.purchase_return_service import PurchaseReturnService
-from shop_project.infrastructure.entities.claim_token import ClaimToken
 
 
-class PurchaseFlowService:
+class PurchaseActiveCustomerService:
     def __init__(
         self,
         unit_of_work_factory: IUnitOfWorkFactory,
@@ -62,22 +66,30 @@ class PurchaseFlowService:
         self._payment_gateway: IPaymentGateway = payment_gateway
         self._claim_token_service: IClaimTokenService = claim_token_service
 
-    async def get_claim_token(self, customer_id: UUID) -> ClaimTokenSchema:
+    async def get_claim_token(
+        self, access_payload: AccessTokenPayload
+    ) -> ClaimTokenSchema:
+        ensure_subject_type_or_raise_forbidden(access_payload, SubjectEnum.CUSTOMER)
+
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(ClaimToken)
-            .from_id([customer_id])
+            .from_id([access_payload.account_id])
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            maybe_claim_token_lst = resources.get_all(ClaimToken)
+            resources = uow.get_resources()
+            claim_token = resources.get_by_id_or_none(
+                ClaimToken, access_payload.account_id
+            )
 
-            if maybe_claim_token_lst:
-                claim_token = maybe_claim_token_lst[0]
+            if claim_token:
+                claim_token = claim_token
                 token_raw = self._claim_token_service.refresh()
             else:
-                claim_token, token_raw = self._claim_token_service.create(customer_id)
+                claim_token, token_raw = self._claim_token_service.create(
+                    access_payload.account_id
+                )
 
             resources.put(ClaimToken, claim_token)
 
@@ -86,23 +98,25 @@ class PurchaseFlowService:
         return ClaimTokenSchema(claim_token=token_raw)
 
     async def activate_draft(
-        self, customer_id: UUID, purchase_draft_id: UUID
+        self, access_payload: AccessTokenPayload, purchase_draft_id: UUID
     ) -> PurchaseActivationSchema:
+        ensure_subject_type_or_raise_forbidden(access_payload, SubjectEnum.CUSTOMER)
+
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(PurchaseDraft)
             .from_id([purchase_draft_id])
             .and_()
-            .from_attribute("customer_id", [customer_id])
+            .from_attribute("customer_id", [access_payload.account_id])
             .for_update()
             .load(Product)
             .from_previous()
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            purchase_draft: PurchaseDraft = resources.get_by_id(
-                PurchaseDraft, purchase_draft_id
+            resources = uow.get_resources()
+            purchase_draft: PurchaseDraft = get_one_or_raise_not_found(
+                resources, PurchaseDraft, purchase_draft_id
             )
 
             product_inventory = ProductInventory(resources.get_all(Product))
@@ -114,11 +128,6 @@ class PurchaseFlowService:
             resources.delete(PurchaseDraft, purchase_draft)
             resources.put(PurchaseActive, activation.purchase_active)
             resources.put(EscrowAccount, activation.escrow_account)
-
-            assert (
-                activation.purchase_active.entity_id
-                == activation.escrow_account.entity_id
-            )
 
             uow.mark_commit()
 
@@ -138,72 +147,11 @@ class PurchaseFlowService:
             payment_url=payment_url,
         )
 
-    async def claim(self, claim_token: str) -> list[PurchaseSummarySchema]:
-        token_fingerprint = self._claim_token_service.get_claim_token_fingerprint(
-            claim_token
-        )
+    async def unclaim(
+        self, access_payload: AccessTokenPayload, purchase_active_id: UUID
+    ):
+        ensure_subject_type_or_raise_forbidden(access_payload, SubjectEnum.CUSTOMER)
 
-        async with self._unit_of_work_factory.create(
-            self._query_builder_type(mutating=True)
-            .load(ClaimToken)
-            .from_attribute("token_fingerprint", [token_fingerprint])
-            .for_update()
-            .load(Customer)
-            .from_previous()
-            .for_share()
-            .load(EscrowAccount)
-            .from_previous()
-            .for_update()
-            .load(PurchaseActive)
-            .from_previous()
-            .for_update()
-            .build()
-        ) as uow:
-            resources = uow.get_resorces()
-            escrow_accounts = resources.get_all(EscrowAccount)
-            purchases = resources.get_all(PurchaseActive)
-
-            escrow_purchase_map: dict[UUID, list[Any]] = defaultdict(
-                lambda: [None, None]
-            )
-
-            for escrow_account in escrow_accounts:
-                escrow_purchase_map[escrow_account.entity_id][0] = escrow_account
-
-            for purchase in purchases:
-                escrow_purchase_map[purchase.entity_id][1] = purchase
-
-            summaries_with_escrows: list[tuple[PurchaseSummary, EscrowAccount]] = []
-
-            for escrow, purchase in escrow_purchase_map.values():
-                if not purchase:
-                    continue
-
-                assert isinstance(purchase, PurchaseActive)
-                assert isinstance(escrow, EscrowAccount)
-
-                summary = self._purchase_claim_service.claim(
-                    purchase_active=purchase, escrow_account=escrow
-                )
-
-                resources.delete(PurchaseActive, purchase)
-                resources.put(PurchaseSummary, summary)
-                summaries_with_escrows.append((summary, escrow))
-
-            uow.mark_commit()
-
-        result: list[PurchaseSummarySchema] = []
-        for summary, escrow_account in summaries_with_escrows:
-            result.append(
-                PurchaseSummarySchema.create(
-                    purchase_summary_dto=to_dto(summary),
-                    escrow_account_dto=to_dto(escrow_account),
-                )
-            )
-
-        return result
-
-    async def unclaim(self, customer_id: UUID, purchase_active_id: UUID):
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(EscrowAccount)
@@ -212,16 +160,20 @@ class PurchaseFlowService:
             .load(PurchaseActive)
             .from_previous()
             .and_()
-            .from_attribute("customer_id", [customer_id])
+            .from_attribute("customer_id", [access_payload.account_id])
             .for_update()
             .load(Product)
             .from_previous()
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            purchase_active = resources.get_by_id(PurchaseActive, purchase_active_id)
-            escrow_account = resources.get_by_id(EscrowAccount, purchase_active_id)
+            resources = uow.get_resources()
+            purchase_active = get_one_or_raise_not_found(
+                resources, PurchaseActive, purchase_active_id
+            )
+            escrow_account = get_one_or_raise_not_found(
+                resources, EscrowAccount, purchase_active_id
+            )
 
             summary = self._purchase_return_service.unclaim(
                 product_inventory=ProductInventory(resources.get_all(Product)),

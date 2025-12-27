@@ -6,7 +6,7 @@ from taskiq.abc.broker import AsyncBroker
 from taskiq.brokers.inmemory_broker import InMemoryBroker
 from taskiq_aio_pika.broker import AioPikaBroker
 
-from shop_project.application.background.exceptions import RetryException
+from shop_project.application.exceptions import RetryException
 from shop_project.infrastructure.background_tasks.maybe_cdc_formatter import (
     MaybeCDCFormatter,
 )

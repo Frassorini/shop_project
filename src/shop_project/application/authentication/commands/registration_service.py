@@ -12,15 +12,23 @@ from shop_project.application.authentication.schemas.credential_schema import (
 from shop_project.application.authentication.schemas.session_refresh_schema import (
     SessionRefreshSchema,
 )
+from shop_project.application.authentication.shared_scenarios import (
+    verify_and_consume_totp,
+)
+from shop_project.application.entities.account import Account
+from shop_project.application.entities.auth_session import AuthSession
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.exceptions import (
     AlreadyExistsException,
-    ForbiddenException,
 )
 from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
 )
 from shop_project.application.shared.interfaces.interface_query_builder import (
     IQueryBuilder,
+)
+from shop_project.application.shared.interfaces.interface_resource_container import (
+    IResourceContainer,
 )
 from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
@@ -35,9 +43,6 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject
-from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 
 
 class RegistrationService:
@@ -73,11 +78,6 @@ class RegistrationService:
     async def _register_subject_sms(
         self, subject_type: Type[Subject], register_request: PhoneTotpCredentialSchema
     ) -> SessionRefreshSchema:
-        subject = _create_subject(subject_type, register_request)
-        account = self._account_service.create_account(
-            subject, phone_number=register_request.identifier
-        )
-
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(Account)
@@ -90,41 +90,31 @@ class RegistrationService:
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            if resources.get_all(Account):
-                raise AlreadyExistsException
+            resources = uow.get_resources()
 
-            totp = resources.get_one_by_attribute(
-                ExternalIdTotp, "external_id", register_request.identifier
+            _ensure_account_not_exists(resources)
+
+            verify_and_consume_totp(
+                resources=resources,
+                totp_service=self._totp_service,
+                external_id=register_request.identifier,
+                code=register_request.code_plaintext.get_secret_value(),
             )
 
-            if not self._totp_service.verify_totp(
-                totp, register_request.code_plaintext.get_secret_value()
-            ):
-                raise ForbiddenException
-
-            auth_session, session_refresh = self._session_service.create_session(
-                account, subject
+            session_refresh = self._make_registration(
+                resources=resources,
+                subject_type=subject_type,
+                identidier_type="phone_number",
+                register_request=register_request,
             )
-            resources.put(AuthSession, auth_session)
-            resources.put(Account, account)
-            resources.put(subject_type, subject)
-            resources.delete(ExternalIdTotp, totp)
 
             uow.mark_commit()
 
-        return SessionRefreshSchema.model_validate(
-            session_refresh, from_attributes=True
-        )
+        return session_refresh
 
     async def _register_subject_email(
         self, subject_type: Type[Subject], register_request: EmailTotpCredentialSchema
     ) -> SessionRefreshSchema:
-        subject = _create_subject(subject_type, register_request)
-        account = self._account_service.create_account(
-            subject, email=register_request.identifier
-        )
-
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(Account)
@@ -137,45 +127,32 @@ class RegistrationService:
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            if resources.get_all(Account):
-                raise AlreadyExistsException
+            resources = uow.get_resources()
+            _ensure_account_not_exists(resources)
 
-            totp = resources.get_one_by_attribute(
-                ExternalIdTotp, "external_id", register_request.identifier
+            verify_and_consume_totp(
+                resources=resources,
+                totp_service=self._totp_service,
+                external_id=register_request.identifier,
+                code=register_request.code_plaintext.get_secret_value(),
             )
 
-            if not self._totp_service.verify_totp(
-                totp, register_request.code_plaintext.get_secret_value()
-            ):
-                raise ForbiddenException
-
-            auth_session, session_refresh = self._session_service.create_session(
-                account, subject
+            session_refresh = self._make_registration(
+                resources=resources,
+                subject_type=subject_type,
+                identidier_type="email",
+                register_request=register_request,
             )
-            resources.put(AuthSession, auth_session)
-            resources.put(Account, account)
-            resources.put(subject_type, subject)
-            resources.delete(ExternalIdTotp, totp)
 
             uow.mark_commit()
 
-        return SessionRefreshSchema.model_validate(
-            session_refresh, from_attributes=True
-        )
+        return session_refresh
 
     async def _register_subject_login(
         self,
         subject_type: Type[Subject],
         register_request: LoginPasswordCredentialSchema,
     ) -> SessionRefreshSchema:
-        subject = _create_subject(subject_type, register_request)
-        account = self._account_service.create_account(
-            subject, login=register_request.identifier
-        )
-        self._account_service.set_password(
-            account, register_request.password_plaintext.get_secret_value()
-        )
 
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
@@ -184,19 +161,60 @@ class RegistrationService:
             .for_share()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
 
-            if resources.get_all(Account):
-                raise AlreadyExistsException
+            _ensure_account_not_exists(resources)
 
-            auth_session, session_refresh = self._session_service.create_session(
-                account, subject
+            session_refresh = self._make_registration(
+                resources=resources,
+                subject_type=subject_type,
+                identidier_type="login",
+                register_request=register_request,
             )
-            resources.put(AuthSession, auth_session)
-            resources.put(Account, account)
-            resources.put(subject_type, subject)
+
+            assert (
+                account := _get_account_by_identifier(
+                    resources=resources, login=register_request.identifier
+                )
+            )
+            self._account_service.set_password(
+                account, register_request.password_plaintext.get_secret_value()
+            )
 
             uow.mark_commit()
+
+        return SessionRefreshSchema.model_validate(
+            session_refresh, from_attributes=True
+        )
+
+    def _make_registration(
+        self,
+        resources: IResourceContainer,
+        subject_type: Type[Subject],
+        identidier_type: str,
+        register_request: CredentialSchema,
+    ) -> SessionRefreshSchema:
+        subject = _create_subject(subject_type, register_request)
+
+        if identidier_type not in ["login", "phone_number", "email"]:
+            raise ValueError
+
+        account = self._account_service.create_account(
+            subject,
+            login=register_request.identifier if identidier_type == "login" else None,
+            phone_number=(
+                register_request.identifier
+                if identidier_type == "phone_number"
+                else None
+            ),
+            email=register_request.identifier if identidier_type == "email" else None,
+        )
+        auth_session, session_refresh = self._session_service.create_session(
+            account, subject
+        )
+        resources.put(AuthSession, auth_session)
+        resources.put(Account, account)
+        resources.put(subject_type, subject)
 
         return SessionRefreshSchema.model_validate(
             session_refresh, from_attributes=True
@@ -232,6 +250,29 @@ class RegistrationService:
     def _register_subject(
         self, subject_type: Type[Subject], register_request: CredentialSchema
     ) -> Coroutine[None, None, SessionRefreshSchema]: ...
+
+
+def _ensure_account_not_exists(resources: IResourceContainer) -> None:
+    if resources.get_all(Account):
+        raise AlreadyExistsException
+
+
+def _get_account_by_identifier(
+    resources: IResourceContainer,
+    phone_number: str | None = None,
+    email: str | None = None,
+    login: str | None = None,
+) -> Account | None:
+    if not (bool(phone_number) + bool(email) + bool(login) == 1):
+        raise ValueError
+    if phone_number:
+        return resources.get_one_or_none_by_attribute(
+            Account, "phone_number", phone_number
+        )
+    if email:
+        return resources.get_one_or_none_by_attribute(Account, "email", email)
+    if login:
+        return resources.get_one_or_none_by_attribute(Account, "login", login)
 
 
 @overload

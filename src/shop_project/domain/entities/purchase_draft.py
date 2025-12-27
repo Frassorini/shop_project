@@ -67,9 +67,25 @@ class PurchaseDraft(PersistableEntity):
         if amount <= 0:
             raise DomainException("Amount must be > 0")
 
+        if len(self._items) >= 40:
+            raise DomainException("Too many items")
+
     def add_item(self, product_id: UUID, amount: int) -> None:
         if self.state == PurchaseDraftState.FINALIZED:
             raise DomainException("Cannot add item to finalized draft")
+
+        if product_id in self._items:
+            new_amount = self._items[product_id].amount + amount
+            self._items.pop(product_id)
+
+            self._validate_item(product_id, new_amount)
+
+            self._items[product_id] = PurchaseDraftItem(
+                product_id=product_id,
+                amount=new_amount,
+            )
+
+            return
 
         self._validate_item(product_id, amount)
 
@@ -78,8 +94,22 @@ class PurchaseDraft(PersistableEntity):
             amount=amount,
         )
 
+    def remove_item(self, product_id: UUID) -> None:
+        if self.state == PurchaseDraftState.FINALIZED:
+            raise DomainException("Cannot remove item from finalized draft")
+
+        if product_id not in self._items:
+            raise DomainException("Item not found")
+
+        self._items.pop(product_id)
+
     def get_item(self, product_id: UUID) -> PurchaseDraftItem:
+        if product_id not in self._items:
+            raise DomainException("Item not found")
         return self._items[product_id]
+
+    def __contains__(self, product_id: UUID) -> bool:
+        return product_id in self._items
 
     @property
     def items(self) -> list[PurchaseDraftItem]:

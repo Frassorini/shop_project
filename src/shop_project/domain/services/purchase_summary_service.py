@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_summary import (
     PurchaseSummary,
@@ -40,7 +38,7 @@ class PurchaseSummaryService:
 
         purchase_summary = PurchaseSummary(
             customer_id=purchase.customer_id,
-            entity_id=uuid4(),
+            entity_id=purchase.entity_id,
             escrow_account_id=purchase.escrow_account_id,
             reason=reason,
             items=purchase_summary_items,

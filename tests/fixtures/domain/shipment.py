@@ -5,11 +5,11 @@ from dishka.container import Container
 
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.shipment import Shipment
+from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.shipment_activation_service import (
     ShipmentActivationService,
     ShipmentRequest,
 )
-from tests.fixtures.domain.purchase_active import ProductInventory
 from tests.helpers import AggregateContainer
 
 
@@ -39,7 +39,7 @@ def shipment_factory(
 
 
 @pytest.fixture
-def shipment_conatiner_factory(
+def shipment_container_factory(
     potatoes_product_10: Callable[[], Product],
     sausages_product_10: Callable[[], Product],
     domain_container: Container,

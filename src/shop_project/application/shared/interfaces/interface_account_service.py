@@ -2,8 +2,8 @@ from typing import Protocol
 
 from pydantic import EmailStr
 
+from shop_project.application.entities.account import Account
 from shop_project.domain.interfaces.subject import Subject
-from shop_project.infrastructure.entities.account import Account
 
 
 class IAccountService(Protocol):

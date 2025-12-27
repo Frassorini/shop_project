@@ -3,8 +3,8 @@ from typing import Any
 from taskiq import AsyncBroker
 from taskiq.decor import AsyncTaskiqDecoratedTask
 
+from shop_project.application.entities.task import Task
 from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
-from shop_project.infrastructure.entities.task import Task
 
 
 class TaskSender(ITaskSender):

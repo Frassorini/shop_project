@@ -46,7 +46,7 @@ def uow_delete_and_check(
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
             purchase_summary_from_db: PersistableEntity = resources.get_by_id(
                 model_type, domain_object.entity_id
             )
@@ -54,7 +54,7 @@ def uow_delete_and_check(
             uow.mark_commit()
 
         async with uow_check(model_type, domain_object) as uow2:
-            resources = uow2.get_resorces()
+            resources = uow2.get_resources()
             with pytest.raises(ResourcesException):
                 resources.get_by_id(model_type, domain_object.entity_id)
 
@@ -93,7 +93,7 @@ def uow_get_all_single_model(
         async with uow_factory.create(
             QueryBuilder(mutating=False).load(model_type).no_lock().build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
             return resources.get_all(model_type)
 
     return _inner
@@ -113,7 +113,7 @@ def uow_get_one_single_model(
             .no_lock()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
             return resources.get_one_by_attribute(
                 model_type, attribute_name, attribute_value
             )
@@ -139,7 +139,7 @@ def uow_get_many_single_model(
             .no_lock()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
             return resources.get_by_attribute(
                 model_type, attribute_name, attribute_values
             )
@@ -217,7 +217,7 @@ async def fill_database(
     ) -> None:
         async with uow_factory.create(QueryBuilder(mutating=True).build()) as uow:
             for model_type, domain_objects in data.items():
-                uow.get_resorces().put_many(model_type, domain_objects)
+                uow.get_resources().put_many(model_type, domain_objects)
             uow.mark_commit()
 
     return _fill_db

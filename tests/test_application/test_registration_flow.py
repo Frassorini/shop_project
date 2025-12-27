@@ -7,10 +7,10 @@ from dishka.async_container import AsyncContainer
 from shop_project.application.authentication.schemas.session_refresh_schema import (
     SessionRefreshSchema,
 )
+from shop_project.application.entities.account import Account
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
-from shop_project.infrastructure.entities.account import Account
 from shop_project.infrastructure.persistence.query.query_builder import QueryBuilder
 from shop_project.infrastructure.persistence.unit_of_work import UnitOfWorkFactory
 from shop_project.shared.phone_str import validate_phone_number
@@ -38,7 +38,7 @@ async def test_register_customer_sms_code_flow(
         .no_lock()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
 
         account = resources.get_one_by_attribute(Account, "phone_number", phone_number)
         customer = resources.get_one_by_attribute(
@@ -71,7 +71,7 @@ async def test_register_employee_email_code_flow(
         .no_lock()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
 
         account = resources.get_one_by_attribute(Account, "email", email)
 
@@ -106,7 +106,7 @@ async def test_register_manager_login_flow(
         .no_lock()
         .build()
     ) as uow:
-        resources = uow.get_resorces()
+        resources = uow.get_resources()
 
         account = resources.get_one_by_attribute(Account, "login", login)
         manager = resources.get_one_by_attribute(

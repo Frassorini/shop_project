@@ -1,4 +1,4 @@
-from typing import Coroutine, Type
+from typing import Coroutine, Type, TypeVar
 
 from plum import dispatch, overload
 
@@ -15,6 +15,12 @@ from shop_project.application.authentication.schemas.credential_schema import (
 from shop_project.application.authentication.schemas.session_refresh_schema import (
     SessionRefreshSchema,
 )
+from shop_project.application.authentication.shared_scenarios import (
+    verify_and_consume_totp,
+)
+from shop_project.application.entities.account import Account
+from shop_project.application.entities.auth_session import AuthSession
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.exceptions import (
     ForbiddenException,
 )
@@ -23,6 +29,9 @@ from shop_project.application.shared.interfaces.interface_account_service import
 )
 from shop_project.application.shared.interfaces.interface_query_builder import (
     IQueryBuilder,
+)
+from shop_project.application.shared.interfaces.interface_resource_container import (
+    IResourceContainer,
 )
 from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
@@ -37,9 +46,6 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.subject import Subject
-from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 
 
 class AuthenticationService:
@@ -75,7 +81,9 @@ class AuthenticationService:
     async def refresh_session_manager(self, refresh_token: str):
         return await self._refresh_session(Manager, refresh_token)
 
-    async def _refresh_session(self, subject_type: Type[Subject], refresh_token: str):
+    async def _refresh_session(
+        self, subject_type: Type[Subject], refresh_token: str
+    ) -> SessionRefreshSchema:
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(AuthSession)
@@ -86,11 +94,10 @@ class AuthenticationService:
             .for_share()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            auth_session = resources.get_one_by_attribute(
-                AuthSession, "refresh_token_fingerprint", refresh_token
-            )
-            subject = resources.get_by_id(subject_type, auth_session.account_id)
+            resources = uow.get_resources()
+
+            auth_session = _get_one_auth_session_or_abort(resources)
+            subject = _get_one_subject_or_abort(resources, subject_type)
 
             session_refresh = self._session_service.refresh_session(
                 subject, auth_session
@@ -116,15 +123,10 @@ class AuthenticationService:
             .for_share()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
 
-            if not resources.get_all(Account) or not resources.get_all(subject_type):
-                raise ForbiddenException
-
-            account = resources.get_one_by_attribute(
-                Account, external_id_type, external_id
-            )
-            subject = resources.get_by_id(subject_type, account.entity_id)
+            account = _get_one_account_or_abort(resources)
+            subject = _get_one_subject_or_abort(resources, subject_type)
 
             if not self._account_service.verify_password(
                 account, credential.password_plaintext.get_secret_value()
@@ -162,30 +164,17 @@ class AuthenticationService:
             .for_share()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
-            if not resources.get_all(Account):
-                raise ForbiddenException
+            resources = uow.get_resources()
 
-            if not resources.get_all(ExternalIdTotp):
-                raise ForbiddenException
+            account = _get_one_account_or_abort(resources)
+            subject = _get_one_subject_or_abort(resources, subject_type)
 
-            if not resources.get_all(subject_type):
-                raise ForbiddenException
-
-            account = resources.get_one_by_attribute(
-                Account, external_id_type, external_id
+            verify_and_consume_totp(
+                resources=resources,
+                totp_service=self._totp_service,
+                external_id=external_id,
+                code=credential.code_plaintext.get_secret_value(),
             )
-            totp = resources.get_one_by_attribute(
-                ExternalIdTotp, "external_id", external_id
-            )
-            subject = resources.get_by_id(subject_type, account.entity_id)
-
-            if not self._totp_service.verify_totp(
-                totp, credential.code_plaintext.get_secret_value()
-            ):
-                raise ForbiddenException
-
-            resources.delete(ExternalIdTotp, totp)
 
             auth_session, session_refresh = self._session_service.create_session(
                 account, subject
@@ -220,6 +209,41 @@ class AuthenticationService:
     def _login_subject(
         self, subject_type: Type[Subject], credential: CredentialSchema
     ) -> Coroutine[None, None, SessionRefreshSchema]: ...
+
+
+S = TypeVar("S", bound=Subject)
+
+
+def _get_one_subject_or_abort(
+    resources: IResourceContainer, subject_type: Type[S]
+) -> S:
+    subjects = resources.get_all(subject_type)
+    if not subjects:
+        raise ForbiddenException
+    if len(subjects) > 1:
+        raise RuntimeError
+
+    return subjects[0]
+
+
+def _get_one_account_or_abort(resources: IResourceContainer) -> Account:
+    accounts = resources.get_all(Account)
+    if not accounts:
+        raise ForbiddenException
+    if len(accounts) > 1:
+        raise RuntimeError
+
+    return accounts[0]
+
+
+def _get_one_auth_session_or_abort(resources: IResourceContainer) -> AuthSession:
+    auth_sessions = resources.get_all(AuthSession)
+    if not auth_sessions:
+        raise ForbiddenException
+    if len(auth_sessions) > 1:
+        raise RuntimeError
+
+    return auth_sessions[0]
 
 
 @overload

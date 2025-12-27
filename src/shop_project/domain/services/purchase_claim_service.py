@@ -1,3 +1,4 @@
+from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_summary import PurchaseSummary
@@ -12,8 +13,12 @@ class PurchaseClaimService:
         )
 
     def claim(
-        self, purchase_active: PurchaseActive, escrow_account: EscrowAccount
+        self,
+        employee: Employee,
+        purchase_active: PurchaseActive,
+        escrow_account: EscrowAccount,
     ) -> PurchaseSummary:
+
         if purchase_active.is_finalized():
             raise DomainException("Cannot claim finalized purchase")
 

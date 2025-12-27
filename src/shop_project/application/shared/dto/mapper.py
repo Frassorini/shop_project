@@ -1,5 +1,10 @@
 from typing import TypeVar, overload
 
+from shop_project.application.entities.account import Account
+from shop_project.application.entities.auth_session import AuthSession
+from shop_project.application.entities.claim_token import ClaimToken
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
+from shop_project.application.entities.task import Task
 from shop_project.application.shared.base_dto import BaseDTO, DTODynamicRegistry
 from shop_project.application.shared.dto.account_dto import AccountDTO
 from shop_project.application.shared.dto.auth_session_dto import AuthSessionDTO
@@ -45,11 +50,6 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummary,
 )
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.auth_session import AuthSession
-from shop_project.infrastructure.entities.claim_token import ClaimToken
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
-from shop_project.infrastructure.entities.task import Task
 
 T = TypeVar("T", bound=PersistableEntity)
 

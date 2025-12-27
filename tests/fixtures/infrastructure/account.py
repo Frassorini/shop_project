@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 from dishka.container import Container
 
+from shop_project.application.entities.account import Account
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
@@ -13,7 +14,6 @@ from shop_project.domain.interfaces.subject import (
 from shop_project.infrastructure.authentication.services.account_service import (
     AccountService,
 )
-from shop_project.infrastructure.entities.account import Account
 from tests.helpers import AggregateContainer
 
 

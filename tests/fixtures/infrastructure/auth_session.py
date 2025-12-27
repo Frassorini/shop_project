@@ -1,18 +1,32 @@
-from typing import Callable
+from typing import Awaitable, Callable
 from uuid import UUID
 
 import pytest
 from dishka.container import Container
 
+from shop_project.application.entities.account import Account
+from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.domain.entities.customer import Customer
+from shop_project.domain.helpers.subject_mapper import get_subject_enum
 from shop_project.domain.interfaces.subject import (
     Subject,
 )
 from shop_project.infrastructure.authentication.services.session_service import (
     SessionService,
 )
-from shop_project.infrastructure.entities.account import Account
 from tests.helpers import AggregateContainer
+
+
+@pytest.fixture
+def get_subject_access_token_payload() -> (
+    Callable[[Customer], Awaitable[AccessTokenPayload]]
+):
+    async def _inner(subject: Subject) -> AccessTokenPayload:
+        return AccessTokenPayload(
+            subject_type=get_subject_enum(subject), account_id=subject.entity_id
+        )
+
+    return _inner
 
 
 @pytest.fixture

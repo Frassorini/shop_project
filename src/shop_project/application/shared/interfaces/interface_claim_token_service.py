@@ -1,7 +1,7 @@
 from typing import Protocol
 from uuid import UUID
 
-from shop_project.infrastructure.entities.claim_token import ClaimToken
+from shop_project.application.entities.claim_token import ClaimToken
 
 
 class IClaimTokenService(Protocol):

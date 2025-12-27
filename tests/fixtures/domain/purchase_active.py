@@ -5,6 +5,7 @@ from dishka.container import Container
 
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
+from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
 from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.purchase_activation_service import (
@@ -74,6 +75,24 @@ def purchase_active_filled_container_factory(
             },
         )
         container.merge(purchase_draft_container)
+
+        return container
+
+    return factory
+
+
+@pytest.fixture
+def escrow_account_container_factory(
+    purchase_active_filled_container_factory: Callable[[], AggregateContainer],
+) -> Callable[[], AggregateContainer]:
+    def factory() -> AggregateContainer:
+        purchase_container = purchase_active_filled_container_factory()
+
+        container = AggregateContainer(
+            purchase_container.dependencies[EscrowAccount][0], dependencies={}
+        )
+        container.merge(purchase_container)
+        container.dependencies[PurchaseActive].pop(0)
 
         return container
 

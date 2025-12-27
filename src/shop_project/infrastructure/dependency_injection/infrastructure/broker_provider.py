@@ -4,14 +4,8 @@ from typing import AsyncGenerator, Callable
 from dishka import BaseScope, Component, Provider, Scope, alias, provide
 from taskiq import AsyncBroker
 
-from shop_project.application.shared.interfaces.interface_task_factory import (
-    ITaskFactory,
-)
 from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
-from shop_project.infrastructure.background_tasks.application_task_factory import (
-    TaskFactory,
-)
-from shop_project.infrastructure.background_tasks.application_task_sender_service import (
+from shop_project.infrastructure.background_tasks.task_sender_service import (
     TaskSender,
 )
 
@@ -43,9 +37,4 @@ class BrokerProvider(Provider):
     async def task_sender(self, broker: AsyncBroker) -> TaskSender:
         return TaskSender(broker)
 
-    @provide(scope=Scope.REQUEST)
-    async def task_factory(self) -> TaskFactory:
-        return TaskFactory()
-
     task_sender_proto = alias(TaskSender, provides=ITaskSender)
-    task_factory_proto = alias(TaskFactory, provides=ITaskFactory)

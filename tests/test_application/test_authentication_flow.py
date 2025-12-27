@@ -9,6 +9,7 @@ from shop_project.application.authentication.commands.authentication_service imp
 from shop_project.application.authentication.schemas.session_refresh_schema import (
     SessionRefreshSchema,
 )
+from shop_project.application.entities.auth_session import AuthSession
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
@@ -17,7 +18,6 @@ from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
-from shop_project.infrastructure.entities.auth_session import AuthSession
 from shop_project.shared.phone_str import validate_phone_number
 
 

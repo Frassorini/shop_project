@@ -5,6 +5,7 @@ from uuid import uuid4
 from plum import dispatch, overload
 from pydantic import SecretStr
 
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.shared.interfaces.interface_notification import (
     EmailNotificationService,
     SMSNotificationService,
@@ -19,7 +20,6 @@ from shop_project.infrastructure.cryptography.interfaces.code_generator import (
 from shop_project.infrastructure.cryptography.interfaces.password_hasher import (
     PasswordHasher,
 )
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 from shop_project.infrastructure.notifications.messages.email_message import (
     EmailMessage,
 )

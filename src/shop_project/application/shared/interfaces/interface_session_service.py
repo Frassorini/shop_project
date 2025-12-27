@@ -3,14 +3,12 @@ from typing import Protocol
 
 from pydantic import SecretStr
 
-from shop_project.domain.interfaces.subject import Subject
-from shop_project.infrastructure.authentication.helpers.access_token_payload import (
-    AccessTokenPayload,
-)
-from shop_project.infrastructure.entities.account import Account
-from shop_project.infrastructure.entities.auth_session import (
+from shop_project.application.entities.account import Account
+from shop_project.application.entities.auth_session import (
     AuthSession,
 )
+from shop_project.application.shared.access_token_payload import AccessTokenPayload
+from shop_project.domain.interfaces.subject import Subject
 
 
 @dataclass(frozen=True)

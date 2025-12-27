@@ -4,8 +4,12 @@ from shop_project.application.authentication.schemas.totp_request_schema import 
     EmailTotpRequestSchema,
     SmsTotpRequestSchema,
 )
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.shared.interfaces.interface_query_builder import (
     IQueryBuilder,
+)
+from shop_project.application.shared.interfaces.interface_resource_container import (
+    IResourceContainer,
 )
 from shop_project.application.shared.interfaces.interface_totp_service import (
     ITotpService,
@@ -13,8 +17,14 @@ from shop_project.application.shared.interfaces.interface_totp_service import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
-from shop_project.infrastructure.exceptions import ResourcesException
+
+
+def delete_old_totp(resources: IResourceContainer, external_id: str) -> None:
+    totp = resources.get_one_or_none_by_attribute(
+        ExternalIdTotp, "external_id", external_id
+    )
+    if totp:
+        resources.delete(ExternalIdTotp, totp)
 
 
 class TotpChallengeService:
@@ -29,10 +39,6 @@ class TotpChallengeService:
         self._totp_service = totp_service
 
     async def begin_sms_challenge(self, totp_request: SmsTotpRequestSchema) -> None:
-        totp_pair = self._totp_service.create_sms_code_message_pair(
-            phone_number=totp_request.identifier
-        )
-
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(ExternalIdTotp)
@@ -42,16 +48,13 @@ class TotpChallengeService:
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
 
-            try:
-                totp_old = resources.get_one_by_attribute(
-                    ExternalIdTotp, "external_id", totp_request.identifier
-                )
-            except ResourcesException:
-                pass
-            else:
-                resources.delete(ExternalIdTotp, totp_old)
+            delete_old_totp(resources, totp_request.identifier)
+
+            totp_pair = self._totp_service.create_sms_code_message_pair(
+                phone_number=totp_request.identifier
+            )
 
             resources.put(ExternalIdTotp, totp_pair.totp)
 
@@ -60,10 +63,6 @@ class TotpChallengeService:
         await self._totp_service.send_totp_message(totp_pair.message)
 
     async def begin_email_challenge(self, totp_request: EmailTotpRequestSchema) -> None:
-        totp_pair = self._totp_service.create_email_code_message_pair(
-            email=totp_request.identifier
-        )
-
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(ExternalIdTotp)
@@ -73,16 +72,13 @@ class TotpChallengeService:
             .for_update()
             .build()
         ) as uow:
-            resources = uow.get_resorces()
+            resources = uow.get_resources()
 
-            try:
-                totp_old = resources.get_one_by_attribute(
-                    ExternalIdTotp, "external_id", totp_request.identifier
-                )
-            except ResourcesException:
-                pass
-            else:
-                resources.delete(ExternalIdTotp, totp_old)
+            delete_old_totp(resources, totp_request.identifier)
+
+            totp_pair = self._totp_service.create_email_code_message_pair(
+                email=totp_request.identifier
+            )
 
             resources.put(ExternalIdTotp, totp_pair.totp)
 

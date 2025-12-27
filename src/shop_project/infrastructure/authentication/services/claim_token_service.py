@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+from shop_project.application.entities.claim_token import ClaimToken
 from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
 )
@@ -10,7 +11,6 @@ from shop_project.infrastructure.cryptography.interfaces.token_fingerprint_calcu
 from shop_project.infrastructure.cryptography.interfaces.token_generator import (
     TokenGenerator,
 )
-from shop_project.infrastructure.entities.claim_token import ClaimToken
 
 
 class ClaimTokenService(IClaimTokenService):

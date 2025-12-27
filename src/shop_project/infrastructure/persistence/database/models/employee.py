@@ -15,6 +15,7 @@ class Employee(Base):
 
     entity_id: Mapped[UUID] = mapped_column(nullable=False)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
+    state: Mapped[str] = mapped_column(String(50), nullable=False)
 
     account: Mapped["Account"] = relationship(
         lazy="raise",
@@ -25,9 +26,10 @@ class Employee(Base):
         ForeignKeyConstraint(["entity_id"], ["account.entity_id"]),
     )
 
-    def repopulate(self, entity_id: UUID, name: str, **kw: Any) -> None:
+    def repopulate(self, entity_id: UUID, name: str, state: str, **kw: Any) -> None:
         self.entity_id = entity_id
         self.name = name
+        self.state = state
 
     def __init__(self, **kw: Any) -> None:
         super().__init__()

@@ -4,8 +4,8 @@ from uuid import UUID
 
 from pydantic import SecretStr
 
+from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.shared.base_dto import BaseDTO
-from shop_project.infrastructure.entities.external_id_totp import ExternalIdTotp
 
 
 class ExternalIdTotpDTO(BaseDTO[ExternalIdTotp]):
