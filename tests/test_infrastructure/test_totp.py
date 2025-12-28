@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from dishka.async_container import AsyncContainer
@@ -29,7 +29,7 @@ async def test_email(async_container: AsyncContainer):
 
     assert totp_service.verify_totp(pair.totp, code)
 
-    pair.totp.expiration = datetime.now() - timedelta(days=1)
+    pair.totp.expiration = datetime.now(tz=timezone.utc) - timedelta(days=1)
     assert not totp_service.verify_totp(pair.totp, code)
 
 
@@ -48,5 +48,5 @@ async def test_sms(async_container: AsyncContainer):
 
     assert totp_service.verify_totp(pair.totp, code)
 
-    pair.totp.expiration = datetime.now() - timedelta(days=1)
+    pair.totp.expiration = datetime.now(tz=timezone.utc) - timedelta(days=1)
     assert not totp_service.verify_totp(pair.totp, code)

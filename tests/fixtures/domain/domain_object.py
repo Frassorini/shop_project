@@ -6,6 +6,7 @@ from shop_project.application.entities.account import Account
 from shop_project.application.entities.auth_session import AuthSession
 from shop_project.application.entities.claim_token import ClaimToken
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.entities.task import Task
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
@@ -25,6 +26,7 @@ def domain_object_factory(
     task_container_factory: Callable[..., AggregateContainer],
     claim_token_container_factory: Callable[..., AggregateContainer],
     account_container_factory: Callable[..., AggregateContainer],
+    operation_log_container_factory: Callable[..., AggregateContainer],
     external_id_totp_container_factory: Callable[..., AggregateContainer],
     auth_session_container_factory: Callable[..., AggregateContainer],
     manager_container_factory: Callable[..., AggregateContainer],
@@ -40,6 +42,8 @@ def domain_object_factory(
     def factory(model_type: Type[PersistableEntity]) -> AggregateContainer:
         if model_type is Task:
             return task_container_factory()
+        if model_type is OperationLog:
+            return operation_log_container_factory()
         if model_type is ClaimToken:
             return claim_token_container_factory()
         if model_type is Account:

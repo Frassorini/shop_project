@@ -14,10 +14,16 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.operation_log_payload_factories.shipment import (
+    create_activate_shipment_payload,
+    create_cancel_shipment_payload,
+    create_receive_shipment_payload,
+)
 from shop_project.application.shared.scenarios.entity import (
     get_one_or_raise_forbidden,
     get_one_or_raise_not_found,
 )
+from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.subject import (
     ensure_subject_type_or_raise_forbidden,
 )
@@ -88,6 +94,11 @@ class ShipmentManagerService:
 
             resources.put(Shipment, shipment)
 
+            operation_log = create_activate_shipment_payload(
+                access_payload, to_dto(shipment)
+            )
+            log_operation(resources, operation_log)
+
             uow.mark_commit()
 
         return ShipmentSchema.model_validate(to_dto(shipment))
@@ -117,6 +128,11 @@ class ShipmentManagerService:
 
             resources.put(ShipmentSummary, summary)
             resources.delete(Shipment, shipment)
+
+            operation_log = create_cancel_shipment_payload(
+                access_payload, to_dto(shipment)
+            )
+            log_operation(resources, operation_log)
 
             uow.mark_commit()
 
@@ -152,6 +168,11 @@ class ShipmentManagerService:
 
             resources.put(ShipmentSummary, summary)
             resources.delete(Shipment, shipment)
+
+            operation_log = create_receive_shipment_payload(
+                access_payload, to_dto(shipment)
+            )
+            log_operation(resources, operation_log)
 
             uow.mark_commit()
 

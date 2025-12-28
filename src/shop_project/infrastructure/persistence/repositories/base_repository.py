@@ -117,17 +117,19 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
 
         for dto in items:
             entity = self.session.identity_map.get(
-                self._get_identity_key(self.orm_type, dto.entity_id)
+                self._get_identity_key(self.orm_type, dto)
             )
+
             if not entity:
-                continue
+                raise RuntimeError(
+                    f"Entity of type {self.dto_type.__name__} {dto.entity_id} not found for updating"
+                )
 
             entity_id_field = getattr(entity, "entity_id", None)
             if not entity_id_field:
                 raise RuntimeError(
                     f"Parent entity {self.orm_type.__name__} has no entity_id field"
                 )
-
             entity.repopulate(**dto.model_dump())
 
             for child_descriptor in self.child_descriptors:
@@ -180,7 +182,7 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
 
         for dto in items:
             entity = self.session.identity_map.get(
-                self._get_identity_key(self.orm_type, dto.entity_id)
+                self._get_identity_key(self.orm_type, dto)
             )
 
             if not entity:
@@ -274,8 +276,12 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
         return query
 
     @staticmethod
-    def _get_identity_key(model_type: Type[BO], *args: Any) -> _IdentityKeyType[BO]:
-        return inspect(model_type).identity_key_from_primary_key((*args,))
+    def _get_identity_key(model_type: type[BO], dto: BD) -> _IdentityKeyType[BO]:
+        mapper = inspect(model_type)
+
+        pk_values = tuple(getattr(dto, column.key) for column in mapper.primary_key)
+
+        return mapper.identity_key_from_primary_key(pk_values)
 
     def __init_subclass__(cls):
         if cls.is_needed_to_register():

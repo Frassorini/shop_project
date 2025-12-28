@@ -10,10 +10,15 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.operation_log_payload_factories.employee import (
+    create_authorize_employee_payload,
+    create_unauthorize_employee_payload,
+)
 from shop_project.application.shared.scenarios.entity import (
     get_one_or_raise_forbidden,
     get_one_or_raise_not_found,
 )
+from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.subject import (
     ensure_subject_type_or_raise_forbidden,
 )
@@ -54,6 +59,11 @@ class EmployeeManagerService:
 
             employee.authorize()
 
+            operation_log = create_authorize_employee_payload(
+                access_payload, to_dto(employee)
+            )
+            log_operation(resources, operation_log)
+
             uow.mark_commit()
 
         return EmployeeSchema.model_validate(to_dto(employee))
@@ -80,6 +90,11 @@ class EmployeeManagerService:
             employee = get_one_or_raise_not_found(resources, Employee, employee_id)
 
             employee.unauthorize()
+
+            operation_log = create_unauthorize_employee_payload(
+                access_payload, to_dto(employee)
+            )
+            log_operation(resources, operation_log)
 
             uow.mark_commit()
 

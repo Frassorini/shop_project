@@ -4,6 +4,7 @@ from shop_project.application.entities.account import Account
 from shop_project.application.entities.auth_session import AuthSession
 from shop_project.application.entities.claim_token import ClaimToken
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.entities.task import Task
 from shop_project.application.shared.base_dto import BaseDTO, DTODynamicRegistry
 from shop_project.application.shared.dto.account_dto import AccountDTO
@@ -14,6 +15,7 @@ from shop_project.application.shared.dto.employee_dto import EmployeeDTO
 from shop_project.application.shared.dto.escrow_account_dto import EscrowAccountDTO
 from shop_project.application.shared.dto.external_id_totp_dto import ExternalIdTotpDTO
 from shop_project.application.shared.dto.manager_dto import ManagerDTO
+from shop_project.application.shared.dto.operation_log_dto import OperationLogDTO
 from shop_project.application.shared.dto.product_dto import ProductDTO
 from shop_project.application.shared.dto.purchase_active_dto import (
     PurchaseActiveDTO,
@@ -56,6 +58,8 @@ T = TypeVar("T", bound=PersistableEntity)
 
 @overload
 def to_dto(entity: Task) -> TaskDTO: ...
+@overload
+def to_dto(entity: OperationLog) -> OperationLogDTO: ...
 @overload
 def to_dto(entity: ClaimToken) -> ClaimTokenDTO: ...
 @overload

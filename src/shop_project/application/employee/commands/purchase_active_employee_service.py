@@ -21,9 +21,13 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.operation_log_payload_factories.purchase import (
+    create_claim_purchase_payload,
+)
 from shop_project.application.shared.scenarios.entity import (
     get_one_or_raise_forbidden,
 )
+from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.purchase import (
     get_escrow_purchase_active_map,
 )
@@ -109,6 +113,12 @@ class PurchaseActiveEmployeeService:
                 resources.delete(PurchaseActive, purchase)
                 resources.put(PurchaseSummary, summary)
                 summaries_with_escrows.append((summary, escrow))
+
+            for escrow, purchase in escrow_purchase_map:
+                operation_log = create_claim_purchase_payload(
+                    access_payload, to_dto(escrow)
+                )
+                log_operation(resources, operation_log)
 
             uow.mark_commit()
 

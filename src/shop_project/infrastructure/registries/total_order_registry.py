@@ -4,6 +4,7 @@ from shop_project.application.entities.account import Account
 from shop_project.application.entities.auth_session import AuthSession
 from shop_project.application.entities.claim_token import ClaimToken
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.entities.task import Task
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
@@ -19,6 +20,7 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 _REGISTRY: list[Type[PersistableEntity]] = [
     Task,
+    OperationLog,
     ClaimToken,
     Account,
     ExternalIdTotp,

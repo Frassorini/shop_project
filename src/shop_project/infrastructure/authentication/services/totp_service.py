@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Coroutine
 from uuid import uuid4
 
@@ -49,7 +49,7 @@ class TotpService(ITotpService):
         self._sms_sender = sms_sender
 
     def verify_totp(self, totp: ExternalIdTotp, code: str) -> bool:
-        if totp.expiration < datetime.now():
+        if totp.expiration < datetime.now(tz=timezone.utc):
             return False
 
         return self._password_hasher.verify(code, totp.totp_verifier.get_secret_value())
@@ -115,6 +115,6 @@ class TotpService(ITotpService):
             external_id_type=external_id_type,
             external_id=external_id,
             totp_verifier=SecretStr(self._password_hasher.hash(totp_secret)),
-            issued_at=datetime.now(),
-            expiration=datetime.now() + self._totp_ttl,
+            issued_at=datetime.now(tz=timezone.utc),
+            expiration=datetime.now(tz=timezone.utc) + self._totp_ttl,
         )

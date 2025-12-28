@@ -27,7 +27,12 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.operation_log_payload_factories.purchase import (
+    create_activate_purchase_payload,
+    create_manual_unclaim_purchase_payload,
+)
 from shop_project.application.shared.scenarios.entity import get_one_or_raise_not_found
+from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.subject import (
     ensure_subject_type_or_raise_forbidden,
 )
@@ -129,6 +134,16 @@ class PurchaseActiveCustomerService:
             resources.put(PurchaseActive, activation.purchase_active)
             resources.put(EscrowAccount, activation.escrow_account)
 
+            operation_log = create_activate_purchase_payload(
+                access_token_payload=access_payload,
+                purchase_active_dto=to_dto(activation.purchase_active),
+                escrow_account_dto=to_dto(activation.escrow_account),
+                product_dtos=[
+                    to_dto(product) for product in resources.get_all(Product)
+                ],
+            )
+            log_operation(resources, operation_log)
+
             uow.mark_commit()
 
         payment_request = CreatePaymentRequest(
@@ -183,6 +198,12 @@ class PurchaseActiveCustomerService:
 
             resources.delete(PurchaseActive, purchase_active)
             resources.put(PurchaseSummary, summary)
+
+            operation_log = create_manual_unclaim_purchase_payload(
+                purchase_summary_dto=to_dto(summary),
+                escrow_account_dto=to_dto(escrow_account),
+            )
+            log_operation(resources, operation_log)
 
             uow.mark_commit()
 

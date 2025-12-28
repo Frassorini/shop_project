@@ -11,6 +11,10 @@ from typing import (
 import pytest
 from dishka.async_container import AsyncContainer
 
+from shop_project.application.entities.operation_log.operation_code import (
+    OperationCodeEnum,
+)
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.manager.commands.product_manager_service import (
     ProductManagerService,
 )
@@ -38,6 +42,7 @@ async def test_product_manager_create(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     product_service = await async_container.get(ProductManagerService)
     manager_container = manager_container_factory()
@@ -64,6 +69,10 @@ async def test_product_manager_create(
     assert product_schema.entity_id == product.entity_id
     assert product_schema.name == product.name
 
+    logs = await ensure_operation_log_amount(1)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.CREATE_PRODUCT.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -77,6 +86,7 @@ async def test_product_manager_delete(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     product_service = await async_container.get(ProductManagerService)
     manager_container = manager_container_factory()
@@ -99,6 +109,11 @@ async def test_product_manager_delete(
     product = await uow_get_all_single_model(Product)
     assert not product
 
+    logs = await ensure_operation_log_amount(2)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.DELETE_PRODUCT.value in codes
+    assert OperationCodeEnum.CREATE_PRODUCT.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -112,6 +127,7 @@ async def test_product_manager_change(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     product_service = await async_container.get(ProductManagerService)
     manager_container = manager_container_factory()
@@ -144,3 +160,8 @@ async def test_product_manager_change(
     assert product
     assert product_schema.price == product.price
     assert product_schema.price != create_product_schema.price
+
+    logs = await ensure_operation_log_amount(2)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.UPDATE_PRODUCT.value in codes
+    assert OperationCodeEnum.CREATE_PRODUCT.value in codes

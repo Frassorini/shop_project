@@ -21,6 +21,7 @@ pytest_plugins = [
     "tests.fixtures.application.totp",
     "tests.fixtures.application.registration",
     "tests.fixtures.application.purchase_activation",
+    "tests.fixtures.application.operation_log",
     "tests.fixtures.infrastructure.unit_of_work",
     "tests.fixtures.infrastructure.database",
     "tests.fixtures.infrastructure.broker",

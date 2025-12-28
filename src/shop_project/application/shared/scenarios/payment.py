@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Sequence
 
 from shop_project.application.shared.interfaces.interface_payment_gateway import (
     IPaymentGateway,
@@ -29,7 +29,7 @@ async def get_state_map(
 
 async def get_payment_state_map(
     resources: IResourceContainer, payment_gateway: IPaymentGateway
-) -> dict[PaymentState, list[Any]]:
+) -> dict[PaymentState, list[EscrowAccount]]:
     escrow_accounts = resources.get_all(EscrowAccount)
     state_map = await get_state_map(payment_gateway, escrow_accounts)
     return state_map

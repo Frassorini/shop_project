@@ -25,6 +25,10 @@ from shop_project.application.customer.schemas.purchase_active_schema import (
     PurchaseActivationSchema,
     PurchaseActiveSchema,
 )
+from shop_project.application.entities.operation_log.operation_code import (
+    OperationCodeEnum,
+)
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.entities.task import Task, create_task
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
@@ -56,6 +60,7 @@ async def test_purchase_flow_activate_purchase(
         [Type[PersistableEntity], str, Any], Awaitable[PersistableEntity]
     ],
     customer_container_factory: Callable[[], AggregateContainer],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -76,6 +81,10 @@ async def test_purchase_flow_activate_purchase(
     assert purchase_schema.entity_id == purchase_active.entity_id
     assert purchase_schema.price == escrow_account.total_amount
 
+    logs = await ensure_operation_log_amount(1)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -89,6 +98,7 @@ async def test_purchase_flow_cancel_payment(
     ],
     inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
     customer_container_factory: Callable[[], AggregateContainer],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -117,6 +127,10 @@ async def test_purchase_flow_cancel_payment(
     assert purchase_schema.entity_id == purchase_active.entity_id
     assert purchase_schema.price == escrow_account.total_amount
 
+    logs = await ensure_operation_log_amount(1)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -133,6 +147,7 @@ async def test_purchase_flow_finalize_cancelled(
     ],
     inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
     customer_container_factory: Callable[[], AggregateContainer],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -164,6 +179,11 @@ async def test_purchase_flow_finalize_cancelled(
     assert summary.reason == PurchaseSummaryReason.PAYMENT_CANCELLED
     assert escrow_account.state == EscrowAccountState.FINALIZED
 
+    logs = await ensure_operation_log_amount(2)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+    assert OperationCodeEnum.CANCEL_PURCHASE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -177,6 +197,7 @@ async def test_purchase_flow_confirm_payment(
     ],
     inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
     customer_container_factory: Callable[[], AggregateContainer],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -205,6 +226,11 @@ async def test_purchase_flow_confirm_payment(
     assert purchase_schema.entity_id == purchase_active.entity_id
     assert purchase_schema.price == escrow_account.total_amount
 
+    logs = await ensure_operation_log_amount(2)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+    assert OperationCodeEnum.PAY_PURCHASE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -224,6 +250,7 @@ async def test_purchase_flow_manual_unclaim(
         [Subject], Awaitable[AccessTokenPayload]
     ],
     customer_container_factory: Callable[[], AggregateContainer],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -254,6 +281,12 @@ async def test_purchase_flow_manual_unclaim(
     assert summary.reason == PurchaseSummaryReason.NOT_CLAIMED
     assert escrow_account.state == EscrowAccountState.REFUNDING
 
+    logs = await ensure_operation_log_amount(3)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+    assert OperationCodeEnum.PAY_PURCHASE.value in codes
+    assert OperationCodeEnum.MANUAL_UNCLAIM_PURCHASE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -270,6 +303,7 @@ async def test_purchase_flow_auto_unclaim(
     ],
     inmem_save_and_send_task: Callable[[Task], Awaitable[None]],
     customer_container_factory: Callable[[], AggregateContainer],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -303,6 +337,12 @@ async def test_purchase_flow_auto_unclaim(
     assert summary.reason == PurchaseSummaryReason.NOT_CLAIMED
     assert escrow_account.state == EscrowAccountState.REFUNDING
 
+    logs = await ensure_operation_log_amount(3)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+    assert OperationCodeEnum.PAY_PURCHASE.value in codes
+    assert OperationCodeEnum.AUTO_UNCLAIM_PURCHASE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -322,6 +362,7 @@ async def test_purchase_flow_confirm_refund(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     customer_container: AggregateContainer = customer_container_factory()
     customer: Customer = (
@@ -355,3 +396,10 @@ async def test_purchase_flow_confirm_refund(
     )  # pyright: ignore[reportAssignmentType]
     assert summary.reason == PurchaseSummaryReason.NOT_CLAIMED
     assert escrow_account.state == EscrowAccountState.FINALIZED
+
+    logs = await ensure_operation_log_amount(4)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+    assert OperationCodeEnum.PAY_PURCHASE.value in codes
+    assert OperationCodeEnum.MANUAL_UNCLAIM_PURCHASE.value in codes
+    assert OperationCodeEnum.REFUND_PURCHASE.value in codes

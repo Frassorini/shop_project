@@ -26,6 +26,10 @@ from shop_project.application.customer.schemas.purchase_summary_schema import (
 from shop_project.application.employee.commands.purchase_active_employee_service import (
     PurchaseActiveEmployeeService,
 )
+from shop_project.application.entities.operation_log.operation_code import (
+    OperationCodeEnum,
+)
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.entities.task import Task, create_task
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.interfaces.interface_task_sender import ITaskSender
@@ -67,6 +71,7 @@ async def test_purchase_flow_claim(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     employee_container: AggregateContainer = employee_container_factory()
     employee: Employee = (
@@ -110,3 +115,9 @@ async def test_purchase_flow_claim(
     )  # pyright: ignore[reportAssignmentType]
     assert summary.reason == PurchaseSummaryReason.CLAIMED
     assert escrow_account.state == EscrowAccountState.FINALIZED
+
+    logs = await ensure_operation_log_amount(3)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_PURCHASE.value in codes
+    assert OperationCodeEnum.PAY_PURCHASE.value in codes
+    assert OperationCodeEnum.CLAIM_PURCHASE.value in codes

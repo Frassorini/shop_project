@@ -3,12 +3,17 @@ from typing import (
     Awaitable,
     Callable,
     Coroutine,
+    Sequence,
     Type,
 )
 
 import pytest
 from dishka.async_container import AsyncContainer
 
+from shop_project.application.entities.operation_log.operation_code import (
+    OperationCodeEnum,
+)
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.manager.commands.employee_manager_service import (
     EmployeeManagerService,
 )
@@ -33,6 +38,7 @@ async def test_employee_manager_service_authorize(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     manager_container = manager_container_factory()
     manager: Manager = (
@@ -58,6 +64,10 @@ async def test_employee_manager_service_authorize(
     assert employee_new.entity_id == employee.entity_id
     assert employee_new.is_authorized()
 
+    logs = await ensure_operation_log_amount(1)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.AUTHORIZE_EMPLOYEE.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -72,6 +82,7 @@ async def test_employee_manager_service_unauthorize(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     manager_container = manager_container_factory()
     manager: Manager = (
@@ -97,3 +108,7 @@ async def test_employee_manager_service_unauthorize(
     assert employee_new.name == employee_schema.name
     assert employee_new.entity_id == employee.entity_id
     assert not employee_new.is_authorized()
+
+    logs = await ensure_operation_log_amount(1)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.UNAUTHORIZE_EMPLOYEE.value in codes

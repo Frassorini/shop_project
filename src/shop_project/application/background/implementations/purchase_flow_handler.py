@@ -8,6 +8,7 @@ from shop_project.application.background.base_task_handler import (
 )
 from shop_project.application.entities.task import Task
 from shop_project.application.exceptions import RetryException
+from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_payment_gateway import (
     CreatePaymentRequest,
     IPaymentGateway,
@@ -19,6 +20,13 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.operation_log_payload_factories.purchase import (
+    create_auto_unclaim_purchase_payload,
+    create_cancel_purchase_payload,
+    create_pay_purchase_payload,
+    create_refund_purchase_payload,
+)
+from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.payment import (
     get_payment_state_map,
 )
@@ -94,6 +102,10 @@ class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
                 ]
             )
 
+            for escrow_account in state_map.get(PaymentState.PAID, []):
+                operation_log = create_pay_purchase_payload(to_dto(escrow_account))
+                log_operation(resources, operation_log)
+
             uow.mark_commit()
 
         _handle_unexpected_states(
@@ -162,6 +174,10 @@ class BatchFinalizeNotPaidTasksHandler(BaseTaskHandler[NullTaskParams]):
                 resources.delete(PurchaseActive, purchase)
                 resources.put(PurchaseSummary, summary)
 
+            for escrow, purchase in escrow_purchase_map:
+                operation_log = create_cancel_purchase_payload(to_dto(escrow))
+                log_operation(resources, operation_log)
+
             uow.mark_commit()
 
 
@@ -228,6 +244,18 @@ class BatchPaidReservationTimeOutTaskHandler(BaseTaskHandler[NullTaskParams]):
                 [str(item[0].entity_id) for item in escrow_purchase_map]
             )
 
+            for escrow, _ in escrow_purchase_map:
+                summary: PurchaseSummary = resources.get_one_by_attribute(
+                    PurchaseSummary, "escrow_account_id", escrow.entity_id
+                )
+                operation_log = create_auto_unclaim_purchase_payload(
+                    purchase_summary_dto=to_dto(summary),
+                    escrow_account_dto=to_dto(escrow),
+                )
+                log_operation(resources, operation_log)
+
+            uow.mark_commit()
+
             uow.mark_commit()
 
 
@@ -275,6 +303,10 @@ class BatchWaitRefundTaskHandler(BaseTaskHandler[NullTaskParams]):
             await self._payment_gateway.start_refunds(
                 [str(item.entity_id) for item in state_map.get(PaymentState.PAID, [])]
             )
+
+            for escrow_account in state_map.get(PaymentState.REFUNDED, []):
+                operation_log = create_refund_purchase_payload(to_dto(escrow_account))
+                log_operation(resources, operation_log)
 
             uow.mark_commit()
 

@@ -9,10 +9,16 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
+from shop_project.application.shared.operation_log_payload_factories.product import (
+    create_create_product_payload,
+    create_delete_product_payload,
+    create_update_product_payload,
+)
 from shop_project.application.shared.scenarios.entity import (
     get_one_or_raise_forbidden,
     get_one_or_raise_not_found,
 )
+from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.subject import (
     ensure_subject_type_or_raise_forbidden,
 )
@@ -61,6 +67,11 @@ class ProductManagerService:
 
             resources.put(Product, product)
 
+            operation_log = create_create_product_payload(
+                access_payload, to_dto(product)
+            )
+            log_operation(resources, operation_log)
+
             uow.mark_commit()
 
         return ProductSchema.model_validate(to_dto(product))
@@ -88,6 +99,12 @@ class ProductManagerService:
 
             for product in products:
                 resources.delete(Product, product)
+
+            for product in products:
+                operation_log = create_delete_product_payload(
+                    access_payload, to_dto(product)
+                )
+                log_operation(resources, operation_log)
 
             uow.mark_commit()
 
@@ -124,6 +141,11 @@ class ProductManagerService:
             )
 
             resources.put(Product, new_product)
+
+            operation_log = create_update_product_payload(
+                access_payload, to_dto(new_product)
+            )
+            log_operation(resources, operation_log)
 
             uow.mark_commit()
 

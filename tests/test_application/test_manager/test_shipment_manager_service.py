@@ -10,6 +10,10 @@ from typing import (
 import pytest
 from dishka.async_container import AsyncContainer
 
+from shop_project.application.entities.operation_log.operation_code import (
+    OperationCodeEnum,
+)
+from shop_project.application.entities.operation_log.operation_log import OperationLog
 from shop_project.application.manager.commands.shipment_manager_service import (
     ShipmentManagerService,
 )
@@ -44,6 +48,7 @@ async def test_shipment_manager_service_create(
     get_subject_access_token_payload: Callable[
         [Subject], Awaitable[AccessTokenPayload]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     purchase_draft_service = await async_container.get(ShipmentManagerService)
     manager_container = manager_container_factory()
@@ -82,6 +87,10 @@ async def test_shipment_manager_service_create(
     assert shipment.entity_id == shipment_schema.entity_id
     assert shipment.state == ShipmentState.ACTIVE
 
+    logs = await ensure_operation_log_amount(1)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_SHIPMENT.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -100,6 +109,7 @@ async def test_shipment_manager_service_cancel(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     purchase_draft_service = await async_container.get(ShipmentManagerService)
     manager_container = manager_container_factory()
@@ -143,6 +153,11 @@ async def test_shipment_manager_service_cancel(
     assert shipment_summary.entity_id == shipment_summary_schema.entity_id
     assert shipment_summary.reason == ShipmentSummaryReason.CANCELLED
 
+    logs = await ensure_operation_log_amount(2)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_SHIPMENT.value in codes
+    assert OperationCodeEnum.CANCEL_SHIPMENT.value in codes
+
 
 @pytest.mark.asyncio
 @pytest.mark.inmemory
@@ -161,6 +176,7 @@ async def test_shipment_manager_service_receive(
     uow_get_all_single_model: Callable[
         [Type[PersistableEntity]], Awaitable[Sequence[PersistableEntity]]
     ],
+    ensure_operation_log_amount: Callable[[int], Awaitable[Sequence[OperationLog]]],
 ) -> None:
     purchase_draft_service = await async_container.get(ShipmentManagerService)
     manager_container = manager_container_factory()
@@ -210,3 +226,8 @@ async def test_shipment_manager_service_receive(
         for new_item in products_new:
             if old_item.entity_id == new_item.entity_id:
                 assert new_item.amount == old_item.amount + 10
+
+    logs = await ensure_operation_log_amount(2)
+    codes = [log.operation_code for log in logs]
+    assert OperationCodeEnum.ACTIVATE_SHIPMENT.value in codes
+    assert OperationCodeEnum.RECEIVE_SHIPMENT.value in codes

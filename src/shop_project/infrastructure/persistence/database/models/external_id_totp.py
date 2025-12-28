@@ -1,11 +1,13 @@
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import SecretStr
-from sqlalchemy import DateTime, PrimaryKeyConstraint, String
+from sqlalchemy import PrimaryKeyConstraint, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from shop_project.infrastructure.persistence.database.models.base import Base
+from shop_project.infrastructure.persistence.database.utc_datetime import UTCDateTime
 
 
 class ExternalIdTotp(Base):
@@ -15,9 +17,11 @@ class ExternalIdTotp(Base):
     external_id_type: Mapped[str] = mapped_column(String(50), nullable=False)
     external_id: Mapped[str] = mapped_column(String(50), nullable=False)
     totp_verifier: Mapped[str] = mapped_column(String(255), nullable=False)
-    issued_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
-    expiration: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), nullable=False
+    issued_at: Mapped[datetime] = mapped_column(
+        UTCDateTime(timezone=True), nullable=False
+    )
+    expiration: Mapped[datetime] = mapped_column(
+        UTCDateTime(timezone=True), nullable=False
     )
 
     __table_args__ = (PrimaryKeyConstraint("entity_id"),)
@@ -28,8 +32,8 @@ class ExternalIdTotp(Base):
         external_id_type: str,
         external_id: str,
         totp_verifier: SecretStr,
-        issued_at: DateTime,
-        expiration: DateTime,
+        issued_at: datetime,
+        expiration: datetime,
         **kw: Any,
     ) -> None:
         self.entity_id = entity_id
