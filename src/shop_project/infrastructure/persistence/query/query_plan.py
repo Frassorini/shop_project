@@ -37,13 +37,18 @@ class QueryPlan(ABC, IQueryPlan):
         model_type: Type[PersistableEntity] | None,
         criteria: QueryCriteria | None,
         lock: QueryLock | None,
+        order_by: str | None,
+        order_by_desc: bool,
+        limit: int | None,
     ) -> None:
 
         model_type = _ensure_not_none(model_type, "model type not specified")
         criteria = _ensure_not_none(criteria, "criteria not specified")
         lock = _ensure_not_none(lock, "lock not specified")
 
-        query = ComposedQuery(model_type, criteria, lock)
+        query = ComposedQuery(
+            model_type, criteria, lock, order_by, order_by_desc, limit
+        )
 
         self._validate_query(query)
 

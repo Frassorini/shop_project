@@ -14,10 +14,17 @@ class ComposedQuery(BaseQuery):
         model_type: Type[PersistableEntity],
         criteria: QueryCriteria,
         lock: QueryLock,
+        order_by: str | None = None,
+        order_by_desc: bool = False,
+        limit: int | None = None,
     ) -> None:
         self.model_type: Type[PersistableEntity] = model_type
         self.criteria: QueryCriteria = criteria
         self.lock: QueryLock = lock
+        self.order_by: str | None = order_by
+        self.order_by_desc: bool = order_by_desc
+        self.limit: int | None = limit
+
         self._result: list[PersistableEntity] = []
         self._is_loaded: bool = False
 

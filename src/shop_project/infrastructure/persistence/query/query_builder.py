@@ -27,6 +27,9 @@ class QueryData:
     model_type: type | None
     criteria: QueryCriteria
     lock: QueryLock | None
+    order_by: str | None = None
+    order_by_desc: bool = False
+    limit: int | None = None
 
     @property
     def is_not_empty(self) -> bool:
@@ -57,6 +60,9 @@ class QueryBuilder(IQueryBuilder):
             self._current_query_data.model_type,
             self._current_query_data.criteria,
             self._current_query_data.lock,
+            self._current_query_data.order_by,
+            self._current_query_data.order_by_desc,
+            self._current_query_data.limit,
         )
 
         self._current_query_data = QueryData(None, QueryCriteria(), None)
@@ -86,6 +92,17 @@ class QueryBuilder(IQueryBuilder):
 
         return self
 
+    def order_by(self, attribute_name: str, desc: bool = False) -> Self:
+        self._current_query_data.order_by = attribute_name
+        self._current_query_data.order_by_desc = desc
+
+        return self
+
+    def limit(self, limit: int) -> Self:
+        self._current_query_data.limit = limit
+
+        return self
+
     def greater_than(self, attribute_name: str, value: Any) -> Self:
         provider = ValueContainer([value])
 
@@ -95,12 +112,10 @@ class QueryBuilder(IQueryBuilder):
 
         return self
 
-    def lesser_than(self, attribute_name: str, value: Any) -> Self:
+    def less_than(self, attribute_name: str, value: Any) -> Self:
         provider = ValueContainer([value])
 
-        self._current_query_data.criteria.criterion_lesser_than(
-            attribute_name, provider
-        )
+        self._current_query_data.criteria.criterion_less_than(attribute_name, provider)
 
         return self
 

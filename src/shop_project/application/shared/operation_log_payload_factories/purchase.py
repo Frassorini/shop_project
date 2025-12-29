@@ -72,9 +72,13 @@ def create_claim_purchase_payload(
 
 
 def create_manual_unclaim_purchase_payload(
-    purchase_summary_dto: PurchaseSummaryDTO, escrow_account_dto: EscrowAccountDTO
+    access_token_payload: AccessTokenPayload,
+    purchase_summary_dto: PurchaseSummaryDTO,
+    escrow_account_dto: EscrowAccountDTO,
 ) -> ManualUnclaimPurchaseOperationLogPayload:
     return ManualUnclaimPurchaseOperationLogPayload(
+        subject_type=access_token_payload.subject_type,
+        subject_id=access_token_payload.account_id,
         purchase_id=escrow_account_dto.entity_id,
         reason=purchase_summary_dto.reason,
     )

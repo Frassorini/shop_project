@@ -3,7 +3,7 @@ from typing import Any, Generic, Literal, Mapping, Type, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import Select, inspect
+from sqlalchemy import Column, Select, inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.orm._typing import _IdentityKeyType  # type: ignore
@@ -201,6 +201,12 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
 
     async def load(self, query: BaseQuery) -> list[BD]:
         if isinstance(query, ComposedQuery):
+            if query.limit is not None:
+                return await self._load_with_limit_subquery(query)
+
+            if query.order_by is not None:
+                raise ValueError("Order by is not supported without limit")
+
             aliases = {
                 child_descriptor.parent_dto_child_container_field_name: aliased(
                     child_descriptor.child_orm,
@@ -247,6 +253,57 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
 
         return result
 
+    async def _load_with_limit_subquery(self, query: ComposedQuery) -> list[BD]:
+        # --- создаём базовые структуры
+        child_tables = {
+            cd.parent_dto_child_container_field_name: cd.child_orm
+            for cd in self.child_descriptors
+        }
+        parent_refs = {
+            cd.parent_dto_child_container_field_name: cd.child_dto_parent_reference_field_name
+            for cd in self.child_descriptors
+        }
+
+        pk_column = self._get_primary_key_column(self.orm_type)
+
+        # Подзапрос для родителей с лимитом
+        parent_subq = select(pk_column).where(
+            query.criteria.to_sqlalchemy(
+                self.orm_type, child_tables=child_tables, parent_refs=parent_refs
+            )
+        )
+
+        if query.order_by is not None:
+            order_by_col = getattr(self.orm_type, query.order_by, None)
+            if order_by_col is None:
+                raise ValueError(f"Unknown order by field: {query.order_by}")
+            if getattr(query, "order_by_desc", False):
+                parent_subq = parent_subq.order_by(order_by_col.desc())
+            else:
+                parent_subq = parent_subq.order_by(order_by_col)
+
+        parent_subq = parent_subq.limit(query.limit).subquery()
+
+        # Основной запрос с joinedload детей
+        base_query = select(self.orm_type)
+        for cd in self.child_descriptors:
+            children_container_field = getattr(
+                self.orm_type,
+                cd.parent_dto_child_container_field_name,
+            )
+            base_query = base_query.options(joinedload(children_container_field))
+
+        base_query = base_query.where(
+            pk_column.in_(select(parent_subq.c[pk_column.key]))
+        )
+        base_query = self._apply_lock_mysql(base_query, query.lock)
+
+        result_raw = await self.session.execute(base_query)
+        result_orm = result_raw.scalars().unique().all()
+        result = [self.dto_type.model_validate(item) for item in result_orm]
+
+        return result
+
     async def load_scalars(self, query: CustomQuery) -> Any:
         result = await self.session.execute(query.compile_sqlalchemy())
         return result.scalars().unique().all()
@@ -282,6 +339,16 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
         pk_values = tuple(getattr(dto, column.key) for column in mapper.primary_key)
 
         return mapper.identity_key_from_primary_key(pk_values)
+
+    def _get_primary_key_column(self, model_type: type[BaseORM]) -> Column[Any]:
+        """
+        Возвращает столбец первичного ключа для модели.
+        Если составной PK, возвращает первый столбец.
+        """
+        pk_columns = inspect(model_type).primary_key
+        if not pk_columns:
+            raise ValueError(f"Модель {model_type.__name__} не имеет первичного ключа")
+        return pk_columns[0]
 
     def __init_subclass__(cls):
         if cls.is_needed_to_register():

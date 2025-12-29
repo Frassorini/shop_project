@@ -200,6 +200,7 @@ class PurchaseActiveCustomerService:
             resources.put(PurchaseSummary, summary)
 
             operation_log = create_manual_unclaim_purchase_payload(
+                access_token_payload=access_payload,
                 purchase_summary_dto=to_dto(summary),
                 escrow_account_dto=to_dto(escrow_account),
             )

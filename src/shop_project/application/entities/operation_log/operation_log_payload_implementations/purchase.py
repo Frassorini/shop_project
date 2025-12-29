@@ -42,14 +42,14 @@ class ClaimPurchaseOperationLogPayload(
 ):
     subject_type: SubjectEnum
     subject_id: UUID
-    subject_type: SubjectEnum
-    subject_id: UUID
     purchase_id: UUID
 
 
 class ManualUnclaimPurchaseOperationLogPayload(
     BaseOperationLogPayload[OperationCodeEnum.MANUAL_UNCLAIM_PURCHASE]
 ):
+    subject_type: SubjectEnum
+    subject_id: UUID
     purchase_id: UUID
     reason: str
 

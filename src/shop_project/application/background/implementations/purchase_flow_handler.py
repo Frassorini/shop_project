@@ -214,7 +214,7 @@ class BatchPaidReservationTimeOutTaskHandler(BaseTaskHandler[NullTaskParams]):
             .load(PurchaseActive)
             .from_previous()
             .and_()
-            .lesser_than("reserved_until", datetime.now(tz=timezone.utc))
+            .less_than("reserved_until", datetime.now(tz=timezone.utc))
             .for_update()
             .load(Product)
             .from_previous()

@@ -39,6 +39,9 @@ from shop_project.application.manager.commands.product_manager_service import (
 from shop_project.application.manager.commands.shipment_manager_service import (
     ShipmentManagerService,
 )
+from shop_project.application.manager.queries.operation_log_read_service import (
+    OperationLogReadService,
+)
 from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
 )
@@ -234,6 +237,17 @@ class ApplicationServiceProvider(Provider):
             shipment_activation_service=shipment_activation_service,
             shipment_cancel_service=shipment_cancel_service,
             shipment_receive_service=shipment_receive_service,
+        )
+
+    @provide
+    async def operation_log_read_service(
+        self,
+        unit_of_work_factory: IUnitOfWorkFactory,
+        query_builder_type: Type[IQueryBuilder],
+    ) -> OperationLogReadService:
+        return OperationLogReadService(
+            unit_of_work_factory=unit_of_work_factory,
+            query_builder_type=query_builder_type,
         )
 
     @provide
