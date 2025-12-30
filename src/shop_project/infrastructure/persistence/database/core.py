@@ -56,17 +56,20 @@ class Database:
         return obj
 
     @classmethod
-    def from_env(cls) -> Self:
-        obj = cls.__new__(cls)
-        url = URL.create(
+    def get_url_from_env(cls) -> str:
+        return URL.create(
             drivername=get_env("DB_DRIVER"),
             username=get_env("DB_USER"),
             password=get_env("DB_PASSWORD"),
             host=get_env("DB_HOST"),
             port=int(get_env("DB_PORT")),
             database=get_env("DB_NAME"),
-        )
-        obj.__init__(url.render_as_string(hide_password=False))
+        ).render_as_string(hide_password=False)
+
+    @classmethod
+    def from_env(cls) -> Self:
+        obj = cls.__new__(cls)
+        obj.__init__(cls.get_url_from_env())
         return obj
 
     @classmethod

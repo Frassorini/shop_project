@@ -2,30 +2,12 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Integer, PrimaryKeyConstraint, String
+from sqlalchemy import PrimaryKeyConstraint, String
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.types import TypeDecorator
 
 from shop_project.infrastructure.persistence.database.models.base import Base
+from shop_project.infrastructure.persistence.database.seq_type import SeqType
 from shop_project.infrastructure.persistence.database.utc_datetime import UTCDateTime
-
-
-class SeqType(TypeDecorator[int]):
-    """
-    Диалектозависимый тип для seq:
-    - SQLite: INTEGER PK autoincrement
-    - Postgres/MySQL: BIGINT PK autoincrement
-    """
-
-    cache_ok = True
-
-    impl = BigInteger  # базовый тип
-
-    def load_dialect_impl(self, dialect):
-        if dialect.name == "sqlite":
-            return dialect.type_descriptor(Integer())
-        else:
-            return dialect.type_descriptor(BigInteger())
 
 
 class OperationLog(Base):

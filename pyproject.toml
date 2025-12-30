@@ -29,6 +29,9 @@ dependencies = [
     "email-validator (>=2.3.0,<3.0.0)",
     "pydantic-extra-types (>=2.10.6,<3.0.0)",
     "phonenumbers (>=9.0.19,<10.0.0)",
+    "uvicorn (>=0.40.0,<0.41.0)",
+    "alembic (>=1.17.2,<2.0.0)",
+    "python-multipart (>=0.0.21,<0.0.22)",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -52,6 +55,10 @@ markers = [
     "inmemory: mark test as inmemory only",
     "unit: mark test as unit"
 ]
+
+[tool.alembic]
+# path to migration scripts
+script_location = "%(here)s/alembic"
 
 [tool.isort]
 profile = "black"

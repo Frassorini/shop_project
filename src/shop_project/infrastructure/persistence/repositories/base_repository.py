@@ -207,6 +207,9 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
             if query.order_by is not None:
                 raise ValueError("Order by is not supported without limit")
 
+            if query.offset is not None:
+                raise ValueError("Offset is not supported without limit")
+
             aliases = {
                 child_descriptor.parent_dto_child_container_field_name: aliased(
                     child_descriptor.child_orm,
@@ -282,9 +285,11 @@ class BaseRepository(Generic[BO, BD, PE], ABC):
             else:
                 parent_subq = parent_subq.order_by(order_by_col)
 
+        if getattr(query, "offset", None) is not None:
+            parent_subq = parent_subq.offset(query.offset)
+
         parent_subq = parent_subq.limit(query.limit).subquery()
 
-        # Основной запрос с joinedload детей
         base_query = select(self.orm_type)
         for cd in self.child_descriptors:
             children_container_field = getattr(

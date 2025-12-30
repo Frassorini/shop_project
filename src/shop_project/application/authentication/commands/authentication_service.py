@@ -45,7 +45,9 @@ from shop_project.application.shared.interfaces.interface_unit_of_work import (
 from shop_project.domain.entities.customer import Customer
 from shop_project.domain.entities.employee import Employee
 from shop_project.domain.entities.manager import Manager
-from shop_project.domain.interfaces.subject import Subject
+from shop_project.domain.helpers.subject_mapper import get_subject
+from shop_project.domain.interfaces.subject import Subject, SubjectEnum
+from shop_project.infrastructure.env_loader import get_env
 
 
 class AuthenticationService:
@@ -62,6 +64,14 @@ class AuthenticationService:
         self._account_service: IAccountService = account_service
         self._totp_service: ITotpService = totp_service
         self._session_service: ISessionService = session_service
+
+    async def login_env(self, credential: CredentialSchema):
+        subject_type = get_subject(SubjectEnum(get_env("SUBJECT_MODE")))
+        return await self._login_subject(subject_type, credential)
+
+    async def refresh_session_env(self, refresh_token: str):
+        subject_type = get_subject(SubjectEnum(get_env("SUBJECT_MODE")))
+        return await self._refresh_session(subject_type, refresh_token)
 
     async def login_customer(self, credential: CredentialSchema):
         return await self._login_subject(Customer, credential)
@@ -112,6 +122,8 @@ class AuthenticationService:
         self, subject_type: Type[Subject], credential: PasswordCredentialSchema
     ) -> SessionRefreshSchema:
         external_id, external_id_type = _extract_external_id_and_type(credential)
+
+        print(subject_type)
 
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)

@@ -35,3 +35,20 @@ class CatalogueCustomerReadService:
         res = [ProductSchema.model_validate(to_dto(product)) for product in products]
 
         return res
+
+    async def get_products(self, offset: int, limit: int) -> list[ProductSchema]:
+        async with self._unit_of_work_factory.create(
+            self._query_builder_type(mutating=False)
+            .load(Product)
+            .order_by("entity_id", desc=True)
+            .offset(offset)
+            .limit(limit)
+            .no_lock()
+            .build()
+        ) as uow:
+            resources = uow.get_resources()
+            products: Sequence[Product] = resources.get_all(Product)
+
+        res = [ProductSchema.model_validate(to_dto(product)) for product in products]
+
+        return res

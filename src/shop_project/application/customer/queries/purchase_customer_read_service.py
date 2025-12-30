@@ -51,6 +51,8 @@ class PurchaseCustomerReadService:
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
             .load(EscrowAccount)
+            .from_attribute("customer_id", [access_payload.account_id])
+            .and_()
             .from_id(ids)
             .no_lock()
             .load(PurchaseActive)
@@ -85,6 +87,8 @@ class PurchaseCustomerReadService:
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
             .load(PurchaseDraft)
+            .from_attribute("customer_id", [access_payload.account_id])
+            .and_()
             .from_id(ids)
             .no_lock()
             .load(Product)
@@ -115,7 +119,116 @@ class PurchaseCustomerReadService:
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
             .load(EscrowAccount)
+            .from_attribute("customer_id", [access_payload.account_id])
+            .and_()
             .from_id(ids)
+            .no_lock()
+            .load(PurchaseSummary)
+            .from_previous()
+            .and_()
+            .from_attribute("customer_id", [access_payload.account_id])
+            .no_lock()
+            .build()
+        ) as uow:
+            resources = uow.get_resources()
+
+            purchase_summaries = get_all_or_raise_not_found(resources, PurchaseSummary)
+            escrow_accounts = get_all_or_raise_not_found(resources, EscrowAccount)
+
+            escrow_purchase_map = get_escrow_purchase_summary_map(resources)
+
+        res = [
+            PurchaseSummarySchema.create(
+                purchase_summary_dto=to_dto(purchase_summary),
+                escrow_account_dto=to_dto(escrow_account),
+            )
+            for escrow_account, purchase_summary in escrow_purchase_map
+        ]
+
+        return res
+
+    async def get_actives(
+        self, access_payload: AccessTokenPayload, offset: int, limit: int
+    ) -> list[PurchaseActiveSchema]:
+        ensure_subject_type_or_raise_forbidden(access_payload, SubjectEnum.CUSTOMER)
+
+        async with self._unit_of_work_factory.create(
+            self._query_builder_type(mutating=False)
+            .load(EscrowAccount)
+            .from_attribute("customer_id", [access_payload.account_id])
+            .order_by("entity_id", desc=True)
+            .offset(offset)
+            .limit(limit)
+            .no_lock()
+            .load(PurchaseActive)
+            .from_previous()
+            .and_()
+            .from_attribute("customer_id", [access_payload.account_id])
+            .no_lock()
+            .build()
+        ) as uow:
+            resources = uow.get_resources()
+
+            purchase_actives = get_all_or_raise_not_found(resources, PurchaseActive)
+            escrow_accounts = get_all_or_raise_not_found(resources, EscrowAccount)
+
+            escrow_purchase_map = get_escrow_purchase_active_map(resources)
+
+        res = [
+            PurchaseActiveSchema.create(
+                purchase_summary_dto=to_dto(purchase_active),
+                escrow_account_dto=to_dto(escrow_account),
+            )
+            for escrow_account, purchase_active in escrow_purchase_map
+        ]
+
+        return res
+
+    async def get_drafts(
+        self, access_payload: AccessTokenPayload, offset: int, limit: int
+    ) -> list[PurchaseDraftSchema]:
+        ensure_subject_type_or_raise_forbidden(access_payload, SubjectEnum.CUSTOMER)
+
+        async with self._unit_of_work_factory.create(
+            self._query_builder_type(mutating=False)
+            .load(PurchaseDraft)
+            .from_attribute("customer_id", [access_payload.account_id])
+            .order_by("entity_id", desc=True)
+            .offset(offset)
+            .limit(limit)
+            .no_lock()
+            .load(Product)
+            .from_previous()
+            .no_lock()
+            .build()
+        ) as uow:
+            resources = uow.get_resources()
+
+            purchase_drafts = get_all_or_raise_not_found(resources, PurchaseDraft)
+            products = resources.get_all(Product)
+
+        res = [
+            PurchaseDraftSchema.create(
+                purchase_draft_dto=to_dto(purchase_draft),
+                products=[to_dto(product) for product in products],
+            )
+            for purchase_draft in purchase_drafts
+        ]
+
+        return res
+
+    async def get_summaries(
+        self, access_payload: AccessTokenPayload, offset: int, limit: int
+    ) -> list[PurchaseSummarySchema]:
+        ensure_subject_type_or_raise_forbidden(access_payload, SubjectEnum.CUSTOMER)
+
+        async with self._unit_of_work_factory.create(
+            self._query_builder_type(mutating=False)
+            .load(EscrowAccount)
+            .from_attribute("customer_id", [access_payload.account_id])
+            .order_by("entity_id", desc=True)
+            .offset(offset)
+            .limit(limit)
             .no_lock()
             .load(PurchaseSummary)
             .from_previous()

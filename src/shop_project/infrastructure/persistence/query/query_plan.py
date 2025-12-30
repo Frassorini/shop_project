@@ -40,6 +40,7 @@ class QueryPlan(ABC, IQueryPlan):
         order_by: str | None,
         order_by_desc: bool,
         limit: int | None,
+        offset: int | None,
     ) -> None:
 
         model_type = _ensure_not_none(model_type, "model type not specified")
@@ -47,7 +48,7 @@ class QueryPlan(ABC, IQueryPlan):
         lock = _ensure_not_none(lock, "lock not specified")
 
         query = ComposedQuery(
-            model_type, criteria, lock, order_by, order_by_desc, limit
+            model_type, criteria, lock, order_by, order_by_desc, limit, offset
         )
 
         self._validate_query(query)

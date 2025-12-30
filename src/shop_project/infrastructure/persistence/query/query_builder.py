@@ -30,6 +30,7 @@ class QueryData:
     order_by: str | None = None
     order_by_desc: bool = False
     limit: int | None = None
+    offset: int | None = None
 
     @property
     def is_not_empty(self) -> bool:
@@ -63,6 +64,7 @@ class QueryBuilder(IQueryBuilder):
             self._current_query_data.order_by,
             self._current_query_data.order_by_desc,
             self._current_query_data.limit,
+            self._current_query_data.offset,
         )
 
         self._current_query_data = QueryData(None, QueryCriteria(), None)
@@ -100,6 +102,11 @@ class QueryBuilder(IQueryBuilder):
 
     def limit(self, limit: int) -> Self:
         self._current_query_data.limit = limit
+
+        return self
+
+    def offset(self, offset: int) -> Self:
+        self._current_query_data.offset = offset
 
         return self
 

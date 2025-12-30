@@ -3,6 +3,10 @@ from dishka.async_container import AsyncContainer
 from pydantic import SecretBytes
 from taskiq import AsyncBroker
 
+from shop_project.infrastructure.background_tasks.broker import (
+    make_broker,
+    producer_broker_context_factory,
+)
 from shop_project.infrastructure.dependency_injection.application.application_service_provider import (
     ApplicationServiceProvider,
 )
@@ -38,6 +42,30 @@ from tests.helpers import get_test_jwt_private_key, get_test_jwt_public_key
 
 def container_taskiq_worker_factory(broker: AsyncBroker) -> AsyncContainer:
     broker_ctx = create_context_from_value(broker)
+    database_ctx = create_context_from_value(Database.from_env())
+
+    container = make_async_container(
+        DomainProvider(),
+        CryptographyProvider(
+            JwtKeyContainer(
+                public_key=SecretBytes(get_test_jwt_public_key()),
+                private_key=SecretBytes(get_test_jwt_private_key()),
+            )
+        ),
+        PaymentProvider(),
+        AuthenticationProvider(),
+        PersistenceProvider(database_ctx),
+        BrokerProvider(broker_ctx),
+        ApplicationServiceProvider(),
+        ApplicationTaskHandlerProvider(),
+        NotificationProvider(),
+    )
+
+    return container
+
+
+def container_fastapi_factory() -> AsyncContainer:
+    broker_ctx = producer_broker_context_factory(make_broker)
     database_ctx = create_context_from_value(Database.from_env())
 
     container = make_async_container(

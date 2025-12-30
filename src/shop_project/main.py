@@ -1,18 +1,17 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
-from dishka import make_async_container
 from dishka.async_container import AsyncContainer
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
-from shop_project.infrastructure.dependency_injection.domain.domain_provider import (
-    DomainProvider,
+from shop_project.controllers.fastapi.routers.auth import router as auth_router
+from shop_project.controllers.fastapi.routers.customer import router as customer_router
+from shop_project.controllers.fastapi.routers.employee import router as employee_router
+from shop_project.controllers.fastapi.routers.manager import router as manager_router
+from shop_project.controllers.fastapi.routers.shared import router as shared_router
+from shop_project.infrastructure.dependency_injection.factories import (
+    container_fastapi_factory,
 )
-from shop_project.infrastructure.dependency_injection.infrastructure.persistence_provider import (
-    PersistenceProvider,
-)
-from shop_project.infrastructure.persistence.database.core import Database
 
 
 @asynccontextmanager
@@ -21,23 +20,23 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    if app.state.container is not None:
+        await app.state.container.close()
+
     pass
-
-
-@asynccontextmanager
-async def database_ctx() -> AsyncGenerator[Database, None]:
-    db = Database.from_env()
-    try:
-        yield db
-    finally:
-        await db.close()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
-    container: AsyncContainer = make_async_container(
-        DomainProvider(), PersistenceProvider(database_ctx)
-    )
+    container: AsyncContainer = container_fastapi_factory()
 
     setup_dishka(container, app)
+    app.state.container = container
+
+    app.include_router(shared_router)
+    app.include_router(customer_router)
+    app.include_router(employee_router)
+    app.include_router(manager_router)
+    app.include_router(auth_router)
+
     return app
