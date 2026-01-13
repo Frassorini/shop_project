@@ -72,3 +72,15 @@ class CancelPurchaseOperationLogPayload(
     BaseOperationLogPayload[OperationCodeEnum.CANCEL_PURCHASE]
 ):
     purchase_id: UUID
+
+
+class RestockPurchaseItem(BaseModel):
+    product_id: UUID
+    amount: int
+
+
+class FinalizeCancelledPurchaseOperationLogPayload(
+    BaseOperationLogPayload[OperationCodeEnum.FINALIZE_CANCELLED_PURCHASE]
+):
+    purchase_id: UUID
+    items: list[RestockPurchaseItem]

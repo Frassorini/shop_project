@@ -12,6 +12,7 @@ from shop_project.controllers.fastapi.routers.shared import router as shared_rou
 from shop_project.infrastructure.dependency_injection.factories import (
     container_fastapi_factory,
 )
+from shop_project.infrastructure.env_loader import get_env
 
 
 @asynccontextmanager
@@ -38,5 +39,12 @@ def create_app() -> FastAPI:
     app.include_router(employee_router)
     app.include_router(manager_router)
     app.include_router(auth_router)
+
+    if get_env("WITH_TEST_ROUTER"):
+        from shop_project.controllers.fastapi.routers.testing import (
+            router as test_router,
+        )
+
+        app.include_router(test_router)
 
     return app

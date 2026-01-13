@@ -123,8 +123,6 @@ class AuthenticationService:
     ) -> SessionRefreshSchema:
         external_id, external_id_type = _extract_external_id_and_type(credential)
 
-        print(subject_type)
-
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=True)
             .load(Account)

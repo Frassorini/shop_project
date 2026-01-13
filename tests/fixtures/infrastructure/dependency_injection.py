@@ -9,11 +9,26 @@ from dishka.container import Container
 from pydantic import SecretBytes
 from taskiq import AsyncBroker
 
-from shop_project.infrastructure.dependency_injection.application.application_service_provider import (
-    ApplicationServiceProvider,
-)
 from shop_project.infrastructure.dependency_injection.application.application_task_handler_provider import (
     ApplicationTaskHandlerProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.auth_application_provider import (
+    AuthApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.customer_application_provider import (
+    CustomerApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.employee_application_provider import (
+    EmployeeApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.manager_application_provider import (
+    ManagerApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.payment_application_provider import (
+    PaymentApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.policy_provider import (
+    PolicyProvider,
 )
 from shop_project.infrastructure.dependency_injection.domain.domain_provider import (
     DomainProvider,
@@ -76,7 +91,12 @@ async def base_async_container() -> AsyncContainer:
         AuthenticationProvider(),
         PersistenceProvider(null_ctx),
         BrokerProvider(null_ctx),
-        ApplicationServiceProvider(),
+        AuthApplicationProvider(),
+        CustomerApplicationProvider(),
+        ManagerApplicationProvider(),
+        EmployeeApplicationProvider(),
+        PaymentApplicationProvider(),
+        PolicyProvider(),
         ApplicationTaskHandlerProvider(),
         NotificationProvider(),
     )

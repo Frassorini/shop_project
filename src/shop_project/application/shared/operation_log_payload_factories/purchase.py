@@ -4,9 +4,11 @@ from shop_project.application.entities.operation_log.operation_log_payload_imple
     AutoUnclaimPurchaseOperationLogPayload,
     CancelPurchaseOperationLogPayload,
     ClaimPurchaseOperationLogPayload,
+    FinalizeCancelledPurchaseOperationLogPayload,
     ManualUnclaimPurchaseOperationLogPayload,
     PayPurchaseOperationLogPayload,
     RefundPurchaseOperationLogPayload,
+    RestockPurchaseItem,
 )
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.dto.escrow_account_dto import EscrowAccountDTO
@@ -107,4 +109,23 @@ def create_cancel_purchase_payload(
 ) -> CancelPurchaseOperationLogPayload:
     return CancelPurchaseOperationLogPayload(
         purchase_id=escrow_account_dto.entity_id,
+    )
+
+
+def create_finalize_cancelled_purchase_payload(
+    escrow_account_dto: EscrowAccountDTO,
+    purchase_summary_dto: PurchaseSummaryDTO,
+) -> FinalizeCancelledPurchaseOperationLogPayload:
+    items: list[RestockPurchaseItem] = []
+
+    for purchase_item_dto in purchase_summary_dto.items:
+        items.append(
+            RestockPurchaseItem(
+                product_id=purchase_item_dto.product_id,
+                amount=purchase_item_dto.amount,
+            )
+        )
+
+    return FinalizeCancelledPurchaseOperationLogPayload(
+        purchase_id=escrow_account_dto.entity_id, items=items
     )

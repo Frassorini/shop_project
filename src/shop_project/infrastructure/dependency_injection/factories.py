@@ -7,11 +7,26 @@ from shop_project.infrastructure.background_tasks.broker import (
     make_broker,
     producer_broker_context_factory,
 )
-from shop_project.infrastructure.dependency_injection.application.application_service_provider import (
-    ApplicationServiceProvider,
-)
 from shop_project.infrastructure.dependency_injection.application.application_task_handler_provider import (
     ApplicationTaskHandlerProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.auth_application_provider import (
+    AuthApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.customer_application_provider import (
+    CustomerApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.employee_application_provider import (
+    EmployeeApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.manager_application_provider import (
+    ManagerApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.payment_application_provider import (
+    PaymentApplicationProvider,
+)
+from shop_project.infrastructure.dependency_injection.application.policy_provider import (
+    PolicyProvider,
 )
 from shop_project.infrastructure.dependency_injection.domain.domain_provider import (
     DomainProvider,
@@ -56,7 +71,12 @@ def container_taskiq_worker_factory(broker: AsyncBroker) -> AsyncContainer:
         AuthenticationProvider(),
         PersistenceProvider(database_ctx),
         BrokerProvider(broker_ctx),
-        ApplicationServiceProvider(),
+        AuthApplicationProvider(),
+        CustomerApplicationProvider(),
+        ManagerApplicationProvider(),
+        EmployeeApplicationProvider(),
+        PaymentApplicationProvider(),
+        PolicyProvider(),
         ApplicationTaskHandlerProvider(),
         NotificationProvider(),
     )
@@ -80,7 +100,12 @@ def container_fastapi_factory() -> AsyncContainer:
         AuthenticationProvider(),
         PersistenceProvider(database_ctx),
         BrokerProvider(broker_ctx),
-        ApplicationServiceProvider(),
+        AuthApplicationProvider(),
+        CustomerApplicationProvider(),
+        ManagerApplicationProvider(),
+        EmployeeApplicationProvider(),
+        PaymentApplicationProvider(),
+        PolicyProvider(),
         ApplicationTaskHandlerProvider(),
         NotificationProvider(),
     )

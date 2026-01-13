@@ -44,19 +44,19 @@ class BaseOperationLogPayload(BaseModel, Generic[T]):
                 raise RuntimeError("Generic has more than one type")
             type_ = args[0]
             if isinstance(type_, TypeVar):
-                raise RuntimeError("Generic type is lost")
+                raise RuntimeError("Generic type lost")
             return type_
-        raise RuntimeError("Generic type is not found in generic base")
+        raise RuntimeError("Generic type not found in generic base")
 
     def model_post_init(self, context: Any, /) -> None:
         if not self._get_one_generic_type():
-            raise ValueError("Generic type is not set")
+            raise ValueError("Generic type not set")
 
     @classmethod
     def is_needed_to_register(cls) -> bool:
         meta = getattr(cls, "__pydantic_generic_metadata__", None)
         if not meta:
-            raise RuntimeError("Generic metadata is not found")
+            raise RuntimeError("Generic metadata not found")
 
         if meta.get("args"):
             return True

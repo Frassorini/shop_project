@@ -7,6 +7,7 @@ from shop_project.application.customer.schemas.purchase_summary_schema import (
     PurchaseSummarySchema,
 )
 from shop_project.application.entities.claim_token import ClaimToken
+from shop_project.application.exceptions import NotFoundException
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_claim_token_service import (
@@ -80,7 +81,7 @@ class PurchaseActiveEmployeeService:
             self._query_builder_type(mutating=True)
             .load(ClaimToken)
             .from_attribute("token_fingerprint", [token_fingerprint])
-            .for_update()
+            .for_share()
             .load(Employee)
             .from_id([access_payload.account_id])
             .for_share()
@@ -101,6 +102,11 @@ class PurchaseActiveEmployeeService:
             )
             escrow_accounts = resources.get_all(EscrowAccount)
             purchases = resources.get_all(PurchaseActive)
+
+            if not resources.get_all(ClaimToken):
+                raise NotFoundException(
+                    f"ClaimToken with fingerprint {token_fingerprint} not found"
+                )
 
             escrow_purchase_map = get_escrow_purchase_active_map(resources)
 

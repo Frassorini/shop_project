@@ -27,10 +27,13 @@ class ClaimTokenService(IClaimTokenService):
     def get_claim_token_fingerprint(self, claim_token: str) -> str:
         return self.token_fingerprint_calculator.fingerprint(claim_token)
 
-    def refresh(self) -> str:
+    def refresh(self, claim_token: ClaimToken) -> str:
         raw_token = self.rand_datagen.generate()
 
-        self.token_fingerprint_calculator.fingerprint(raw_token)
+        claim_token.token_fingerprint = self.token_fingerprint_calculator.fingerprint(
+            raw_token
+        )
+        claim_token.expiration = datetime.now(tz=timezone.utc) + self.token_ttl
 
         return raw_token
 

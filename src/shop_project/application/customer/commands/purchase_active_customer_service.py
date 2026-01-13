@@ -31,6 +31,9 @@ from shop_project.application.shared.operation_log_payload_factories.purchase im
     create_activate_purchase_payload,
     create_manual_unclaim_purchase_payload,
 )
+from shop_project.application.shared.policies.refund_initiation_policy import (
+    RefundInitiationPolicy,
+)
 from shop_project.application.shared.scenarios.entity import get_one_or_raise_not_found
 from shop_project.application.shared.scenarios.operation_log import log_operation
 from shop_project.application.shared.scenarios.subject import (
@@ -60,6 +63,7 @@ class PurchaseActiveCustomerService:
         purchase_return_service: PurchaseReturnService,
         payment_gateway: IPaymentGateway,
         claim_token_service: IClaimTokenService,
+        refund_initiation_policy: RefundInitiationPolicy,
     ) -> None:
         self._unit_of_work_factory: IUnitOfWorkFactory = unit_of_work_factory
         self._query_builder_type: Type[IQueryBuilder] = query_builder_type
@@ -70,6 +74,9 @@ class PurchaseActiveCustomerService:
         self._purchase_return_service: PurchaseReturnService = purchase_return_service
         self._payment_gateway: IPaymentGateway = payment_gateway
         self._claim_token_service: IClaimTokenService = claim_token_service
+        self._refund_initiation_policy: RefundInitiationPolicy = (
+            refund_initiation_policy
+        )
 
     async def get_claim_token(
         self, access_payload: AccessTokenPayload
@@ -90,7 +97,7 @@ class PurchaseActiveCustomerService:
 
             if claim_token:
                 claim_token = claim_token
-                token_raw = self._claim_token_service.refresh()
+                token_raw = self._claim_token_service.refresh(claim_token)
             else:
                 claim_token, token_raw = self._claim_token_service.create(
                     access_payload.account_id
@@ -208,6 +215,7 @@ class PurchaseActiveCustomerService:
 
             uow.mark_commit()
 
-        await self._payment_gateway.start_refunds([str(escrow_account.entity_id)])
+        if self._refund_initiation_policy.start_immediately:
+            await self._payment_gateway.start_refunds([str(escrow_account.entity_id)])
 
         return PurchaseSummarySchema.create(to_dto(summary), to_dto(escrow_account))

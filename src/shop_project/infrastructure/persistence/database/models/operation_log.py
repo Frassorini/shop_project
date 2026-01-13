@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import PrimaryKeyConstraint, String
+from sqlalchemy import PrimaryKeyConstraint, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from shop_project.infrastructure.persistence.database.models.base import Base
@@ -18,7 +18,7 @@ class OperationLog(Base):
         SeqType(), nullable=False, autoincrement=True, unique=True
     )  # let database generate on its own
     operation_code: Mapped[str] = mapped_column(String(50), nullable=False)
-    payload_json: Mapped[str] = mapped_column(String(255), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text(), nullable=False)
     occured_at: Mapped[datetime] = mapped_column(
         UTCDateTime(timezone=True), nullable=False
     )

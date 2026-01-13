@@ -23,6 +23,7 @@ from shop_project.application.shared.interfaces.interface_unit_of_work import (
 from shop_project.application.shared.operation_log_payload_factories.purchase import (
     create_auto_unclaim_purchase_payload,
     create_cancel_purchase_payload,
+    create_finalize_cancelled_purchase_payload,
     create_pay_purchase_payload,
     create_refund_purchase_payload,
 )
@@ -88,9 +89,13 @@ class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
 
             for escrow_account in state_map.get(PaymentState.PAID, []):
                 escrow_account.mark_as_paid()
+                operation_log = create_pay_purchase_payload(to_dto(escrow_account))
+                log_operation(resources, operation_log)
 
             for escrow_account in state_map.get(PaymentState.CANCELLED, []):
                 escrow_account.cancel_payment()
+                operation_log = create_cancel_purchase_payload(to_dto(escrow_account))
+                log_operation(resources, operation_log)
 
             await self._payment_gateway.create_payments(
                 [
@@ -101,10 +106,6 @@ class BatchWaitPaymentTaskHandler(BaseTaskHandler[NullTaskParams]):
                     for escrow_account in state_map.get(PaymentState.NONEXISTENT, [])
                 ]
             )
-
-            for escrow_account in state_map.get(PaymentState.PAID, []):
-                operation_log = create_pay_purchase_payload(to_dto(escrow_account))
-                log_operation(resources, operation_log)
 
             uow.mark_commit()
 
@@ -174,8 +175,14 @@ class BatchFinalizeNotPaidTasksHandler(BaseTaskHandler[NullTaskParams]):
                 resources.delete(PurchaseActive, purchase)
                 resources.put(PurchaseSummary, summary)
 
-            for escrow, purchase in escrow_purchase_map:
-                operation_log = create_cancel_purchase_payload(to_dto(escrow))
+            for escrow, _ in escrow_purchase_map:
+                summary: PurchaseSummary = resources.get_one_by_attribute(
+                    PurchaseSummary, "escrow_account_id", escrow.entity_id
+                )
+                operation_log = create_finalize_cancelled_purchase_payload(
+                    to_dto(escrow),
+                    to_dto(summary),
+                )
                 log_operation(resources, operation_log)
 
             uow.mark_commit()

@@ -4,6 +4,9 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from shop_project.application.manager.commands.background_manager_service import (
+    BackgroundManagerService,
+)
 from shop_project.application.manager.commands.employee_manager_service import (
     EmployeeManagerService,
 )
@@ -202,3 +205,29 @@ async def get_employees_by_ids(
     ids: list[UUID] = Query(...),
 ) -> list[EmployeeSchema]:
     return await service.get_by_ids(access_payload, ids)
+
+
+@router.post(
+    "/background/purchase-flow/trigger",
+    status_code=204,
+)
+async def trigger_purchase_flow(
+    access_payload: Annotated[AccessTokenPayload, Depends(get_access_payload)],
+    service: FromDishka[BackgroundManagerService],
+) -> None:
+    await service.trigger_purchase_flow(
+        access_payload=access_payload,
+    )
+
+
+@router.post(
+    "/background/tasks/redeliver",
+    status_code=204,
+)
+async def manual_redeliver_tasks(
+    access_payload: Annotated[AccessTokenPayload, Depends(get_access_payload)],
+    service: FromDishka[BackgroundManagerService],
+) -> None:
+    await service.manual_redeliver_tasks(
+        access_payload=access_payload,
+    )
