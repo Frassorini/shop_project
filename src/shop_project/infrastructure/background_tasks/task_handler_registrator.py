@@ -9,10 +9,10 @@ from shop_project.application.background.base_task_handler import (
     BaseTaskParams,
     TaskHandlerRegistry,
 )
+from shop_project.application.background.exceptions import RetryException
 from shop_project.application.background.init_task_handler_registry import (
     init_task_handler_registry,
 )
-from shop_project.application.exceptions import RetryException
 from shop_project.infrastructure.background_tasks.on_task_fail_actions import (
     log_message_taskiq,
 )

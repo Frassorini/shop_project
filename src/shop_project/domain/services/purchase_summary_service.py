@@ -4,7 +4,7 @@ from shop_project.domain.entities.purchase_summary import (
     PurchaseSummaryItem,
     PurchaseSummaryReason,
 )
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import DomainInvalidStateError
 
 
 class PurchaseSummaryService:
@@ -24,11 +24,11 @@ class PurchaseSummaryService:
         self, purchase: PurchaseActive, reason: PurchaseSummaryReason
     ) -> PurchaseSummary:
         if purchase.is_finalized():
-            raise DomainException("Cannot finalize finalized purchase")
+            raise DomainInvalidStateError("Cannot finalize finalized purchase")
 
         purchase_summary_items: list[PurchaseSummaryItem] = []
 
-        for item in purchase.get_items():
+        for item in purchase.items:
             purchase_summary_items.append(
                 PurchaseSummaryItem(
                     product_id=item.product_id,

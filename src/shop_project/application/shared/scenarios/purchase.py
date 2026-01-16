@@ -33,11 +33,13 @@ def get_escrow_purchase_active_map(
     for entity_id, (escrow_account, purchase_active) in escrow_purchase_map.items():
         if not isinstance(escrow_account, EscrowAccount):
             assert purchase_active is PurchaseActive
-            print(f"PurchaseActive {purchase_active.entity_id} has no EscrowAccount")
-            continue
+            raise RuntimeError(
+                f"PurchaseActive {purchase_active.entity_id} has no EscrowAccount"
+            )
         if not isinstance(purchase_active, PurchaseActive):
-            print(f"EscrowAccount {escrow_account.entity_id} has no PurchaseActive")
-            continue
+            raise RuntimeError(
+                f"EscrowAccount {escrow_account.entity_id} has no PurchaseActive"
+            )
 
         filtered.append((escrow_account, purchase_active))
 
@@ -62,15 +64,16 @@ def get_escrow_purchase_summary_map(
 
     filtered: list[tuple[EscrowAccount, PurchaseSummary]] = []
 
-    for entity_id, (escrow_account, purchase_active) in escrow_purchase_map.items():
+    for entity_id, (escrow_account, purchase_summary) in escrow_purchase_map.items():
         if not isinstance(escrow_account, EscrowAccount):
-            assert purchase_active is PurchaseSummary
-            print(f"PurchaseSummary {purchase_active.entity_id} has no EscrowAccount")
-            continue
-        if not isinstance(purchase_active, PurchaseSummary):
+            assert purchase_summary is PurchaseSummary
+            raise RuntimeError(
+                f"PurchaseSummary {purchase_summary.entity_id} has no EscrowAccount"
+            )
+        if not isinstance(purchase_summary, PurchaseSummary):
             print(f"EscrowAccount {escrow_account.entity_id} has no PurchaseSummary")
             continue
 
-        filtered.append((escrow_account, purchase_active))
+        filtered.append((escrow_account, purchase_summary))
 
     return filtered

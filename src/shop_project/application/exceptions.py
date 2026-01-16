@@ -1,26 +1,24 @@
-class ApplicationException(Exception):
+from shop_project.domain.base_exceptions.error_code import ErrorCode
+from shop_project.domain.base_exceptions.user_visible_exception import (
+    UserVisibleException,
+)
+
+
+class ApplicationException(UserVisibleException):
     pass
 
 
-class AlreadyExistsException(ApplicationException):
-    pass
+class ApplicationAlreadyExistsError(ApplicationException):
+    code = ErrorCode.CONFLICT
 
 
-class ForbiddenException(ApplicationException):
-    pass
+class ApplicationConflictError(ApplicationException):
+    code = ErrorCode.CONFLICT
 
 
-class NotFoundException(ApplicationException):
-    pass
+class ApplicationForbiddenError(ApplicationException):
+    code = ErrorCode.FORBIDDEN
 
 
-class TaskException(Exception):
-    pass
-
-
-class RetryException(TaskException):
-    pass
-
-
-class AlreadyDoneException(TaskException):
-    pass
+class ApplicationNotFoundError(ApplicationException):
+    code = ErrorCode.NOT_FOUND

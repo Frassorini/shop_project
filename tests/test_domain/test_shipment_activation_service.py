@@ -26,4 +26,4 @@ def test_activate(
         product_inventory=product_inventory, request=request
     )
 
-    assert shipment.get_items() == [ShipmentItem(potatoes.entity_id, 2)]
+    assert shipment.items == [ShipmentItem(potatoes.entity_id, 2)]

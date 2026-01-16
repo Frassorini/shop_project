@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_draft import PurchaseDraft
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import DomainInvalidStateError
 from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.checkout_service import CheckoutService
 from shop_project.domain.services.purchase_reservation_service import (
@@ -32,7 +32,7 @@ class PurchaseActivationService:
         self, product_inventory: ProductInventory, purchase_draft: PurchaseDraft
     ) -> PurchaseActivation:
         if purchase_draft.is_finalized():
-            raise DomainException("Cannot activate finalized draft")
+            raise DomainInvalidStateError("Cannot activate finalized draft")
 
         escrow_account = self._checkout_service.checkout(
             product_inventory, purchase_draft

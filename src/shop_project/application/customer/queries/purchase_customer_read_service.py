@@ -18,7 +18,6 @@ from shop_project.application.shared.interfaces.interface_query_builder import (
 from shop_project.application.shared.interfaces.interface_unit_of_work import (
     IUnitOfWorkFactory,
 )
-from shop_project.application.shared.scenarios.entity import get_all_or_raise_not_found
 from shop_project.application.shared.scenarios.purchase import (
     get_escrow_purchase_active_map,
     get_escrow_purchase_summary_map,
@@ -64,8 +63,8 @@ class PurchaseCustomerReadService:
         ) as uow:
             resources = uow.get_resources()
 
-            purchase_actives = get_all_or_raise_not_found(resources, PurchaseActive)
-            escrow_accounts = get_all_or_raise_not_found(resources, EscrowAccount)
+            purchase_actives = resources.get_all(PurchaseActive)
+            escrow_accounts = resources.get_all(EscrowAccount)
 
             escrow_purchase_map = get_escrow_purchase_active_map(resources)
 
@@ -98,7 +97,7 @@ class PurchaseCustomerReadService:
         ) as uow:
             resources = uow.get_resources()
 
-            purchase_drafts = get_all_or_raise_not_found(resources, PurchaseDraft)
+            purchase_drafts = resources.get_all(PurchaseDraft)
             products = resources.get_all(Product)
 
         res = [
@@ -132,8 +131,8 @@ class PurchaseCustomerReadService:
         ) as uow:
             resources = uow.get_resources()
 
-            purchase_summaries = get_all_or_raise_not_found(resources, PurchaseSummary)
-            escrow_accounts = get_all_or_raise_not_found(resources, EscrowAccount)
+            purchase_summaries = resources.get_all(PurchaseSummary)
+            escrow_accounts = resources.get_all(EscrowAccount)
 
             escrow_purchase_map = get_escrow_purchase_summary_map(resources)
 
@@ -169,8 +168,8 @@ class PurchaseCustomerReadService:
         ) as uow:
             resources = uow.get_resources()
 
-            purchase_actives = get_all_or_raise_not_found(resources, PurchaseActive)
-            escrow_accounts = get_all_or_raise_not_found(resources, EscrowAccount)
+            purchase_actives = resources.get_all(PurchaseActive)
+            escrow_accounts = resources.get_all(EscrowAccount)
 
             escrow_purchase_map = get_escrow_purchase_active_map(resources)
 
@@ -204,7 +203,7 @@ class PurchaseCustomerReadService:
         ) as uow:
             resources = uow.get_resources()
 
-            purchase_drafts = get_all_or_raise_not_found(resources, PurchaseDraft)
+            purchase_drafts = resources.get_all(PurchaseDraft)
             products = resources.get_all(Product)
 
         res = [
@@ -239,8 +238,8 @@ class PurchaseCustomerReadService:
         ) as uow:
             resources = uow.get_resources()
 
-            purchase_summaries = get_all_or_raise_not_found(resources, PurchaseSummary)
-            escrow_accounts = get_all_or_raise_not_found(resources, EscrowAccount)
+            purchase_summaries = resources.get_all(PurchaseSummary)
+            escrow_accounts = resources.get_all(EscrowAccount)
 
             escrow_purchase_map = get_escrow_purchase_summary_map(resources)
 

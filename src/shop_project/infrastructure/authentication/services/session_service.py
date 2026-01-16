@@ -8,7 +8,7 @@ from shop_project.application.entities.account import Account
 from shop_project.application.entities.auth_session import (
     AuthSession,
 )
-from shop_project.application.exceptions import ForbiddenException
+from shop_project.application.exceptions import ApplicationForbiddenError
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.interfaces.interface_session_service import (
     ISessionService,
@@ -60,7 +60,7 @@ class SessionService(ISessionService):
         self, account: Account, subject: Subject
     ) -> tuple[AuthSession, SessionRefresh]:
         if account.entity_id != subject.entity_id:
-            raise ForbiddenException
+            raise ApplicationForbiddenError
         refresh_token = self.rand_datagen.generate()
         access_token = self.data_signer.sign(
             self._create_access_token_payload(subject).model_dump(mode="json"),
@@ -84,7 +84,7 @@ class SessionService(ISessionService):
 
     def refresh_session(self, subject: Subject, session: AuthSession) -> SessionRefresh:
         if subject.entity_id != session.account_id:
-            raise ForbiddenException
+            raise ApplicationForbiddenError
         if session.expiration < datetime.now(tz=timezone.utc):
             raise AuthSessionExpiredException
 

@@ -37,7 +37,7 @@ def test_to_dto(
 
     assert dto.entity_id == purchase_draft.entity_id
     assert dto.state == purchase_draft.state.value
-    assert dto.items[0].product_id == purchase_draft.get_items()[0].product_id
+    assert dto.items[0].product_id == purchase_draft.items[0].product_id
 
 
 def test_to_domain(
@@ -53,7 +53,7 @@ def test_to_domain(
 
     assert order_from_dto.entity_id == purchase_draft.entity_id
     assert order_from_dto.state == purchase_draft.state
-    assert order_from_dto.get_items() == purchase_draft.get_items()
+    assert order_from_dto.items == purchase_draft.items
 
 
 T = TypeVar("T", bound=PersistableEntity)

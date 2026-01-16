@@ -4,7 +4,11 @@ from enum import Enum
 from typing import Self
 from uuid import UUID
 
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import (
+    DomainConflictError,
+    DomainNotFoundError,
+    DomainValidationError,
+)
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 from shop_project.shared.base_state_machine import BaseStateMachine
@@ -16,11 +20,8 @@ class PurchaseActiveItem(StockItem):
     amount: int
 
     def __post_init__(self) -> None:
-        self._validate()
-
-    def _validate(self) -> None:
         if self.amount <= 0:
-            raise DomainException("Amount must be > 0")
+            raise DomainValidationError("Amount must be > 0")
 
 
 class PurchaseActiveState(Enum):
@@ -88,17 +89,17 @@ class PurchaseActive(PersistableEntity):
 
     def _validate_item(self, item: PurchaseActiveItem) -> None:
         if item.product_id in self._items:
-            raise DomainException("Item already added")
+            raise DomainConflictError("Item already added")
 
     def get_item(self, product_id: UUID) -> PurchaseActiveItem:
-        return self._items[product_id]
+        try:
+            return self._items[product_id]
+        except KeyError:
+            raise DomainNotFoundError("Item not found")
 
     @property
     def items(self) -> list[PurchaseActiveItem]:
         return sorted(self._items.values(), key=lambda item: item.product_id)
-
-    def get_items(self) -> list[PurchaseActiveItem]:
-        return list(self._items.values())
 
     def finalize(self) -> None:
         self._state_machine.try_transition_to(PurchaseActiveState.FINALIZED)

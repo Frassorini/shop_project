@@ -81,19 +81,19 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
     PurchaseDraft: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda cart: [item.product_id for item in cart.get_items()],
+            strategy=lambda cart: [item.product_id for item in cart.items],
         ),
     },
     PurchaseActive: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda order: [item.product_id for item in order.get_items()],
+            strategy=lambda order: [item.product_id for item in order.items],
         ),
     },
     PurchaseSummary: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda order: [item.product_id for item in order.get_items()],
+            strategy=lambda order: [item.product_id for item in order.items],
         ),
     },
     EscrowAccount: {
@@ -109,13 +109,13 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
     Shipment: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda order: [item.product_id for item in order.get_items()],
+            strategy=lambda order: [item.product_id for item in order.items],
         ),
     },
     ShipmentSummary: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda order: [item.product_id for item in order.get_items()],
+            strategy=lambda order: [item.product_id for item in order.items],
         ),
     },
     Product: {},

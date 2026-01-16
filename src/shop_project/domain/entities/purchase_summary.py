@@ -3,6 +3,11 @@ from enum import Enum
 from typing import Self
 from uuid import UUID
 
+from shop_project.domain.exceptions import (
+    DomainConflictError,
+    DomainNotFoundError,
+    DomainValidationError,
+)
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 
 
@@ -10,6 +15,10 @@ from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 class PurchaseSummaryItem:
     product_id: UUID
     amount: int
+
+    def __post_init__(self) -> None:
+        if self.amount <= 0:
+            raise DomainValidationError("Amount must be > 0")
 
 
 class PurchaseSummaryReason(Enum):
@@ -42,6 +51,7 @@ class PurchaseSummary(PersistableEntity):
         self._items: dict[UUID, PurchaseSummaryItem] = {}
 
         for item in items:
+            self._validate_item(item)
             self._items[item.product_id] = item
 
     @classmethod
@@ -63,12 +73,16 @@ class PurchaseSummary(PersistableEntity):
 
         return obj
 
+    def _validate_item(self, item: PurchaseSummaryItem) -> None:
+        if item.product_id in self._items:
+            raise DomainConflictError("Item already added")
+
     def get_item(self, product_id: UUID) -> PurchaseSummaryItem:
-        return self._items[product_id]
+        try:
+            return self._items[product_id]
+        except KeyError:
+            raise DomainNotFoundError("Item not found")
 
     @property
     def items(self) -> list[PurchaseSummaryItem]:
         return sorted(self._items.values(), key=lambda item: item.product_id)
-
-    def get_items(self) -> list[PurchaseSummaryItem]:
-        return list(self._items.values())

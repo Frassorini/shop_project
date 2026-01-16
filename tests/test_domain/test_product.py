@@ -6,7 +6,7 @@ from uuid import UUID
 import pytest
 
 from shop_project.domain.entities.product import Product
-from shop_project.domain.exceptions import DomainException, NegativeAmountException
+from shop_project.domain.exceptions import DomainException, DomainValidationError
 
 
 def test_product_amount(potatoes_product_1: Callable[[], Product]) -> None:
@@ -23,7 +23,7 @@ def test_product_add_amount(potatoes_product_1: Callable[[], Product]) -> None:
 def test_create_negative_amount_product(
     unique_id_factory: Callable[[], UUID],
 ) -> None:
-    with pytest.raises(NegativeAmountException):
+    with pytest.raises(DomainValidationError):
         product = Product(
             entity_id=unique_id_factory(), name="potatoes", amount=-1, price=Decimal(1)
         )
@@ -31,7 +31,7 @@ def test_create_negative_amount_product(
 
 def test_negative_amount_product(potatoes_product_1: Callable[[], Product]) -> None:
     product = potatoes_product_1()
-    with pytest.raises(NegativeAmountException):
+    with pytest.raises(DomainValidationError):
         product.amount -= 5
 
 

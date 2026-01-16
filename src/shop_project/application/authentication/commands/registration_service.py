@@ -19,7 +19,7 @@ from shop_project.application.entities.account import Account
 from shop_project.application.entities.auth_session import AuthSession
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.exceptions import (
-    AlreadyExistsException,
+    ApplicationAlreadyExistsError,
 )
 from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
@@ -180,11 +180,13 @@ class RegistrationService:
                 register_request=register_request,
             )
 
-            assert (
-                account := _get_account_by_identifier(
-                    resources=resources, login=register_request.identifier
-                )
+            account = _get_account_by_identifier(
+                resources=resources, login=register_request.identifier
             )
+
+            if not account:
+                raise RuntimeError
+
             self._account_service.set_password(
                 account, register_request.password_plaintext.get_secret_value()
             )
@@ -262,7 +264,7 @@ class RegistrationService:
 
 def _ensure_account_not_exists(resources: IResourceContainer) -> None:
     if resources.get_all(Account):
-        raise AlreadyExistsException
+        raise ApplicationAlreadyExistsError("Account already exists")
 
 
 def _get_account_by_identifier(
@@ -272,7 +274,7 @@ def _get_account_by_identifier(
     login: str | None = None,
 ) -> Account | None:
     if not (bool(phone_number) + bool(email) + bool(login) == 1):
-        raise ValueError
+        raise ValueError("Exactly one identifier must be provided")
     if phone_number:
         return resources.get_one_or_none_by_attribute(
             Account, "phone_number", phone_number

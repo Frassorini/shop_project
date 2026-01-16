@@ -19,11 +19,11 @@ class PurchaseReservationService:
         purchase_draft: PurchaseDraft,
         escrow_account: EscrowAccount,
     ) -> PurchaseActive:
-        product_inventory.reserve_stock(purchase_draft.get_items())
+        product_inventory.reserve_stock(purchase_draft.items)
 
         purchase_active_items: list[PurchaseActiveItem] = []
 
-        for item in purchase_draft.get_items():
+        for item in purchase_draft.items:
             purchase_active_items.append(
                 PurchaseActiveItem(
                     product_id=item.product_id,

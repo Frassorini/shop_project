@@ -5,8 +5,8 @@ from shop_project.application.background.base_task_handler import (
     BaseTaskHandler,
     BaseTaskParams,
 )
+from shop_project.application.background.exceptions import AlreadyDoneException
 from shop_project.application.entities.task import Task, create_task
-from shop_project.application.exceptions import AlreadyDoneException
 from shop_project.application.shared.interfaces.interface_resource_container import (
     IResourceContainer,
 )

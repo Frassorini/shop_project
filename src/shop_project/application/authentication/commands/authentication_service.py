@@ -22,7 +22,7 @@ from shop_project.application.entities.account import Account
 from shop_project.application.entities.auth_session import AuthSession
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.exceptions import (
-    ForbiddenException,
+    ApplicationForbiddenError,
 )
 from shop_project.application.shared.interfaces.interface_account_service import (
     IAccountService,
@@ -141,7 +141,7 @@ class AuthenticationService:
             if not self._account_service.verify_password(
                 account, credential.password_plaintext.get_secret_value()
             ):
-                raise ForbiddenException
+                raise ApplicationForbiddenError
 
             auth_session, session_refresh = self._session_service.create_session(
                 account, subject
@@ -229,7 +229,7 @@ def _get_one_subject_or_abort(
 ) -> S:
     subjects = resources.get_all(subject_type)
     if not subjects:
-        raise ForbiddenException
+        raise ApplicationForbiddenError
     if len(subjects) > 1:
         raise RuntimeError
 
@@ -239,7 +239,7 @@ def _get_one_subject_or_abort(
 def _get_one_account_or_abort(resources: IResourceContainer) -> Account:
     accounts = resources.get_all(Account)
     if not accounts:
-        raise ForbiddenException
+        raise ApplicationForbiddenError
     if len(accounts) > 1:
         raise RuntimeError
 
@@ -249,7 +249,7 @@ def _get_one_account_or_abort(resources: IResourceContainer) -> Account:
 def _get_one_auth_session_or_abort(resources: IResourceContainer) -> AuthSession:
     auth_sessions = resources.get_all(AuthSession)
     if not auth_sessions:
-        raise ForbiddenException
+        raise ApplicationForbiddenError
     if len(auth_sessions) > 1:
         raise RuntimeError
 

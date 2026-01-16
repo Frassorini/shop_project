@@ -1,6 +1,6 @@
 from shop_project.domain.entities.shipment import Shipment
 from shop_project.domain.entities.shipment_summary import ShipmentSummary
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import DomainInvalidStateError
 from shop_project.domain.services.shipment_summary_service import ShipmentSummaryService
 
 
@@ -12,6 +12,6 @@ class ShipmentCancelService:
 
     def cancel(self, shipment: Shipment) -> ShipmentSummary:
         if not shipment.is_active():
-            raise DomainException("Order is not active")
+            raise DomainInvalidStateError("Cannot cancel inactive shipment")
 
         return self._shipment_summary_service.finalize_cancel(shipment)

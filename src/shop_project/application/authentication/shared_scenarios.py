@@ -1,6 +1,6 @@
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.exceptions import (
-    ForbiddenException,
+    ApplicationForbiddenError,
 )
 from shop_project.application.shared.interfaces.interface_resource_container import (
     IResourceContainer,
@@ -20,7 +20,7 @@ def verify_and_consume_totp(
         ExternalIdTotp, "external_id", external_id
     )
     if not totp:
-        raise ForbiddenException
+        raise ApplicationForbiddenError
     if not totp_service.verify_totp(totp, code):
-        raise ForbiddenException
+        raise ApplicationForbiddenError
     resources.delete(ExternalIdTotp, totp)

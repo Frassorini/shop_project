@@ -3,7 +3,11 @@ from enum import Enum
 from typing import Self
 from uuid import UUID
 
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import (
+    DomainConflictError,
+    DomainNotFoundError,
+    DomainValidationError,
+)
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.domain.interfaces.stock_item import StockItem
 
@@ -13,9 +17,9 @@ class ShipmentSummaryItem(StockItem):
     product_id: UUID
     amount: int
 
-    def _validate(self) -> None:
+    def __post_init__(self) -> None:
         if self.amount <= 0:
-            raise DomainException("Amount must be > 0")
+            raise DomainValidationError("Amount must be > 0")
 
 
 class ShipmentSummaryReason(Enum):
@@ -60,14 +64,14 @@ class ShipmentSummary(PersistableEntity):
 
     def _validate_item(self, item: ShipmentSummaryItem) -> None:
         if item.product_id in self._items:
-            raise DomainException("Item already added")
+            raise DomainConflictError("Item already added")
 
     def get_item(self, product_id: UUID) -> ShipmentSummaryItem:
-        return self._items[product_id]
+        try:
+            return self._items[product_id]
+        except KeyError:
+            raise DomainNotFoundError("Item not found")
 
     @property
     def items(self) -> list[ShipmentSummaryItem]:
         return sorted(self._items.values(), key=lambda item: item.product_id)
-
-    def get_items(self) -> list[ShipmentSummaryItem]:
-        return list(self._items.values())

@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Self
 from uuid import UUID
 
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import DomainValidationError
 from shop_project.domain.interfaces.persistable_entity import PersistableEntity
 from shop_project.shared.base_state_machine import BaseStateMachine
 
@@ -41,12 +41,12 @@ class EscrowAccount(PersistableEntity):
     def __init__(
         self, entity_id: UUID, customer_id: UUID, total_amount: Decimal
     ) -> None:
-        if total_amount <= 0:
-            raise DomainException("Total amount must be positive")
         self.entity_id = entity_id
         self.customer_id = customer_id
         self.total_amount: Decimal = total_amount
         self._state_machine = EscrowAccountStateMachine(EscrowAccountState.PENDING)
+
+        self._validate()
 
     @classmethod
     def load(
@@ -63,7 +63,13 @@ class EscrowAccount(PersistableEntity):
         obj.customer_id = customer_id
         obj._state_machine = EscrowAccountStateMachine(state)
 
+        obj._validate()
+
         return obj
+
+    def _validate(self) -> None:
+        if self.total_amount <= 0:
+            raise DomainValidationError("Total amount must be positive")
 
     @property
     def state(self) -> EscrowAccountState:

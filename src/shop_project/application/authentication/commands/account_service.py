@@ -11,7 +11,7 @@ from shop_project.application.authentication.shared_scenarios import (
 from shop_project.application.entities.account import Account
 from shop_project.application.entities.external_id_totp import ExternalIdTotp
 from shop_project.application.exceptions import (
-    ForbiddenException,
+    ApplicationForbiddenError,
 )
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.interfaces.interface_account_service import (
@@ -66,7 +66,7 @@ class AccountService:
             if not account.login:
                 account.login = password.identifier
             elif account.login != password.identifier:
-                raise ForbiddenException("Login mismatch")
+                raise ApplicationForbiddenError("Login mismatch")
 
             self._account_service.set_password(
                 account, password.password_plaintext.get_secret_value()

@@ -6,8 +6,8 @@ from shop_project.application.background.base_task_handler import (
     BaseTaskHandler,
     NullTaskParams,
 )
+from shop_project.application.background.exceptions import RetryException
 from shop_project.application.entities.task import Task
-from shop_project.application.exceptions import RetryException
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_payment_gateway import (
     CreatePaymentRequest,

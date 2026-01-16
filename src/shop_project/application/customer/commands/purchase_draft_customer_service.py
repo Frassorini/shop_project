@@ -5,6 +5,7 @@ from shop_project.application.customer.schemas.purchase_draft_schema import (
     PurchaseDraftSchema,
     SetNewPurchaseDraftItemsSchema,
 )
+from shop_project.application.exceptions import ApplicationNotFoundError
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_query_builder import (
@@ -126,7 +127,9 @@ class PurchaseDraftCustomerService:
             for item in change.items:
                 product = resources.get_by_id_or_none(Product, item.product_id)
                 if not product:
-                    continue
+                    raise ApplicationNotFoundError(
+                        f"Product {item.product_id} not found"
+                    )
 
                 purchase_draft.add_item(item.product_id, item.amount)
 

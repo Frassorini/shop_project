@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Generic, TypeVar
 
-from shop_project.domain.exceptions import StateException
+from shop_project.domain.exceptions import DomainInvalidStateError
 
 T = TypeVar("T")
 
@@ -18,7 +18,9 @@ class BaseStateMachine(ABC, Generic[T]):
 
     def try_transition_to(self, to_state: T) -> None:
         if not self.can_be_transitioned_to(to_state):
-            raise StateException(f"Invalid transition from {self._state} to {to_state}")
+            raise DomainInvalidStateError(
+                f"Invalid transition from {self._state} to {to_state}"
+            )
 
         self._state = to_state
 

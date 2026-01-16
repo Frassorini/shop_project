@@ -1,6 +1,7 @@
 from typing import Type
 from uuid import UUID, uuid4
 
+from shop_project.application.exceptions import ApplicationNotFoundError
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_query_builder import (
@@ -97,6 +98,12 @@ class ProductManagerService:
             )
             products = resources.get_all(Product)
 
+            found_ids = {product.entity_id for product in products}
+            if found_ids != set(product_ids):
+                raise ApplicationNotFoundError(
+                    f"Products {set(product_ids) - found_ids} not found"
+                )
+
             for product in products:
                 resources.delete(Product, product)
 
@@ -127,26 +134,16 @@ class ProductManagerService:
             manager = get_one_or_raise_forbidden(
                 resources, Manager, access_payload.account_id
             )
-            old_product = get_one_or_raise_not_found(
-                resources, Product, change.entity_id
-            )
+            product = get_one_or_raise_not_found(resources, Product, change.entity_id)
 
-            resources.delete(Product, old_product)
-
-            new_product = Product(
-                entity_id=change.entity_id,
-                name=change.name,
-                amount=old_product.amount,
-                price=change.price,
-            )
-
-            resources.put(Product, new_product)
+            product.name = change.name
+            product.price = change.price
 
             operation_log = create_update_product_payload(
-                access_payload, to_dto(new_product)
+                access_payload, to_dto(product)
             )
             log_operation(resources, operation_log)
 
             uow.mark_commit()
 
-        return ProductSchema.model_validate(to_dto(new_product))
+        return ProductSchema.model_validate(to_dto(product))

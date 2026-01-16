@@ -11,14 +11,15 @@ class ShipmentRequest:
     def add_item(self, product_id: UUID, amount: int) -> None:
         self._items.append(ShipmentItem(product_id, amount))
 
-    def get_items(self) -> list[ShipmentItem]:
-        return self._items
+    @property
+    def items(self) -> list[ShipmentItem]:
+        return sorted(self._items, key=lambda item: item.product_id)
 
 
 class ShipmentActivationService:
     def activate(
         self, product_inventory: ProductInventory, request: ShipmentRequest
     ) -> Shipment:
-        product_inventory.check_stock_validity(request.get_items())
+        product_inventory.check_stock_validity(request.items)
 
-        return Shipment(uuid4(), request.get_items())
+        return Shipment(uuid4(), request.items)

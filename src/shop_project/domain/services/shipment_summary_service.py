@@ -6,7 +6,7 @@ from shop_project.domain.entities.shipment_summary import (
     ShipmentSummaryItem,
     ShipmentSummaryReason,
 )
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import DomainInvalidStateError
 
 
 class ShipmentSummaryService:
@@ -23,11 +23,11 @@ class ShipmentSummaryService:
         self, shipment: Shipment, reason: ShipmentSummaryReason
     ) -> ShipmentSummary:
         if shipment.is_finalized():
-            raise DomainException("Cannot finalize finalized shipment")
+            raise DomainInvalidStateError("Cannot finalize finalized shipment")
 
         shipment_summary_items: list[ShipmentSummaryItem] = []
 
-        for item in shipment.get_items():
+        for item in shipment.items:
             shipment_summary_items.append(
                 ShipmentSummaryItem(
                     product_id=item.product_id,

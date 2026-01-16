@@ -7,14 +7,11 @@ from shop_project.application.customer.schemas.purchase_summary_schema import (
     PurchaseSummarySchema,
 )
 from shop_project.application.entities.claim_token import ClaimToken
-from shop_project.application.exceptions import NotFoundException
+from shop_project.application.exceptions import ApplicationNotFoundError
 from shop_project.application.shared.access_token_payload import AccessTokenPayload
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_claim_token_service import (
     IClaimTokenService,
-)
-from shop_project.application.shared.interfaces.interface_payment_gateway import (
-    IPaymentGateway,
 )
 from shop_project.application.shared.interfaces.interface_query_builder import (
     IQueryBuilder,
@@ -56,7 +53,6 @@ class PurchaseActiveEmployeeService:
         purchase_activation_service: PurchaseActivationService,
         purchase_claim_service: PurchaseClaimService,
         purchase_return_service: PurchaseReturnService,
-        payment_gateway: IPaymentGateway,
         claim_token_service: IClaimTokenService,
     ) -> None:
         self._unit_of_work_factory: IUnitOfWorkFactory = unit_of_work_factory
@@ -66,7 +62,6 @@ class PurchaseActiveEmployeeService:
         )
         self._purchase_claim_service: PurchaseClaimService = purchase_claim_service
         self._purchase_return_service: PurchaseReturnService = purchase_return_service
-        self._payment_gateway: IPaymentGateway = payment_gateway
         self._claim_token_service: IClaimTokenService = claim_token_service
 
     async def claim(
@@ -104,7 +99,7 @@ class PurchaseActiveEmployeeService:
             purchases = resources.get_all(PurchaseActive)
 
             if not resources.get_all(ClaimToken):
-                raise NotFoundException(
+                raise ApplicationNotFoundError(
                     f"ClaimToken with fingerprint {token_fingerprint} not found"
                 )
 

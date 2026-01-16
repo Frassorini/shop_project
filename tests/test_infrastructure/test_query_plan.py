@@ -89,9 +89,7 @@ def test_load_from_previous(purchase_draft_factory: Callable[[], PurchaseDraft])
         Product,
         QueryCriteria().criterion_in(
             "entity_id",
-            ValueExtractor(
-                query, lambda x: [item.product_id for item in x.get_items()]
-            ),
+            ValueExtractor(query, lambda x: [item.product_id for item in x.items]),
         ),
         QueryLock.NO_LOCK,
     )

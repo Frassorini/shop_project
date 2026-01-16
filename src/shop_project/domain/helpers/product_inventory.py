@@ -2,7 +2,10 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from shop_project.domain.entities.product import Product
-from shop_project.domain.exceptions import DomainException
+from shop_project.domain.exceptions import (
+    DomainConflictError,
+    DomainNotFoundError,
+)
 from shop_project.domain.interfaces.stock_item import StockItem
 
 
@@ -13,12 +16,14 @@ class ProductInventory:
     def _ensure_stock_is_valid(self, items: Sequence[StockItem]) -> None:
         for order_item in items:
             if order_item.product_id not in self._stock.keys():
-                raise DomainException("Invalid stock")
+                raise DomainNotFoundError(f"Product {order_item.product_id} not found")
 
     def _ensure_stock_is_sufficient(self, items: Sequence[StockItem]) -> None:
         for order_item in items:
             if order_item.amount > self._stock[order_item.product_id].amount:
-                raise DomainException("Insufficient stock")
+                raise DomainConflictError(
+                    f"Not enough stock for product {order_item.product_id}"
+                )
 
     def _decrease_stock(self, items: Sequence[StockItem]) -> None:
         for order_item in items:

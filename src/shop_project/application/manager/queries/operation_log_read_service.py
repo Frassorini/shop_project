@@ -66,10 +66,6 @@ class OperationLogReadService:
             resources = uow.get_resources()
             sequences: Sequence[OperationLog] = resources.get_all(OperationLog)
 
-            sorted_sequences = sorted(
-                sequences, key=lambda x: x.seq if x.seq is not None else float("+inf")
-            )
-
         return [
             OperationLogSchema.model_validate(to_dto(sequence))
             for sequence in sequences

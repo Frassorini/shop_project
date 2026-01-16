@@ -1,6 +1,7 @@
 from typing import Type
 from uuid import UUID
 
+from shop_project.application.exceptions import ApplicationConflictError
 from shop_project.application.shared.dto.mapper import to_dto
 from shop_project.application.shared.interfaces.interface_query_builder import (
     IQueryBuilder,
@@ -22,7 +23,6 @@ from shop_project.domain.entities.escrow_account import EscrowAccount
 from shop_project.domain.entities.product import Product
 from shop_project.domain.entities.purchase_active import PurchaseActive
 from shop_project.domain.entities.purchase_summary import PurchaseSummary
-from shop_project.domain.exceptions import DomainException
 from shop_project.domain.helpers.product_inventory import ProductInventory
 from shop_project.domain.services.purchase_return_service import PurchaseReturnService
 
@@ -92,7 +92,7 @@ class PaymentService:
             )
 
             if not escrow.is_refunding():
-                raise DomainException("Escrow account is not refunding")
+                raise ApplicationConflictError("Escrow account is not refunding")
 
             escrow.finalize()
 
