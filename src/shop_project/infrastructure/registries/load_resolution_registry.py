@@ -45,6 +45,10 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
             attribute_name="entity_id",
             strategy=lambda account: [account.entity_id],
         ),
+        AuthSession: LoadResolutionDescriptor(
+            attribute_name="account_id",
+            strategy=lambda account: [account.entity_id],
+        ),
     },
     AuthSession: {
         Customer: LoadResolutionDescriptor(
@@ -56,6 +60,10 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
             strategy=lambda auth_session: [auth_session.account_id],
         ),
         Manager: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda auth_session: [auth_session.account_id],
+        ),
+        Account: LoadResolutionDescriptor(
             attribute_name="entity_id",
             strategy=lambda auth_session: [auth_session.account_id],
         ),
@@ -81,19 +89,43 @@ _REGISTRY: dict[Type[Any], dict[Type[Any], LoadResolutionDescriptor[Any]]] = {
     PurchaseDraft: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda cart: [item.product_id for item in cart.items],
+            strategy=lambda purchase_draft: [
+                item.product_id for item in purchase_draft.items
+            ],
+        ),
+        Customer: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda purchase_draft: [purchase_draft.customer_id],
         ),
     },
     PurchaseActive: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
-            strategy=lambda order: [item.product_id for item in order.items],
+            strategy=lambda purchase_active: [
+                item.product_id for item in purchase_active.items
+            ],
+        ),
+        Customer: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda purchase_active: [purchase_active.customer_id],
+        ),
+        EscrowAccount: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda purchase_active: [purchase_active.escrow_account_id],
         ),
     },
     PurchaseSummary: {
         Product: LoadResolutionDescriptor(
             attribute_name="entity_id",
             strategy=lambda order: [item.product_id for item in order.items],
+        ),
+        Customer: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda order: [order.customer_id],
+        ),
+        EscrowAccount: LoadResolutionDescriptor(
+            attribute_name="entity_id",
+            strategy=lambda order: [order.escrow_account_id],
         ),
     },
     EscrowAccount: {

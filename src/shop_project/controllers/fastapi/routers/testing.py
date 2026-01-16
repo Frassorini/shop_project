@@ -9,20 +9,24 @@ router = APIRouter(route_class=DishkaRoute, prefix="/_testing")
 
 
 @router.post("/payments/{payment_id}/confirm")
-async def create_product(service: FromDishka[PaymentService], payment_id: UUID) -> None:
+async def confirm_payment(
+    service: FromDishka[PaymentService], payment_id: UUID
+) -> None:
     await service.confirm_payment(payment_id)
 
 
 @router.post("/payments/{payment_id}/cancel")
-async def create_product(service: FromDishka[PaymentService], payment_id: UUID) -> None:
+async def cancel_payment(service: FromDishka[PaymentService], payment_id: UUID) -> None:
     await service.cancel_payment(payment_id)
 
 
 @router.post("/payments/{payment_id}/confirm-refund")
-async def create_product(service: FromDishka[PaymentService], payment_id: UUID) -> None:
+async def confirm_refund(service: FromDishka[PaymentService], payment_id: UUID) -> None:
     await service.confirm_refund(payment_id)
 
 
 @router.post("/payments/{payment_id}/finalize-not-paid")
-async def create_product(service: FromDishka[PaymentService], payment_id: UUID) -> None:
+async def finalize_not_paid(
+    service: FromDishka[PaymentService], payment_id: UUID
+) -> None:
     await service.finalize_not_paid(payment_id)

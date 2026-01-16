@@ -4,6 +4,9 @@ from dishka.async_container import AsyncContainer
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
+from shop_project.controllers.fastapi.exception_handling.handlers import (
+    register_exception_handlers,
+)
 from shop_project.controllers.fastapi.routers.auth import router as auth_router
 from shop_project.controllers.fastapi.routers.customer import router as customer_router
 from shop_project.controllers.fastapi.routers.employee import router as employee_router
@@ -33,6 +36,8 @@ def create_app() -> FastAPI:
 
     setup_dishka(container, app)
     app.state.container = container
+
+    register_exception_handlers(app)
 
     app.include_router(shared_router)
     app.include_router(customer_router)

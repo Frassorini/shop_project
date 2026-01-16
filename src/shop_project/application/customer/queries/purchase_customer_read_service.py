@@ -49,12 +49,12 @@ class PurchaseCustomerReadService:
 
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
-            .load(EscrowAccount)
-            .from_attribute("customer_id", [access_payload.account_id])
-            .and_()
-            .from_id(ids)
-            .no_lock()
             .load(PurchaseActive)
+            .from_id(ids)
+            .and_()
+            .from_attribute("customer_id", [access_payload.account_id])
+            .no_lock()
+            .load(EscrowAccount)
             .from_previous()
             .and_()
             .from_attribute("customer_id", [access_payload.account_id])
@@ -117,12 +117,12 @@ class PurchaseCustomerReadService:
 
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
-            .load(EscrowAccount)
-            .from_attribute("customer_id", [access_payload.account_id])
-            .and_()
-            .from_id(ids)
-            .no_lock()
             .load(PurchaseSummary)
+            .from_id(ids)
+            .and_()
+            .from_attribute("customer_id", [access_payload.account_id])
+            .no_lock()
+            .load(EscrowAccount)
             .from_previous()
             .and_()
             .from_attribute("customer_id", [access_payload.account_id])
@@ -153,16 +153,14 @@ class PurchaseCustomerReadService:
 
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
-            .load(EscrowAccount)
+            .load(PurchaseActive)
             .from_attribute("customer_id", [access_payload.account_id])
             .order_by("entity_id", desc=True)
             .offset(offset)
             .limit(limit)
             .no_lock()
-            .load(PurchaseActive)
+            .load(EscrowAccount)
             .from_previous()
-            .and_()
-            .from_attribute("customer_id", [access_payload.account_id])
             .no_lock()
             .build()
         ) as uow:
@@ -223,16 +221,14 @@ class PurchaseCustomerReadService:
 
         async with self._unit_of_work_factory.create(
             self._query_builder_type(mutating=False)
-            .load(EscrowAccount)
+            .load(PurchaseSummary)
             .from_attribute("customer_id", [access_payload.account_id])
             .order_by("entity_id", desc=True)
             .offset(offset)
             .limit(limit)
             .no_lock()
-            .load(PurchaseSummary)
+            .load(EscrowAccount)
             .from_previous()
-            .and_()
-            .from_attribute("customer_id", [access_payload.account_id])
             .no_lock()
             .build()
         ) as uow:
